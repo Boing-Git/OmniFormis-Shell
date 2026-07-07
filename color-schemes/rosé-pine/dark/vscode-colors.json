@@ -1,0 +1,28 @@
+{
+  "checksum": ":)",
+  "wallpaper": "/tmp/wallpaper.png",
+  "alpha": "100",
+  "special": {
+    "background": "#403d52",
+    "foreground": "#e0def4",
+    "cursor": "#191724"
+  },
+  "colors": {
+    "color0": "#403d52",
+    "color1": "#e0def4",
+    "color2": "#403d52",
+    "color3": "#9ccfd8",
+    "color4": "#191724",
+    "color5": "#9ccfd8",
+    "color6": "#403d52",
+    "color7": "#6e6a86",
+    "color8": "#403d52",
+    "color9": "#000000",
+    "color10": "#403d52",
+    "color11": "#9ccfd8",
+    "color12": "#191724",
+    "color13": "#9ccfd8",
+    "color14": "#e0def4",
+    "color15": "#e0def4"
+  }
+}

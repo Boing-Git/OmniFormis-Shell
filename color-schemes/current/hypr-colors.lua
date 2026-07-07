@@ -1,0 +1,1 @@
+/home/boing/.config/color-schemes/material-you/dark/hypr-colors.lua

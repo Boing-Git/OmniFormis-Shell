@@ -1,0 +1,1 @@
+/nix/store/33hg70v4dd23690kljlhllrx2wh9mpmy-home-manager-files/.config/fish/conf.d/99-fastfetch.fish

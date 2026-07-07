@@ -1,0 +1,115 @@
+[config]
+variant = "dark"
+json_format = "hex"
+
+[config.wallpaper]
+command = "awww img --transition-type center --transition-duration 1.5 --transition-bezier 0.05,0.7,0.1,1 {{ image }}"
+set = true
+
+[templates.vscode-raw-dark]
+input_path = './templates/dark/vscode'
+output_path = '~/.config/color-schemes/material-you/dark/vscode-colors'
+
+[templates.vscode-raw-light]
+input_path = './templates/light/vscode'
+output_path = '~/.config/color-schemes/material-you/light/vscode-colors'
+
+[templates.vscode-json-dark]
+input_path = './templates/dark/vscode.json'
+output_path = '~/.config/color-schemes/material-you/dark/vscode-colors.json'
+
+[templates.vscode-json-light]
+input_path = './templates/light/vscode.json'
+output_path = '~/.config/color-schemes/material-you/light/vscode-colors.json'
+
+[templates.wezterm-dark]
+input_path = './templates/dark/wezterm.lua'
+output_path = '~/.config/color-schemes/material-you/dark/wezterm.lua'
+post_hook = 'touch ~/.config/wezterm/wezterm.lua'
+
+[templates.wezterm-light]
+input_path = './templates/light/wezterm.lua'
+output_path = '~/.config/color-schemes/material-you/light/wezterm.lua'
+post_hook = 'touch ~/.config/wezterm/wezterm.lua'
+
+[templates.obs-dark]
+input_path = './templates/dark/obs.obt'
+output_path = '~/.config/color-schemes/material-you/dark/automatic.obt'
+
+[templates.obs-light]
+input_path = './templates/light/obs.obt'
+output_path = '~/.config/color-schemes/material-you/light/automatic.obt'
+
+[templates.gtk3-dark]
+input_path = './templates/dark/gtkColors.css'
+output_path = '~/.config/color-schemes/material-you/dark/gtkColors.css'
+post_hook = "sh -c 'command -v gsettings >/dev/null && gsettings set org.gnome.desktop.interface gtk-theme \"\" && gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-{{mode}} || true'"
+
+[templates.gtk3-light]
+input_path = './templates/light/gtkColors.css'
+output_path = '~/.config/color-schemes/material-you/light/gtkColors.css'
+post_hook = "sh -c 'command -v gsettings >/dev/null && gsettings set org.gnome.desktop.interface gtk-theme \"\" && gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-{{mode}} || true'"
+
+[templates.gtk4-dark]
+input_path = './templates/dark/gtkColors.css'
+output_path = '~/.config/color-schemes/material-you/dark/gtkColors.css'
+post_hook = '~/.config/matugen/post-hook-scripts/gtk-themes-reload.sh'
+
+[templates.gtk4-light]
+input_path = './templates/light/gtkColors.css'
+output_path = '~/.config/color-schemes/material-you/light/gtkColors.css'
+post_hook = '~/.config/matugen/post-hook-scripts/gtk-themes-reload.sh'
+
+[templates.hyprland-dark]
+input_path = './templates/dark/hypr-colors.lua'
+output_path = '~/.config/color-schemes/material-you/dark/hypr-colors.lua'
+post_hook = "sh -c 'command -v hyprctl >/dev/null && hyprctl reload || true'"
+
+[templates.hyprland-light]
+input_path = './templates/light/hypr-colors.lua'
+output_path = '~/.config/color-schemes/material-you/light/hypr-colors.lua'
+post_hook = "sh -c 'command -v hyprctl >/dev/null && hyprctl reload || true'"
+
+[templates.cava-dark]
+input_path = './templates/dark/cava.ini'
+output_path = '~/.config/color-schemes/material-you/dark/cava.ini'
+post_hook = 'pkill -USR1 cava || true'
+
+[templates.cava-light]
+input_path = './templates/light/cava.ini'
+output_path = '~/.config/color-schemes/material-you/light/cava.ini'
+post_hook = 'pkill -USR1 cava || true'
+
+[templates.qt-dark]
+input_path = './templates/dark/qtColors.conf'
+output_path = '~/.config/color-schemes/material-you/dark/qtColors.conf'
+
+[templates.qt-light]
+input_path = './templates/light/qtColors.conf'
+output_path = '~/.config/color-schemes/material-you/light/qtColors.conf'
+
+[templates.starship-dark]
+input_path = './templates/dark/starship.toml'
+output_path = '~/.config/color-schemes/material-you/dark/starship.toml'
+
+[templates.starship-light]
+input_path = './templates/light/starship.toml'
+output_path = '~/.config/color-schemes/material-you/light/starship.toml'
+
+[templates.quickshell-dark]
+input_path = './templates/dark/quickTheme.qml'
+output_path = '~/.config/color-schemes/material-you/dark/quickTheme.qml'
+
+[templates.quickshell-light]
+input_path = './templates/light/quickTheme.qml'
+output_path = '~/.config/color-schemes/material-you/light/quickTheme.qml'
+
+[templates.nvim-dark]
+input_path = './templates/dark/nvim.lua'
+output_path = '~/.config/color-schemes/material-you/dark/nvim.lua'
+post_hook = 'pkill -SIGUSR1 nvim || true'
+
+[templates.nvim-light]
+input_path = './templates/light/nvim.lua'
+output_path = '~/.config/color-schemes/material-you/light/nvim.lua'
+post_hook = 'pkill -SIGUSR1 nvim || true'

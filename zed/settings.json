@@ -1,0 +1,69 @@
+{
+  "cli_default_open_behavior": "existing_window",
+  "session": {
+    "trust_all_worktrees": true
+  },
+  "vim_mode": true,
+  "base_keymap": "VSCode",
+  "status_bar": {
+    "experimental.show": false
+  },
+  "agent_servers": {
+    "codex-acp": {
+      "type": "registry"
+    }
+  },
+  "ui_font_size": 16,
+  "buffer_font_size": 16,
+  "theme": {
+    "mode": "system",
+    "light": "One Light",
+    "dark": "One Dark"
+  },
+  "auto_install_extensions": {
+    "nix": true,
+    "qml": true
+  },
+  "buffer_font_family": "CaskaydiaCove Nerd Font",
+  "languages": {
+    "Nix": {
+      "language_servers": [
+        "nixd",
+        "!nil"
+      ]
+    },
+    "QML": {
+      "formatter": {
+        "external": {
+          "arguments": [
+            "-c",
+            "tmp=$(mktemp --suffix .qml); cat > $tmp; qmlformat $tmp"
+          ],
+          "command": "sh"
+        }
+      }
+    }
+  },
+  "lsp": {
+    "nixd": {
+      "settings": {
+        "formatting": {
+          "command": [
+            "alejandra"
+          ]
+        },
+        "nixpkgs": {
+          "expr": "import (builtins.getFlake (builtins.toString ./.)).inputs.nixpkgs {}"
+        }
+      }
+    },
+    "qml": {
+      "binary": {
+        "arguments": [
+          "-E"
+        ]
+      }
+    }
+  },
+  "multi_cursor_modifier": "cmd_or_ctrl"
+}

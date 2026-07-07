@@ -1,0 +1,21 @@
+[
+  {
+    "bindings": {
+      "alt-down": [
+        "editor::SelectNext",
+        {
+          "replace_newest": false
+        }
+      ],
+      "alt-up": [
+        "editor::SelectPrevious",
+        {
+          "replace_newest": false
+        }
+      ],
+      "ctrl-shift-down": "editor::MoveLineDown",
+      "ctrl-shift-up": "editor::MoveLineUp"
+    },
+    "context": "Editor"
+  }
+]

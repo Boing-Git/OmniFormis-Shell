@@ -1,0 +1,28 @@
+{
+  "checksum": ":)",
+  "wallpaper": "/home/boing/Pictures/Wallpapers/anime/a_person_on_a_bicycle_on_a_railing_with_a_city_in_the_background.png",
+  "alpha": "100",
+  "special": {
+    "background": "#121318",
+    "foreground": "#e2e2e9",
+    "cursor": "#b1c5ff"
+  },
+  "colors": {
+    "color0": "#121318",
+    "color1": "#d0d0fb",
+    "color2": "#b1c2f2",
+    "color3": "#f0b0ff",
+    "color4": "#b1c5ff",
+    "color5": "#f0b0ff",
+    "color6": "#2b3f74",
+    "color7": "#c4c6d3",
+    "color8": "#434651",
+    "color9": "#b1c5ff",
+    "color10": "#859feb",
+    "color11": "#e67dff",
+    "color12": "#7e9fff",
+    "color13": "#e67dff",
+    "color14": "#063689",
+    "color15": "#e2e2e9"
+  }
+}

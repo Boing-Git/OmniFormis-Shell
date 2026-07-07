@@ -1,0 +1,171 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Enable the custom palette globally
+palette = "colors"
+
+format = """
+[](fg:primary)\
+$os\
+$username\
+[](bg:primary_container fg:primary)\
+$directory\
+[](fg:primary_container bg:secondary)\
+$git_branch\
+$git_status\
+[](fg:secondary bg:secondary_container)\
+$c\
+$elixir\
+$elm\
+$golang\
+$gradle\
+$haskell\
+$java\
+$julia\
+$maven\
+$nodejs\
+$bun\
+$nim\
+$rust\
+$scala\
+[](fg:secondary_container bg:tertiary)\
+$docker_context\
+[](fg:tertiary bg:tertiary_container)\
+$time\
+[ ](fg:tertiary_container)\
+$character\
+"""
+
+[character]
+success_symbol = ""
+error_symbol = "[✗ ](bold fg:red)"
+
+[username]
+show_always = true
+style_user = "bg:primary fg:on_primary"
+style_root = "bg:primary fg:on_primary"
+format = '[$user ]($style)'
+disabled = false
+
+[os]
+style = "bg:primary fg:on_primary"
+disabled = true 
+
+[directory]
+style = "bg:primary_container fg:on_primary_container"
+format = "[ $path ]($style)"
+truncation_length = 3
+truncation_symbol = "…/"
+
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = " "
+"Pictures" = " "
+
+[c]
+symbol = " "
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[cpp]
+symbol = " "
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[docker_context]
+symbol = " "
+style = "bg:tertiary fg:on_tertiary"
+format = '[ $symbol $context ]($style)'
+
+[elixir]
+symbol = " "
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[elm]
+symbol = " "
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[git_branch]
+symbol = ""
+style = "bg:secondary fg:on_secondary"
+format = '[ $symbol $branch ]($style)'
+
+[git_status]
+style = "bg:secondary fg:on_secondary"
+format = '[$all_status$ahead_behind ]($style)'
+
+[golang]
+symbol = " "
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[gradle]
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[haskell]
+symbol = " "
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[java]
+symbol = " "
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[julia]
+symbol = " "
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[maven]
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[nodejs]
+symbol = ""
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[bun]
+symbol = ""
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[nim]
+symbol = "󰆥 "
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[rust]
+symbol = ""
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[scala]
+symbol = " "
+style = "bg:secondary_container fg:on_secondary_container"
+format = '[ $symbol ($version) ]($style)'
+
+[time]
+disabled = false
+time_format = "%R" 
+style = "bg:tertiary_container fg:on_tertiary_container"
+format = '[ ♥ $time ]($style)'
+
+# Map your template values into standard Starship palette keys
+[palettes.colors]
+primary = '#b1c5ff'
+on_primary = '#002c70'
+primary_container = '#0d3882'
+on_primary_container = '#beceff'
+secondary = '#bac6e9'
+on_secondary = '#24304c'
+secondary_container = '#3b4664'
+on_secondary_container = '#d6dfff'
+tertiary = '#f0b0ff'
+on_tertiary = '#4d175e'
+tertiary_container = '#5a246b'
+on_tertiary_container = '#f4bcff'

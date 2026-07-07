@@ -1,0 +1,16 @@
+{{ colors.surface_dim.dark.hex }}
+{{ colors.on_surface.dark.hex | saturate: 70.0, hsl }}
+{{ colors.secondary.dark.hex | saturate: 20.0, hsl }}
+{{ colors.tertiary.dark.hex | saturate: 15.0, hsl }}
+{{ colors.primary.dark.hex }}
+{{ colors.tertiary.dark.hex }}
+{{ colors.secondary_container.dark.hex | saturate: 20.0, hsl }}
+{{ colors.on_surface_variant.dark.hex }}
+{{ colors.surface_variant.dark.hex }}
+{{ colors.surface_tint.dark.hex | saturate: 15.0, hsl }}
+{{ colors.secondary.dark.hex | auto_lightness: 10.0 | saturate: 20.0, hsl }}
+{{ colors.tertiary.dark.hex | auto_lightness: 10.0 | saturate: 15.0, hsl }}
+{{ colors.primary.dark.hex | auto_lightness: 10.0 }}
+{{ colors.tertiary.dark.hex | auto_lightness: 10.0 }}
+{{ colors.primary_container.dark.hex | saturate: 10.0, hsl }}
+{{ colors.on_surface.dark.hex }}
