@@ -1,1 +1,1 @@
-/home/boing/.config/color-schemes/material-you/dark/nvim.lua
+/home/boing/.config/color-schemes/material-you/light/nvim.lua

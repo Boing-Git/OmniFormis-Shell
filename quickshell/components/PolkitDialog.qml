@@ -17,6 +17,7 @@ Item {
     property alias panelMask: panelMask
     property bool expanded: flow !== null && !flow.isCompleted
     property var focusWindow: null
+    property bool gameMode: false
 
     HyprlandFocusGrab {
         active: root.expanded && root.focusWindow !== null
@@ -98,7 +99,7 @@ Item {
     Rectangle {
         id: panel
         layer.enabled: true
-        layer.effect: MultiEffect { shadowEnabled: true; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
+        layer.effect: MultiEffect { shadowEnabled: !root.gameMode; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
 
@@ -109,11 +110,11 @@ Item {
         visible: opacity > 0
 
         color: Theme.primary
-        radius: root.expanded ? Vars.radiusExtraLarge : height / 2
+        radius: root.gameMode ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
 
-        Behavior on radius { NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
-        Behavior on width { NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
-        Behavior on height { NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
+        Behavior on radius { enabled: !root.gameMode; NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
+        Behavior on width { enabled: !root.gameMode; NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
+        Behavior on height { enabled: !root.gameMode; NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
 
         // EXPANDED UI
         Item {

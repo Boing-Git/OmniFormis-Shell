@@ -13,6 +13,7 @@ Item {
     signal rightClicked
     signal scrolled(int delta)
     property string timeString: ""
+    property bool gameMode: false
 
     // No physics strings or translation properties needed
 
@@ -20,7 +21,7 @@ Item {
         id: clockRect
         layer.enabled: true
         layer.effect: MultiEffect {
-            shadowEnabled: true
+            shadowEnabled: !root.gameMode
             shadowBlur: 1.0
             shadowColor: Qt.rgba(0, 0, 0, 0.25)
             shadowVerticalOffset: 4
@@ -29,14 +30,15 @@ Item {
         width: parent.width
         height: parent.height
         color: Theme.primary
-        radius: height / 2
+        radius: root.gameMode ? 0 : height / 2
         z: 1
 
         Rectangle {
             anchors.fill: parent
-            radius: height / 2
+            radius: root.gameMode ? 0 : height / 2
             color: dragArea.pressed ? Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.12) : (dragArea.containsMouse ? Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.08) : "transparent")
             Behavior on color {
+                enabled: !root.gameMode
                 ColorAnimation {
                     duration: 250
                     easing.type: Easing.BezierSpline

@@ -4,7 +4,10 @@ import re
 import os
 import sys
 
-VARS_FILE = os.path.expanduser("~/.config/hypr/modules/variables.lua")
+# Resolve VARS_FILE relative to this script's location so it works whether
+# called from ~/dotfiles or via a ~/.local/bin symlink.
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+VARS_FILE = os.path.join(SCRIPT_DIR, "modules", "variables.lua")
 
 def read_file():
     if not os.path.exists(VARS_FILE):
@@ -23,55 +26,119 @@ def parse_variables(content):
     with their type and comment (to be used as help text).
     """
     variables = {}
-    # Matches lines like:  Key = "Value", -- Comment
-    # Or:  Key = true, -- Comment
-    # Or:  Key = 10,
-    pattern = re.compile(r'^[ \t]*([a-zA-Z0-9_]+)[ \t]*=[ \t]*(?:"([^"]*)"|(true|false)|(\d+))(?:,?[ \t]*(--.*)?)?$', re.MULTILINE)
+    lines = content.split('\n')
+    current_comments = []
     
-    for match in pattern.finditer(content):
-        key = match.group(1)
-        str_val = match.group(2)
-        bool_val = match.group(3)
-        num_val = match.group(4)
-        comment = match.group(5)
-        
-        help_text = comment.strip("- ") if comment else f"Set {key}"
-        
-        if str_val is not None:
-            val_type = "string"
-        elif bool_val is not None:
-            val_type = "bool"
-        elif num_val is not None:
-            val_type = "int"
-        else:
-            continue
+    current_category = "General"
+    
+    # Matches lines like:  Key = "Value", -- Comment
+    pattern = re.compile(r'^[ \t]*([a-zA-Z0-9_]+)[ \t]*=[ \t]*(?:"([^"]*)"|(true|false)|(-?\d+(?:\.\d+)?))(?:,?[ \t]*(--.*)?)?$')
+    
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('--') and not stripped.startswith('---'):
+            c = stripped.lstrip('-').strip()
+            current_comments.append(c)
             
-        variables[key] = {
-            "type": val_type,
-            "help": help_text
-        }
-        
+            # Simple category heuristic: if the comment is a known category name
+            cat_lower = c.lower()
+            known_categories = [
+                "general", "app launcher", "environment variables", "misc",
+                "animation style", "window rules", "decoration", "shadows",
+                "blur", "groupbar", "input", "gestures", "modifiers"
+            ]
+            if cat_lower in known_categories:
+                current_category = c
+                
+        elif stripped == '' or stripped.startswith('---'):
+            current_comments = []
+        else:
+            match = pattern.match(line)
+            if match:
+                key = match.group(1)
+                str_val = match.group(2)
+                bool_val = match.group(3)
+                num_val = match.group(4)
+                comment = match.group(5)
+                
+                # Help text is the last comment or inline comment
+                help_text = comment.strip("- ") if comment else (current_comments[-1] if current_comments else f"Set {key}")
+                
+                if str_val is not None:
+                    val_type = "string"
+                    current_val = str_val
+                elif bool_val is not None:
+                    val_type = "bool"
+                    current_val = bool_val
+                elif num_val is not None:
+                    val_type = "number"
+                    current_val = num_val
+                else:
+                    current_comments = []
+                    continue
+                    
+                if key == "ColorScheme":
+                    current_comments = []
+                    continue
+                    
+                enums = []
+                if val_type == "string":
+                    # Check both inline comment and preceding comments for enums
+                    comments_to_check = []
+                    if comment:
+                        comments_to_check.append(comment)
+                    comments_to_check.extend(current_comments)
+                    
+                    for c in comments_to_check:
+                        m = re.search(r'\((.*)\)', c)
+                        if m:
+                            quotes = re.findall(r'"([^"]+)"', m.group(1))
+                            if quotes:
+                                enums.extend(quotes)
+                            
+                variables[key] = {
+                    "type": val_type,
+                    "help": help_text,
+                    "enums": enums,
+                    "val": current_val,
+                    "category": current_category
+                }
+            current_comments = []
+            
     return variables
 
 def update_var(content, key, value, val_type):
     """
     Update a variable in the lua file.
-    val_type can be 'string', 'bool', or 'int'
+    val_type can be 'string', 'bool', or 'number'
+    Uses lambda replacement functions to avoid octal escape bugs with backreferences.
     """
     if val_type == "string":
-        pattern = r'([ \t]*)(' + re.escape(key) + r')([ \t]*=[ \t]*)"[^"]*"(,?[ \t]*(--.*)?)'
-        replacement = rf'\1\2\3"{value}"\4'
+        # Groups: (1:indent)(2:key)(3: = )"old_val"(4:trailing comma+comment)
+        pattern = r'([ \t]*)(' + re.escape(key) + r')([ \t]*=[ \t]*)"[^"]*"(,?[ \t]*(?:--.*)?)$'
+        repl_func = lambda m: f'{m.group(1)}{m.group(2)}{m.group(3)}"{value}"{m.group(4)}'
     elif val_type == "bool":
         val_str = "true" if str(value).lower() in ["true", "1", "yes", "y", "t"] else "false"
-        pattern = r'([ \t]*)(' + re.escape(key) + r')([ \t]*=[ \t]*)(true|false)(,?[ \t]*(--.*)?)'
-        replacement = rf'\1\2\3{val_str}\5'
-    elif val_type == "int":
-        pattern = r'([ \t]*)(' + re.escape(key) + r')([ \t]*=[ \t]*)\d+(,?[ \t]*(--.*)?)'
-        replacement = rf'\1\2\3{value}\4'
+        # Groups: (1:indent)(2:key)(3: = )(4:old_bool)(5:trailing comma+comment)
+        pattern = r'([ \t]*)(' + re.escape(key) + r')([ \t]*=[ \t]*)(true|false)(,?[ \t]*(?:--.*)?)$'
+        repl_func = lambda m: f'{m.group(1)}{m.group(2)}{m.group(3)}{val_str}{m.group(5)}'
+    elif val_type == "number":
+        # Format number: write integers without .0, keep floats as-is
+        try:
+            num = float(value)
+            if num == int(num) and '.' not in str(value):
+                formatted = str(int(num))
+            else:
+                formatted = str(num)
+        except ValueError:
+            formatted = str(value)
+        # Groups: (1:indent)(2:key)(3: = )(4:trailing comma+comment)
+        pattern = r'([ \t]*)(' + re.escape(key) + r')([ \t]*=[ \t]*)-?\d+(?:\.\d+)?(,?[ \t]*(?:--.*)?)$'
+        repl_func = lambda m: f'{m.group(1)}{m.group(2)}{m.group(3)}{formatted}{m.group(4)}'
     else:
         return content
 
-    new_content, count = re.subn(pattern, replacement, content, count=1, flags=re.MULTILINE)
+    new_content, count = re.subn(pattern, repl_func, content, count=1, flags=re.MULTILINE)
     if count > 0:
         print(f"Successfully updated {key} to {value}")
     else:
@@ -85,16 +152,30 @@ def main():
     
     parser = argparse.ArgumentParser(
         description="Hyprland Configuration Manager (Dynamically parses variables.lua)",
-        epilog="Example: ./manager.py --ColorScheme dracula --AnimateStyle snappy --groupBar false"
+        epilog="Example: ./manager.py --AnimateStyle snappy --groupBar false"
     )
     
+    parser.add_argument("-l", "--list", action="store_true", help="List all variables and their possible states")
+    
     for key, info in variables.items():
-        if info["type"] == "int":
-            parser.add_argument(f"--{key}", type=int, help=info["help"])
-        else:
-            parser.add_argument(f"--{key}", type=str, help=info["help"])
+        # Use str for all types to preserve exact user input format
+        parser.add_argument(f"--{key}", type=str, help=info["help"])
 
     args, unknown = parser.parse_known_args()
+    
+    if args.list:
+        for key, info in variables.items():
+            if info["type"] == "bool":
+                type_str = "togglable bool"
+            elif info.get("enums"):
+                type_str = f"enum ({', '.join(info['enums'])})"
+            else:
+                type_str = info["type"]
+                
+            left_part = f"{key}: {type_str}"
+            val_part = f"[{info['val']}]"
+            print(f"{left_part:<50} {val_part:<15} - {info['category']} | {info['help']}")
+        sys.exit(0)
     
     if len(sys.argv) == 1:
         parser.print_help()
@@ -113,9 +194,10 @@ def main():
     if modified:
         write_file(content)
         import subprocess
-        sync_script = os.path.expanduser("~/.config/quickshell/sync_colors.py")
-        if os.path.exists(sync_script):
-            subprocess.run([sys.executable, sync_script])
+            
+        # Restart quickshell if GameMode was changed
+        if getattr(args, "GameMode", None) is not None:
+            subprocess.Popen("pkill -9 .quickshell-wra; qs", shell=True)
 
 if __name__ == "__main__":
     main()

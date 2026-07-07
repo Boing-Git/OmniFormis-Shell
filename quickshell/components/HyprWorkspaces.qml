@@ -12,6 +12,8 @@ Item {
     width: bg.width
     height: 40
 
+    property bool gameMode: false
+
     property var currentWorkspace: Hyprland.focusedWorkspace
     property int activeWsId: currentWorkspace ? currentWorkspace.id : 1
     property int currentPage: Math.floor(Math.max(0, activeWsId - 1) / 5)
@@ -56,18 +58,18 @@ Item {
     Rectangle {
         id: bg
         layer.enabled: true
-        layer.effect: MultiEffect { shadowEnabled: true; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
+        layer.effect: MultiEffect { shadowEnabled: !mainContainer.gameMode; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
         anchors.centerIn: parent
         color: Theme.primary
         radius: height / 2
         clip: true
         opacity: overlayVisible ? 1.0 : 0.0
         visible: opacity > 0
-        Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+        Behavior on opacity { enabled: !mainContainer.gameMode; NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
         width: overlayVisible ? workspaceLayout.implicitWidth + Vars.spacingLarge : 100
         height: 40
-        Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+        Behavior on width { enabled: !mainContainer.gameMode; NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
         RowLayout {
             id: workspaceLayout
@@ -86,6 +88,7 @@ Item {
                     implicitHeight: 32
 
                     Behavior on implicitWidth {
+                        enabled: !mainContainer.gameMode
                         NumberAnimation {
                             duration: 250
                             easing.type: Easing.BezierSpline
@@ -96,6 +99,7 @@ Item {
                     color: isFocused ? Theme.primary_container : (wsMouseArea.pressed ? Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.12) : (wsMouseArea.containsMouse ? Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.08) : "transparent"))
 
                     Behavior on color {
+                        enabled: !mainContainer.gameMode
                         ColorAnimation {
                             duration: 250
                             easing.type: Easing.BezierSpline

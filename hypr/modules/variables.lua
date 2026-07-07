@@ -3,117 +3,147 @@
 ----------------------------------------------------------------------------------------
 
 local vars = {
--------------------------------------------------------------------------------------------------------------------------------------
-----One thing to note that add the command for the app not the name, Sometimes the name of the app differs from the app command----
--------------------------------------------------------------------------------------------------------------------------------------
 
-    Term = "wezterm", -- Set the terminal emulator --
-    Browser = "zen-beta", -- Set the browser --
-    Editor = "antigravity", -- Set the code editor --
-    Files = "nautilus", -- Set the file explorer --
-    SysInfo = "btop", -- Set the system info app name/command (e.g., "btop" or "gnome-system-monitor") --
-
-    -- Select between these layouts for window management, These are non-case sensitive --
-    -- Scrolling
-    -- Dwindle
-    -- Master
-    -- Monocle
+    -- General
+    -- Set the browser ("zen-beta", "firefox", "chromium", "brave")
+    Browser = "zen-beta",
+    -- Set the terminal ("wezterm", "foot", "kitty", "alacritty")
+    Term = "wezterm",
+    -- Set the code editor ("code", "cursor", "zed", "nvim")
+    Editor = "code",
+    -- Set the file manager ("nautilus", "thunar", "dolphin", "nemo")
+    Files = "nautilus",
+    -- Set the system info app ("btop", "htop", "nvtop")
+    SysInfo = "btop",
+    -- Enable game mode (hides shell UI)
+    GameMode = false,
+    -- Select layout ("Scrolling", "Dwindle", "Master", "Monocle")
     Layout = "Scrolling",
 
----------------------
--- Enable vim keys --
----------------------
+    -- Input
+    -- Set keyboard layout
+    kb_layout = "us",
+    -- Set keyboard options
+    kb_options = "",
+    -- Set follow mouse mode
+    follow_mouse = 1,
+    -- Set mouse sensitivity
+    sensitivity = 0,
+    -- Enable touchpad natural scroll
+    touchpad_natural_scroll = false,
 
-    singleWindowGapsOut = 10, -- Modify this to or set this 0 for no gaps or add more gaps around the windows but this only works when there is only a single window --
+    -- Gestures
+    -- Set the number of gesture fingers
+    gesture_fingers = 3,
+    -- Set the gesture direction
+    gesture_direction = "vertical",
 
------------------------------
----Select animations style---
------------------------------
+    -- Enable vim keys for navigation
+    vimkeys = true,
 
-    -- Select Animation style and all the animations styles, These are non-case sensitive--
-    -- Expressive  -- Simple but elegant (Material 3 Defaults)
-    -- Springy     -- Simple springy motions
-    -- Jelly       -- Highly elastic and springy
-    -- FlyingCards -- Simple workspace motion but springy in window motion
-    -- Snappy      -- Very fast and responsive, quick pop-ins
-    -- Cinematic   -- Slow, majestic, and smooth for a dramatic feel
-    -- Fluid       -- Continuous, smooth, liquid-like symmetrical curves
-    -- Playful     -- Bouncy with subtle overshoots and anticipation
-    -- Elegant     -- Soft, long, smooth easing for a highly premium feel
-    -- Minimal     -- Extremely subtle utility animations with minimal sliding
-    -- Aggressive  -- Sharp, abrupt motions with aggressive curves
-    -- Elastic     -- Exaggerated elasticity with high bezier overshoots
-    -- Swift       -- Linear but highly accelerated, no wasted time
-    -- Relaxed     -- Slow, gradual, and completely unhurried
-    -- slipStream  -- Smooth, windy sliding animations
-    -- Standard    -- Standard, smooth Material-like animations
-    -- Fluent      -- Comprehensive fluent design animations
-    -- None        -- Disables all animations
-    AnimateStyle = "slipStream",
+    -- Modifiers
+    -- Set the Main modifier ("SUPER", "ALT", "SHIFT", "CTRL")
+    MM = "SUPER",
+    -- Set the Second modifier ("SHIFT", "ALT", "CTRL", "SUPER")
+    SM = "ALT",
+    -- Set the Third modifier ("ALT", "SHIFT", "CTRL", "SUPER")
+    TM = "SHIFT",
+    -- Set the Fourth modifier ("CTRL", "ALT", "SHIFT", "SUPER")
+    QM = "CTRL",
 
-    --Set true if you want group bars on groups--
+    -- App Launcher
+    -- Set the key to open launcher
+    QuickLauncherKey = "D",
+    -- Set the key to take a screenshot
+    QsScreenshotKey = "S",
+    -- Set the key to open wallpaper menu
+    QsWallpaperKey = "W",
+    -- Set the key to open color scheme menu
+    QsColorSchemeKey = "T",
+    -- Set the key to open control center
+    QsControlCenterKey = "C",
+    -- Set the key to open power menu
+    QsPowerMenuKey = "P",
+    -- Set the key to open overview
+    QsOverviewKey = "TAB",
+    -- Set the key to open emoji picker
+    QsEmojiPickerKey = "comma",
+    -- Set the key to open clipboard
+    QsClipboardKey = "V",
+
+    -- Decoration
+    -- Set the gap size between windows (inner)
+    gaps_in = 5,
+    -- Set the gap size between windows and screen edge (outer)
+    gaps_out = 10,
+    -- Set the border size
+    border_size = 2,
+    -- Set window rounding
+    rounding = 17,
+    -- Set rounding power (higher = sharper corners)
+    rounding_power = 20,
+    -- Set active window opacity
+    active_opacity = 1.0,
+    -- Set inactive window opacity
+    inactive_opacity = 0.9,
+    -- Set window opacity for window rules
+    windowOpacity = "0.9",
+    -- Set gap size for single window
+    singleWindowGapsOut = "10",
+
+    -- Shadows
+    -- Enable window shadows
+    shadow_enabled = true,
+    -- Set shadow range
+    shadow_range = 4,
+    -- Set shadow render power
+    shadow_render_power = 3,
+
+    -- Blur
+    -- Enable blur
+    blur_enabled = true,
+    -- Set blur size
+    blur_size = 3,
+    -- Set number of blur passes
+    blur_passes = 1,
+    -- Set blur vibrancy
+    blur_vibrancy = 0.1696,
+
+    -- Groupbar
+    -- Enable group bar
     groupBar = true,
 
-    --Set Wallpaper switch keys--
+    -- General
+    -- Enable resize on border
+    resize_on_border = false,
+    -- Enable screen tearing
+    allow_tearing = false,
 
-    -----------------------
-    ---- DECORATIONS   ----
-    -----------------------
-    gaps_in = 5, -- Gaps between windows
-    gaps_out = 10, -- Gaps between windows and monitor edges
-    border_size = 3, -- Size of the window borders
-    rounding = 35, -- Rounding of window corners
-    rounding_power = 6, -- Rounding power (how smooth the curve is)
-    active_opacity = 0.9, -- Opacity of the focused window
-    inactive_opacity = 0.7, -- Opacity of unfocused windows
-    shadow_enabled = true, -- Enable or disable drop shadows
-    shadow_range = 16, -- Size of the shadow
-    shadow_render_power = 1, -- How fast the shadow fades
-    blur_enabled = true, -- Enable or disable background blur
-    blur_size = 6, -- Size of the blur effect
-    blur_passes = 3, -- Number of blur passes
-    blur_vibrancy = 0.5, -- Increase saturation of blurred colors
+    -- Misc
+    -- Set force default wallpaper (0 to disable)
+    force_default_wallpaper = 0,
+    -- Enable disabling hyprland logo
+    disable_hyprland_logo = true,
+    -- Enable session lock restore
+    allow_session_lock_restore = true,
+    -- Set variable refresh rate (0 = off, 1 = on, 2 = fullscreen only)
+    vrr = 0,
+    -- Enable xwayland force zero scaling
+    xwayland_force_zero_scaling = true,
+    -- Enable xwayland nearest neighbor
+    xwayland_use_nearest_neighbor = true,
 
-    -----------------------
-    ---- GENERAL       ----
-    -----------------------
-    resize_on_border = true, -- Enable resizing windows by clicking/dragging borders
-    allow_tearing = true, -- Allow screen tearing (good for gaming, lowers latency)
+    -- Environment Variables
+    -- Set X cursor size
+    env_xcursor_size = 24,
+    -- Set Hypr cursor size
+    env_hyprcursor_size = 24,
+    -- Set Qt scale factor
+    env_qt_scale_factor = 1,
 
-    -----------------------
-    ---- INPUT         ----
-    -----------------------
-    kb_layout = "us", -- Keyboard layout (e.g., "us", "uk", "fr")
-    kb_options = "caps:escape", -- Keyboard options (e.g., swapping caps/esc)
-    follow_mouse = 1, -- Window focus follows mouse (0 = disabled, 1 = enabled, etc.)
-    sensitivity = 0, -- Mouse sensitivity (-1.0 to 1.0, 0 is unmodified)
-    touchpad_natural_scroll = false, -- Enable natural scrolling on touchpads
-    gesture_fingers = 3, -- Number of fingers for workspace swipe gesture
-    gesture_direction = "horizontal", -- Direction of the workspace swipe ("horizontal" or "vertical")
-
-    -----------------------
-    ---- MISCELLANEOUS ----
-    -----------------------
-    force_default_wallpaper = -1, -- Force the default anime wallpaper (-1 = auto, 0 = disable)
-    disable_hyprland_logo = false, -- Disable the Hyprland logo on the background
-    allow_session_lock_restore = 1, -- Allow session lock to be restored
-    vrr = 1, -- Variable Refresh Rate (0 = off, 1 = on, 2 = fullscreen only)
-    xwayland_force_zero_scaling = true, -- Force XWayland apps to 1x scale (prevents blurriness)
-    xwayland_use_nearest_neighbor = false, -- Use nearest neighbor filtering for XWayland
-
-    -----------------------
-    ---- ENVIRONMENT   ----
-    -----------------------
-    env_xcursor_size = "24", -- XCursor size
-    env_hyprcursor_size = "24", -- Hyprcursor size
-    env_qt_scale_factor = "1" -- QT scale factor
+    -- Animation Style
+    -- Select animation style ("expressive", "spring", "jelly", "flyingcards", "snappy", "cinematic", "minimal", "fluid", "aggressive", "elegant", "playful", "elastic", "swift", "relaxed", "slipstream", "standard", "fluent", "none")
+    AnimateStyle = "expressive",
 }
-
-----------------------------------------------------------------------------------------
--- Special thanks to these people/projects for all of these animation styles:
--- https://github.com/ArtemSmaznov/dotfiles-hyprland/tree/master
--- https://github.com/notcandy001/Moonveil/blob/master/dots/.config/hypr/modules/animations.lua
--- https://github.com/caelestia-dots/shell
-----------------------------------------------------------------------------------------
 
 return vars

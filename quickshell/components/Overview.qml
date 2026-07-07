@@ -13,7 +13,19 @@ import Quickshell.Io
 Item {
     id: overviewContainer
     property bool visibleState: false
+    property bool gameMode: false
     signal closeRequested
+
+    Process {
+        id: gameModeChecker
+        command: ["bash", "-c", "grep -qi 'GameMode[ \t]*=[ \t]*true' ~/.config/hypr/modules/variables.lua && echo 'true' || echo 'false'"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                overviewContainer.gameMode = (this.text.trim() === 'true');
+            }
+        }
+    }
 
     function resolveIcon(appId) {
         if (!appId) return "application-x-executable";
@@ -100,7 +112,7 @@ Item {
                 id: panelBackground
                 layer.enabled: true
                 layer.effect: MultiEffect {
-                    shadowEnabled: true
+                    shadowEnabled: !overviewContainer.gameMode
                     shadowBlur: 1.0
                     shadowColor: Qt.rgba(0, 0, 0, 0.25)
                     shadowVerticalOffset: 4
@@ -109,7 +121,7 @@ Item {
 
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.topMargin: 5
+                anchors.topMargin: overviewContainer.gameMode ? 0 : 5
 
                 property real targetWidth: workspaceGrid.implicitWidth + overviewPanel.bgPadding * 2
                 property real targetHeight: workspaceGrid.implicitHeight + overviewPanel.bgPadding * 2
@@ -117,10 +129,11 @@ Item {
                 width: overviewContainer.visibleState ? targetWidth : 100
                 height: overviewContainer.visibleState ? targetHeight : 40
 
-                radius: overviewContainer.visibleState ? Vars.radiusExtraLarge : height / 2
+                radius: overviewContainer.gameMode ? 0 : (overviewContainer.visibleState ? Vars.radiusExtraLarge : height / 2)
                 color: Theme.primary
 
                 Behavior on radius {
+                    enabled: !overviewContainer.gameMode
                     NumberAnimation {
                         duration: 350
                         easing.type: Easing.BezierSpline
@@ -128,6 +141,7 @@ Item {
                     }
                 }
                 Behavior on width {
+                    enabled: !overviewContainer.gameMode
                     NumberAnimation {
                         id: wAnim
                         duration: 350
@@ -136,6 +150,7 @@ Item {
                     }
                 }
                 Behavior on height {
+                    enabled: !overviewContainer.gameMode
                     NumberAnimation {
                         id: hAnim
                         duration: 350
@@ -144,6 +159,7 @@ Item {
                     }
                 }
                 Behavior on color {
+                    enabled: !overviewContainer.gameMode
                     ColorAnimation {
                         duration: 350
                         easing.type: Easing.BezierSpline
@@ -160,6 +176,7 @@ Item {
                     opacity: overviewContainer.visibleState ? 1.0 : 0.0
                     visible: opacity > 0
                     Behavior on opacity {
+                        enabled: !overviewContainer.gameMode
                         NumberAnimation {
                             duration: 250
                             easing.type: Easing.BezierSpline
@@ -201,6 +218,7 @@ Item {
                                     border.color: (wsContainer.isFocused || wsContainer.hoveredWhileDragging) ? Theme.on_primary_container : "transparent"
 
                                     Behavior on color {
+                                        enabled: !overviewContainer.gameMode
                                         ColorAnimation {
                                             duration: 200
                                             easing.type: Easing.BezierSpline
@@ -208,6 +226,7 @@ Item {
                                         }
                                     }
                                     Behavior on border.color {
+                                        enabled: !overviewContainer.gameMode
                                         ColorAnimation {
                                             duration: 200
                                             easing.type: Easing.BezierSpline
@@ -528,6 +547,7 @@ Item {
                         visible: activeWsId >= 1 && activeWsId <= overviewPanel.totalWorkspaces
 
                         Behavior on x {
+                            enabled: !overviewContainer.gameMode
                             NumberAnimation {
                                 duration: 200
                                 easing.type: Easing.BezierSpline
@@ -535,6 +555,7 @@ Item {
                             }
                         }
                         Behavior on y {
+                            enabled: !overviewContainer.gameMode
                             NumberAnimation {
                                 duration: 200
                                 easing.type: Easing.BezierSpline

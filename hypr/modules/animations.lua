@@ -32,3 +32,50 @@ require("modules.animations." .. module_name)
 animations = {
     enabled = true,
 }
+
+-- Layer Animation Compatibility
+local layer_styles = {
+    jelly = "slide",
+    flyingcards = "slide",
+    relaxed = "fade",
+    expressive = "fade",
+    playful = "fade",
+    elegant = "fade",
+    minimal = "fade",
+    spring = "fade",
+    springy = "fade",
+    snappy = "fade",
+    swift = "fade",
+    cinematic = "fade",
+    fluent = "popin 75%",
+    fluid = "fade",
+    elastic = "fade",
+    standard = "slide",
+    aggressive = "fade",
+    wind = "slide",
+    slipstream = "slide",
+    none = "fade"
+}
+
+local current_layer_style = layer_styles[style_lower] or "fade"
+
+local animated_layers = {
+    "rofi", 
+    "waybar", 
+    "mako", 
+    "dunst", 
+    "swaync-control-center", 
+    "swaync-notification-window", 
+    "org.quickshell", 
+    "gtk-layer-shell",
+    "anyrun"
+}
+
+local layer_rules = {}
+for _, layer in ipairs(animated_layers) do
+    table.insert(layer_rules, "animation " .. current_layer_style .. ", " .. layer)
+end
+
+hl.config({
+    layerrule = layer_rules
+})

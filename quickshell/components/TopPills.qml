@@ -2,6 +2,7 @@ import QtQuick
 import ".."
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import "../Variables/variables.js" as Vars
 
 PanelWindow {
@@ -19,6 +20,19 @@ PanelWindow {
 
     signal popupOpened
 
+    property bool gameMode: false
+
+    Process {
+        id: gameModeChecker
+        command: ["bash", "-c", "grep -qi 'GameMode[ \t]*=[ \t]*true' ~/.config/hypr/modules/variables.lua && echo 'true' || echo 'false'"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                topWindow.gameMode = (this.text.trim() === 'true');
+            }
+        }
+    }
+
     function closeAll() {
         launcherItem.expanded = false;
         controlCenterItem.expanded = false;
@@ -27,6 +41,7 @@ PanelWindow {
         powerMenuItem.expanded = false;
         emojiPickerItem.expanded = false;
         notificationPopupItem.expanded = false;
+        settingsAppItem.expanded = false;
     }
 
     // 1. The Mask Region Array
@@ -57,6 +72,9 @@ PanelWindow {
         }
         Region {
             item: emojiPickerItem.panelMask
+        }
+        Region {
+            item: settingsAppItem.panelMask
         }
     }
 
@@ -94,11 +112,15 @@ PanelWindow {
 
     ClockPill {
         id: clockPill
+        gameMode: topWindow.gameMode
         anchors.top: parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.topMargin: 5
-        opacity: notificationPopupItem.expanded ? 0.0 : 1.0
+        anchors.horizontalCenter: topWindow.gameMode ? undefined : parent.horizontalCenter
+        anchors.left: topWindow.gameMode ? parent.left : undefined
+        anchors.right: topWindow.gameMode ? parent.right : undefined
+        anchors.topMargin: topWindow.gameMode ? 0 : 5
+        opacity: (notificationPopupItem.expanded && !topWindow.gameMode) ? 0.0 : 1.0
         Behavior on opacity {
+            enabled: !topWindow.gameMode
             NumberAnimation {
                 duration: 150
             }
@@ -119,6 +141,7 @@ PanelWindow {
 
     HyprWorkspaces {
         id: workspacesItem
+        gameMode: topWindow.gameMode
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 5
@@ -126,6 +149,7 @@ PanelWindow {
 
     Launcher {
         id: launcherItem
+        gameMode: topWindow.gameMode
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 5
@@ -141,6 +165,7 @@ PanelWindow {
                 colorSchemeSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
     }
@@ -158,6 +183,7 @@ PanelWindow {
                 colorSchemeSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
     }
@@ -172,6 +198,7 @@ PanelWindow {
                 colorSchemeSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
     }
@@ -186,6 +213,7 @@ PanelWindow {
                 colorSchemeSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
     }
@@ -200,6 +228,7 @@ PanelWindow {
                 wallpaperSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
     }
@@ -214,6 +243,7 @@ PanelWindow {
                 wallpaperSwitcherItem.expanded = false;
                 colorSchemeSwitcherItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
     }
@@ -231,6 +261,7 @@ PanelWindow {
                 colorSchemeSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
     }
@@ -248,12 +279,29 @@ PanelWindow {
                 colorSchemeSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
+            }
+        }
+    }
+
+    function toggleSettings() {
+        if (!polkitItem.expanded) {
+            settingsAppItem.expanded = !settingsAppItem.expanded;
+            if (settingsAppItem.expanded) {
+                topWindow.popupOpened();
+                launcherItem.expanded = false;
+                controlCenterItem.expanded = false;
+                wallpaperSwitcherItem.expanded = false;
+                colorSchemeSwitcherItem.expanded = false;
+                powerMenuItem.expanded = false;
+                emojiPickerItem.expanded = false;
             }
         }
     }
 
     PowerMenu {
         id: powerMenuItem
+        gameMode: topWindow.gameMode
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 5
@@ -269,12 +317,14 @@ PanelWindow {
                 wallpaperSwitcherItem.expanded = false;
                 colorSchemeSwitcherItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
     }
 
     PolkitDialog {
         id: polkitItem
+        gameMode: topWindow.gameMode
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 5
@@ -291,12 +341,14 @@ PanelWindow {
                 colorSchemeSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
     }
 
     NotificationPopup {
         id: notificationPopupItem
+        gameMode: topWindow.gameMode
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 5
@@ -313,19 +365,21 @@ PanelWindow {
                 colorSchemeSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
     }
 
     ControlCenter {
         id: controlCenterItem
+        gameMode: topWindow.gameMode
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 5
         width: 100
         height: 40
         focusWindow: topWindow
-        forceHidePill: launcherItem.expanded || volumeOsdItem.isVisible || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded
+        forceHidePill: launcherItem.expanded || volumeOsdItem.isVisible || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded
 
         onExpandedChanged: {
             if (expanded) {
@@ -335,11 +389,16 @@ PanelWindow {
                 colorSchemeSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
                 emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
         
         onOpenColorSchemeRequested: {
             toggleColorScheme();
+        }
+        
+        onOpenSettingsRequested: {
+            toggleSettings();
         }
     }
 
@@ -348,16 +407,17 @@ PanelWindow {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 5
-        preventShow: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || launcherItem.panel.width > 105 || controlCenterItem.panel.width > 105 || powerMenuItem.panel.width > 105 || polkitItem.panel.width > 105 || notificationPopupItem.panel.width > 105 || emojiPickerItem.panel.width > 105 || wallpaperSwitcherItem.panel.width > 105 || colorSchemeSwitcherItem.panel.width > 105
+        preventShow: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || launcherItem.panel.width > 105 || controlCenterItem.panel.width > 105 || powerMenuItem.panel.width > 105 || polkitItem.panel.width > 105 || notificationPopupItem.panel.width > 105 || emojiPickerItem.panel.width > 105 || wallpaperSwitcherItem.panel.width > 105 || colorSchemeSwitcherItem.panel.width > 105 || settingsAppItem.panel.width > 105
     }
 
     WallpaperSwitcher {
         id: wallpaperSwitcherItem
+        gameMode: topWindow.gameMode
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 5
         focusWindow: topWindow
-        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || volumeOsdItem.isVisible
+        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || volumeOsdItem.isVisible
 
         onExpandedChanged: {
             if (expanded) {
@@ -375,6 +435,7 @@ PanelWindow {
 
     EmojiPicker {
         id: emojiPickerItem
+        gameMode: topWindow.gameMode
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 5
@@ -390,17 +451,19 @@ PanelWindow {
                 wallpaperSwitcherItem.expanded = false;
                 colorSchemeSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
+                settingsAppItem.expanded = false;
             }
         }
     }
 
     ColorSchemeSwitcher {
         id: colorSchemeSwitcherItem
+        gameMode: topWindow.gameMode
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.topMargin: 5
         focusWindow: topWindow
-        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || volumeOsdItem.isVisible
+        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || volumeOsdItem.isVisible
 
         onExpandedChanged: {
             if (expanded) {
@@ -408,6 +471,31 @@ PanelWindow {
                 launcherItem.expanded = false;
                 controlCenterItem.expanded = false;
                 wallpaperSwitcherItem.expanded = false;
+                powerMenuItem.expanded = false;
+                emojiPickerItem.expanded = false;
+                settingsAppItem.expanded = false;
+            }
+        }
+
+        onCloseRequested: expanded = false
+    }
+
+    SettingsApp {
+        id: settingsAppItem
+        gameMode: topWindow.gameMode
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.topMargin: 5
+        focusWindow: topWindow
+        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || colorSchemeSwitcherItem.expanded || volumeOsdItem.isVisible
+
+        onExpandedChanged: {
+            if (expanded) {
+                topWindow.popupOpened();
+                launcherItem.expanded = false;
+                controlCenterItem.expanded = false;
+                wallpaperSwitcherItem.expanded = false;
+                colorSchemeSwitcherItem.expanded = false;
                 powerMenuItem.expanded = false;
                 emojiPickerItem.expanded = false;
             }

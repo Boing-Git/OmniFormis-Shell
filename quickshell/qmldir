@@ -12,6 +12,7 @@ VolumeOsd 1.0 components/VolumeOsd.qml
 WallpaperSwitcher 1.0 components/WallpaperSwitcher.qml
 ColorSchemeSwitcher 1.0 components/ColorSchemeSwitcher.qml
 EmojiPicker 1.0 components/EmojiPicker.qml
+SettingsApp 1.0 components/SettingsApp.qml
 
 NotificationCard 1.0 components/NotificationCard.qml
 NotificationPopup 1.0 components/NotificationPopup.qml

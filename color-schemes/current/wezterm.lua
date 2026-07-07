@@ -1,1 +1,1 @@
-/home/boing/.config/color-schemes/material-you/dark/wezterm.lua
+/home/boing/.config/color-schemes/material-you/light/wezterm.lua

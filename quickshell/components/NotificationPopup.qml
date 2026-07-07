@@ -14,6 +14,7 @@ Item {
 
     property bool expanded: false
     property var focusWindow: null
+    property bool gameMode: false
 
     // Expose panel for TopPills Wayland mask tracking
     property alias panel: panel
@@ -55,7 +56,7 @@ Item {
     Rectangle {
         id: panel
         layer.enabled: true
-        layer.effect: MultiEffect { shadowEnabled: true; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
+        layer.effect: MultiEffect { shadowEnabled: !root.gameMode; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
 
@@ -63,14 +64,14 @@ Item {
         height: root.expanded ? contentColumn.implicitHeight + Vars.spacingMedium * 2 + 8 : 40
 
         color: Theme.primary
-        radius: root.expanded ? Vars.radiusLarge : height / 2
+        radius: root.gameMode ? 0 : (root.expanded ? Vars.radiusLarge : height / 2)
 
         opacity: root.expanded || panel.width > 105 ? 1.0 : 0.0
         visible: opacity > 0
 
-        Behavior on radius { NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
-        Behavior on width { NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
-        Behavior on height { NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
+        Behavior on radius { enabled: !root.gameMode; NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
+        Behavior on width { enabled: !root.gameMode; NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
+        Behavior on height { enabled: !root.gameMode; NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
 
         // EXPANDED UI
         Item {

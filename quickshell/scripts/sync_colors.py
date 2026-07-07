@@ -7,8 +7,9 @@ THEME_QML = os.path.expanduser("~/.config/color-schemes/currect/theme.qml")
 COLORSCHEMES_DIR = os.path.expanduser("~/.config/hypr/scheme")
 
 def main():
-    # 1. Read variables.lua to find the active ColorScheme
+    # 1. Read variables.lua to find the active ColorScheme and GameMode
     color_scheme = "material-you" # Default fallback
+    game_mode = False
     try:
         with open(VARS_FILE, "r") as f:
             content = f.read()
@@ -16,6 +17,10 @@ def main():
             match = re.search(r'ColorScheme\s*=\s*["\']([^"\']+)["\']', content)
             if match:
                 color_scheme = match.group(1)
+            # Match GameMode = true/false
+            match_gm = re.search(r'GameMode\s*=\s*(true|false)', content, re.IGNORECASE)
+            if match_gm:
+                game_mode = (match_gm.group(1).lower() == 'true')
     except Exception as e:
         print(f"Error reading {VARS_FILE}: {e}")
 
@@ -51,6 +56,7 @@ def main():
         # Ensure the key is valid (some json files might have metadata like 'source_color' that we can just include)
         qml_content += f'    property color {key}: "{value}"\n'
         
+    qml_content += f'    property bool gameMode: {"true" if game_mode else "false"}\n'
     qml_content += "}\n"
 
     try:

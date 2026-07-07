@@ -2,22 +2,21 @@
 --- These variables define keybinds and modifiers to be used in the hypr config --------
 ----------------------------------------------------------------------------------------
 
+local vars = require("modules.variables")
+
 local kvars = {
-    MM = "SUPER", -- Set the Main modifier --
-    SM = "ALT", -- Set the Second modifier --
-    TM = "SHIFT", -- Set the Thirth modifier --
-    QM = "CTRL", -- Set the Fourth modifier --
+    MM = vars.MM or "SUPER", -- Set the Main modifier --
+    SM = vars.SM or "ALT", -- Set the Second modifier --
+    TM = vars.TM or "SHIFT", -- Set the Thirth modifier --
+    QM = vars.QM or "CTRL", -- Set the Fourth modifier --
 
     TermKey = "T", -- Set the key to open Terminal --
     BrowserKey = "W", -- Set the key to open browser --
     EditorKey = "X", -- Set the key to open code editor -
     FilesKey = "E", -- Set the key to open file explorer --
-    QuickLauncherKey = "D", -- Set the key to open launcher --
+    QuickLauncherKey = vars.QuickLauncherKey or "D", -- Set the key to open launcher --
 
-    vimkeys = true, -- Enable vim keys for navigation --
-
-    --Set Wallpaper switch keys--
-    WallSwitch = "W",
+    vimkeys = vars.vimkeys ~= nil and vars.vimkeys or true, -- Enable vim keys for navigation --
 
     -- Window Actions --
     CloseKey = "Q", -- Set the key to close active window --
@@ -41,14 +40,14 @@ local kvars = {
     ScreenshotKey = "S", -- Set the key to take a screenshot --
 
     -- Quickshell Binds --
-    QsScreenshotKey = "S", -- Set the key to open Quickshell screenshot --
-    QsWallpaperKey = "W", -- Set the key to open Quickshell wallpaper menu --
-    QsColorSchemeKey = "T", -- Set the key to open Quickshell color scheme menu --
-    QsControlCenterKey = "C", -- Set the key to open Quickshell control center --
-    QsPowerMenuKey = "P", -- Set the key to open Quickshell power menu --
-    QsOverviewKey = "TAB", -- Set the key to open Quickshell overview --
-    QsEmojiPickerKey = "comma", -- Set the key to open Quickshell emoji picker --
-    QsClipboardKey = "V", -- Set the key to open Quickshell clipboard --
+    QsScreenshotKey = vars.QsScreenshotKey or "S", -- Set the key to open Quickshell screenshot --
+    QsWallpaperKey = vars.QsWallpaperKey or "W", -- Set the key to open Quickshell wallpaper menu --
+    QsColorSchemeKey = vars.QsColorSchemeKey or "T", -- Set the key to open Quickshell color scheme menu --
+    QsControlCenterKey = vars.QsControlCenterKey or "C", -- Set the key to open Quickshell control center --
+    QsPowerMenuKey = vars.QsPowerMenuKey or "P", -- Set the key to open Quickshell power menu --
+    QsOverviewKey = vars.QsOverviewKey or "TAB", -- Set the key to open Quickshell overview --
+    QsEmojiPickerKey = vars.QsEmojiPickerKey or "comma", -- Set the key to open Quickshell emoji picker --
+    QsClipboardKey = vars.QsClipboardKey or "V", -- Set the key to open Quickshell clipboard --
 
     -- Media / System Controls --
     ShellRestartKey = "R", -- Set the key to restart the shell --

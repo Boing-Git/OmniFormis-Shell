@@ -1,1 +1,1 @@
-/home/boing/.config/color-schemes/material-you/dark/quickTheme.qml
+/home/boing/.config/color-schemes/material-you/light/quickTheme.qml

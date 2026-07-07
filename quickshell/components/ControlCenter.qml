@@ -22,6 +22,7 @@ Item {
     property bool expanded: false
     property var focusWindow: null
     property bool forceHidePill: false
+    property bool gameMode: false
 
 
     // Navigation state: "" (Main Dashboard), "wifi" (Wi-Fi Settings), "bluetooth" (Bluetooth Settings)
@@ -31,6 +32,7 @@ Item {
     signal closeRequested()
     signal popupOpened()
     signal openColorSchemeRequested()
+    signal openSettingsRequested()
     
     // Expose the visual panel for mask tracking in TopPills
     property alias panel: panel
@@ -111,7 +113,7 @@ Item {
     Rectangle {
         id: panel
         layer.enabled: true
-        layer.effect: MultiEffect { shadowEnabled: true; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
+        layer.effect: MultiEffect { shadowEnabled: !root.gameMode; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         
@@ -119,15 +121,15 @@ Item {
         height: root.expanded ? 660 : 40
         
         color: Theme.primary
-        radius: root.expanded ? Vars.radiusExtraLarge : height / 2
+        radius: root.gameMode ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
         // clip: true removed to allow shadow to render
         
         opacity: root.expanded || panel.width > 105 ? 1.0 : 0.0
         visible: opacity > 0
 
-        Behavior on radius { NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
-        Behavior on width { NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
-        Behavior on height { NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
+        Behavior on radius { enabled: !root.gameMode; NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
+        Behavior on width { enabled: !root.gameMode; NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
+        Behavior on height { enabled: !root.gameMode; NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
 
 
 
@@ -141,7 +143,7 @@ Item {
         opacity: root.expanded ? 1.0 : 0.0
         visible: opacity > 0
         clip: true
-        Behavior on opacity { SequentialAnimation { PauseAnimation { duration: root.expanded ? 200 : 0 } NumberAnimation { duration: root.expanded ? 200 : 100; easing.type: Easing.BezierSpline; easing.bezierCurve: root.expanded ? Vars.m3StandardDecelerate : Vars.m3StandardAccelerate } } }
+        Behavior on opacity { enabled: !root.gameMode; SequentialAnimation { PauseAnimation { duration: root.expanded ? 200 : 0 } NumberAnimation { duration: root.expanded ? 200 : 100; easing.type: Easing.BezierSpline; easing.bezierCurve: root.expanded ? Vars.m3StandardDecelerate : Vars.m3StandardAccelerate } } }
 
         // ------------------------------------------
         // VIEW 1: MAIN DASHBOARD MENU
@@ -182,6 +184,19 @@ Item {
                     Behavior on color { ColorAnimation { duration: 150; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3Standard } }
                 }
                 Text { text: "Control Center"; font.family: Vars.fontFamily; font.pixelSize: 20; font.weight: 600; color: Theme.on_primary }
+                
+                Item { Layout.fillWidth: true }
+                
+                Rectangle {
+                    width: 40; height: 40; radius: Vars.radiusMedium
+                    color: settingsHover.pressed ? Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.12) : (settingsHover.containsMouse ? Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.08) : "transparent")
+                    Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Theme.on_primary; text: "settings" }
+                    MouseArea { 
+                        id: settingsHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; 
+                        onClicked: { root.expanded = false; root.openSettingsRequested() } 
+                    }
+                    Behavior on color { ColorAnimation { duration: 150; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3Standard } }
+                }
             }
 
             // Quick Settings 4x2 Grid
