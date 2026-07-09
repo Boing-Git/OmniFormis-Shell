@@ -1,9 +1,10 @@
 <div align="center">
 
-# ☄️ Boing's Arch Linux Dotfiles
+# ☄️ Boing's Unified Dotfiles
 
-A deeply modular, dynamic, and hardware-accelerated desktop environment built on **Arch Linux**, **Hyprland**, and **Quickshell**.
+A deeply modular, dynamic, and hardware-accelerated desktop environment built for **NixOS** and **Arch Linux**, leveraging **Hyprland** and **Quickshell**.
 
+![NixOS](https://img.shields.io/badge/OS-NixOS-5277C3?style=for-the-badge&logo=nixos&logoColor=white)
 ![Arch Linux](https://img.shields.io/badge/OS-Arch_Linux-1793D1?style=for-the-badge&logo=arch-linux&logoColor=white)
 ![Hyprland](https://img.shields.io/badge/WM-Hyprland-00A489?style=for-the-badge&logo=hyprland&logoColor=white)
 ![Quickshell](https://img.shields.io/badge/UI-Quickshell-8B5CF6?style=for-the-badge&logo=qt&logoColor=white)
@@ -14,7 +15,7 @@ A deeply modular, dynamic, and hardware-accelerated desktop environment built on
 
 ## ✨ Overview
 
-Welcome to my personal dotfiles! After migrating from NixOS, this repository represents my fully customized, aesthetic, and automated **Arch Linux** setup. 
+Welcome to my personal dotfiles! This repository represents my fully customized, aesthetic, and automated setup, featuring a unified environment that seamlessly supports both **NixOS** and **Arch Linux**. 
 
 The entire system is glued together by a unified theming engine based on **Material 3 Expressive**, leveraging Pywal/Matugen methodologies to dynamically theme the OS based on the current wallpaper and color scheme.
 
@@ -29,6 +30,17 @@ The entire system is glued together by a unified theming engine based on **Mater
 - **Audio Visualizer**: [Cava](https://github.com/karlstav/cava)
 - **System Monitoring**: Btop, Htop, Nvtop
 - **Theming & Color**: [Matugen](https://github.com/InioX/matugen) + Custom Python/Bash Scripts (`color-schemes/set-theme.sh`)
+
+## 🛠️ Installation
+
+This repository features a unified installer that automatically detects your operating system and executes the appropriate setup logic for both NixOS and Arch Linux.
+
+```bash
+git clone https://github.com/Boing-Git/My-Dotfiles ~/Dotfiles
+cd ~/Dotfiles
+chmod +x install.sh
+./install.sh
+```
 
 ## 🎨 Architecture & Modules
 
