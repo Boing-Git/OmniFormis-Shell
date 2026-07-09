@@ -95,9 +95,9 @@ local vars = {
     -- Enable window shadows
     shadow_enabled = true,
     -- Set shadow range
-    shadow_range = 4,
+    shadow_range = 40,
     -- Set shadow render power
-    shadow_render_power = 3,
+    shadow_render_power = 1,
 
     -- Blur
     -- Enable blur

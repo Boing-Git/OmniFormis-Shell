@@ -772,7 +772,16 @@ Item {
                                                     if (mouse.button === Qt.RightButton) {
                                                         wifiDelegate.showForget = true;
                                                     } else {
-                                                        if (modelData.connected) modelData.disconnect(); else modelData.connect();
+                                                        if (modelData.connected) {
+                                                            modelData.disconnect();
+                                                        } else {
+                                                            if (modelData.saved || modelData.known || modelData.security === "none" || modelData.security === 0) {
+                                                                modelData.connect();
+                                                            } else {
+                                                                wifiPasswordPopup.targetNetwork = modelData;
+                                                                wifiPasswordPopup.open();
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
@@ -826,15 +835,24 @@ Item {
                                         }
                                         
                                         activeFocusOnTab: true
-                                        Keys.onSpacePressed: if(wifiDevice && typeof wifiDevice.scan === 'function') wifiDevice.scan()
-                                        Keys.onReturnPressed: if(wifiDevice && typeof wifiDevice.scan === 'function') wifiDevice.scan()
+                                        Keys.onSpacePressed: { if(wifiDevice) wifiDevice.scannerEnabled = !wifiDevice.scannerEnabled }
+                                        Keys.onReturnPressed: { if(wifiDevice) wifiDevice.scannerEnabled = !wifiDevice.scannerEnabled }
                                         
                                         RowLayout {
                                             anchors.fill: parent; anchors.leftMargin: 20; anchors.rightMargin: 20; spacing: 16
-                                            Text { text: "\ue863"; font.family: "Material Symbols Outlined"; font.pixelSize: 24; color: Theme.on_surface }
-                                            Text { text: "Scan for Networks"; font.family: Vars.fontFamily; font.pixelSize: 16; font.weight: 500; color: Theme.on_surface; Layout.fillWidth: true }
+                                            Text { 
+                                                id: wifiScanIcon
+                                                text: "\ue863"; font.family: "Material Symbols Outlined"; font.pixelSize: 24; 
+                                                color: wifiDevice && wifiDevice.scannerEnabled ? Theme.primary : Theme.on_surface 
+                                                RotationAnimation {
+                                                    target: wifiScanIcon; property: "rotation"
+                                                    loops: Animation.Infinite; from: 0; to: 360; duration: 2000; running: wifiDevice && wifiDevice.scannerEnabled
+                                                    onRunningChanged: if (!running) wifiScanIcon.rotation = 0
+                                                }
+                                            }
+                                            Text { text: (wifiDevice && wifiDevice.scannerEnabled) ? "Scanning..." : "Scan for Networks"; font.family: Vars.fontFamily; font.pixelSize: 16; font.weight: 500; color: Theme.on_surface; Layout.fillWidth: true }
                                         }
-                                        MouseArea { id: scanMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { scanCard.forceActiveFocus(); if(wifiDevice && typeof wifiDevice.scan === 'function') wifiDevice.scan() } }
+                                        MouseArea { id: scanMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { scanCard.forceActiveFocus(); if(wifiDevice) wifiDevice.scannerEnabled = !wifiDevice.scannerEnabled; } }
                                     }
                                 }
                             }
@@ -1240,8 +1258,7 @@ Item {
                                                     cursorShape: Qt.PointingHandCursor
                                                     onClicked: {
                                                         if (adapter) {
-                                                            if (adapter.discovering) adapter.stopDiscovery();
-                                                            else adapter.startDiscovery();
+                                                            adapter.discovering = !adapter.discovering;
                                                         }
                                                     }
                                                 }
@@ -1442,6 +1459,152 @@ Item {
             if (term === "" || Vars.fuzzyMatch(term, v.key) || Vars.fuzzyMatch(term, v.help) || Vars.fuzzyMatch(term, v.category)) {
                 settingsModel.append(v);
             }
+        }
+    }
+
+    Popup {
+        id: wifiPasswordPopup
+        x: panel.x + (panel.width - width) / 2
+        y: panel.y + (panel.height - height) / 2
+        width: Math.min(360, panel.width - 40)
+        modal: true
+        dim: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        
+        property var targetNetwork: null
+        
+        padding: 24
+        
+        Overlay.modal: Rectangle {
+            color: Qt.rgba(0, 0, 0, 0.4)
+            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
+        }
+        
+        background: Rectangle {
+            color: Theme.surface_container_high
+            radius: 28 
+            border.color: Theme.outline_variant
+            border.width: 1
+            layer.enabled: true
+            layer.effect: MultiEffect { shadowEnabled: true; shadowBlur: 1.5; shadowColor: Qt.rgba(0,0,0,0.3); shadowVerticalOffset: 6 }
+        }
+        
+        contentItem: ColumnLayout {
+            spacing: 24
+            
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 16
+                
+                Text {
+                    text: "Connect to " + (wifiPasswordPopup.targetNetwork ? wifiPasswordPopup.targetNetwork.name : "Network")
+                    font.family: Vars.fontFamily
+                    font.pixelSize: 24
+                    font.weight: 400
+                    color: Theme.on_surface
+                    Layout.fillWidth: true
+                    wrapMode: Text.Wrap
+                }
+                
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 56
+                    color: wifiPwdInput.activeFocus ? Qt.tint(Theme.surface_container_highest, Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.08)) : Theme.surface_container_highest
+                    radius: 16
+                    border.color: wifiPwdInput.activeFocus ? Theme.primary : Theme.outline
+                    border.width: wifiPwdInput.activeFocus ? 2 : 1
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 8
+                        spacing: 12
+                        
+                        Text { text: "\ue897"; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: wifiPwdInput.activeFocus ? Theme.primary : Theme.on_surface_variant }
+                        
+                        TextInput {
+                            id: wifiPwdInput
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            verticalAlignment: Text.AlignVCenter
+                            font.family: Vars.fontFamily
+                            font.pixelSize: 16
+                            color: Theme.on_surface
+                            echoMode: pwdToggle.showPwd ? TextInput.Normal : TextInput.Password
+                            selectByMouse: true
+                            clip: true
+                            Keys.onReturnPressed: wifiPasswordPopup.submit()
+                        }
+                        
+                        Rectangle {
+                            id: pwdToggle
+                            property bool showPwd: false
+                            width: 36; height: 36; radius: 18
+                            color: pwdToggleHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent"
+                            Text {
+                                anchors.centerIn: parent
+                                font.family: "Material Symbols Outlined"
+                                font.pixelSize: 20
+                                color: Theme.on_surface_variant
+                                text: pwdToggle.showPwd ? "\ue8f4" : "\ue8f5"
+                            }
+                            MouseArea {
+                                id: pwdToggleHover
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: pwdToggle.showPwd = !pwdToggle.showPwd
+                            }
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+                    }
+                }
+            }
+            
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignRight
+                spacing: 8
+                
+                Rectangle {
+                    implicitWidth: cancelBtnTxt.implicitWidth + 32
+                    implicitHeight: 40
+                    radius: 20
+                    color: cancelHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent"
+                    Text { id: cancelBtnTxt; anchors.centerIn: parent; text: "Cancel"; color: Theme.primary; font.family: Vars.fontFamily; font.pixelSize: 14; font.weight: 500 }
+                    MouseArea { id: cancelHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: wifiPasswordPopup.close() }
+                    Behavior on color { ColorAnimation { duration: Vars.animationDuration } }
+                }
+                
+                Rectangle {
+                    implicitWidth: connectBtnTxt.implicitWidth + 32
+                    implicitHeight: 40
+                    radius: 20
+                    color: connectHover.containsMouse ? Qt.tint(Theme.primary, Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.08)) : Theme.primary
+                    Text { id: connectBtnTxt; anchors.centerIn: parent; text: "Connect"; color: Theme.on_primary; font.family: Vars.fontFamily; font.pixelSize: 14; font.weight: 500 }
+                    MouseArea { id: connectHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: wifiPasswordPopup.submit() }
+                    Behavior on color { ColorAnimation { duration: Vars.animationDuration } }
+                }
+            }
+        }
+        
+        onOpened: {
+            wifiPwdInput.text = "";
+            pwdToggle.showPwd = false;
+            wifiPwdInput.forceActiveFocus();
+        }
+        
+        function submit() {
+            if (targetNetwork) {
+                if (wifiPwdInput.text.length > 0) {
+                    targetNetwork.connect(wifiPwdInput.text);
+                } else {
+                    targetNetwork.connect();
+                }
+            }
+            close();
         }
     }
 }

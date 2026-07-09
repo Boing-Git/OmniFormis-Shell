@@ -51,6 +51,7 @@ Item {
     HyprlandFocusGrab {
         active: root.expanded && root.focusWindow !== null
         windows: root.focusWindow ? [root.focusWindow] : []
+        onCleared: root.expanded = false
     }
     
     focus: root.expanded
@@ -200,7 +201,6 @@ Item {
                 
                 RowLayout {
                     spacing: 8
-                    Text { font.family: "Material Symbols Outlined"; font.pixelSize: 24; color: Theme.on_surface; text: "\ue5cd" }
                     Text { text: "Control Center"; font.family: Vars.fontFamily; font.pixelSize: 18; font.weight: Font.Bold; color: Theme.on_surface }
                 }
                 
@@ -348,7 +348,7 @@ Item {
                         }
                         
                         Rectangle {
-                            anchors.fill: parent; radius: 16; color: Qt.rgba(0,0,0, 0.6); opacity: root.isEditorMode ? 1.0 : 0.0
+                            anchors.fill: parent; radius: 16; color: "transparent"; opacity: root.isEditorMode ? 1.0 : 0.0
                             visible: opacity > 0; Behavior on opacity { NumberAnimation { duration: 150 } }
                             
                             MouseArea {
@@ -357,18 +357,7 @@ Item {
                                 drag.target: ghost
                                 onPressed: { tileDelegate.z = 100; ghost.x = mouse.x - 24; ghost.y = mouse.y - 24; ghost.visible = true; }
                                 onReleased: { tileDelegate.z = 0; ghost.visible = false; ghost.Drag.drop(); ghost.x = 0; ghost.y = 0; }
-                                
-                                Rectangle {
-                                    width: 28; height: 28; radius: 14; color: Theme.error; anchors.top: parent.top; anchors.right: parent.right; anchors.margins: -4
-                                    Text { anchors.centerIn: parent; text: "close"; font.family: "Material Symbols Outlined"; font.pixelSize: 18; color: Theme.on_error }
-                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { availableTiles.append({"moduleId": mId, "expanded": model.expanded}); activeTiles.remove(index, 1) } }
-                                }
-                                
-                                Rectangle {
-                                    width: 36; height: 36; radius: 18; color: "transparent"; anchors.centerIn: parent
-                                    Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 28; color: "white"; text: model.expanded ? "close_fullscreen" : "open_in_full" }
-                                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: activeTiles.setProperty(index, "expanded", !model.expanded) }
-                                }
+                                onDoubleClicked: activeTiles.setProperty(index, "expanded", !model.expanded)
                             }
                             
                             Rectangle {
@@ -397,36 +386,66 @@ Item {
                 }
             }
             
-            // Available Modules Grid (only shown in editor mode when items exist)
-            Text {
-                text: "Available Modules"
-                font.family: Vars.fontFamily; font.pixelSize: 14; font.weight: 600; color: Theme.on_surface_variant
+            // Available Modules Area
+            ColumnLayout {
+                Layout.fillWidth: true
+                visible: root.isEditorMode
                 Layout.topMargin: 16
-                visible: root.isEditorMode && availableTiles.count > 0
-            }
-            GridLayout {
-                id: availableGrid
-                visible: root.isEditorMode && availableTiles.count > 0
-                Layout.fillWidth: true; columns: 4; columnSpacing: 12; rowSpacing: 12
-                Repeater {
-                    model: availableTiles
-                    delegate: Rectangle {
-                        property real cellW: (mainDashboardFlickable.width - 36) / 4
-                        Layout.preferredWidth: cellW
-                        Layout.fillWidth: false
-                        Layout.columnSpan: 1; Layout.preferredHeight: 64; radius: 16
-                        color: Theme.surface_container_highest
+                spacing: 12
+
+                Text {
+                    text: "Available Modules"
+                    font.family: Vars.fontFamily; font.pixelSize: 14; font.weight: 600; color: Theme.on_surface_variant
+                }
+
+                DropArea {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.max(64, availableGrid.implicitHeight)
+                    keys: ["module"]
+                    
+                    Rectangle {
+                        anchors.fill: parent
+                        color: parent.containsDrag ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.1) : "transparent"
+                        radius: 16
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+
+                    onDropped: (drag) => {
+                        let from = drag.source.sourceIndex;
+                        if (from !== undefined) {
+                            let mId = activeTiles.get(from).moduleId;
+                            let exp = activeTiles.get(from).expanded;
+                            availableTiles.append({"moduleId": mId, "expanded": exp});
+                            activeTiles.remove(from, 1);
+                        }
+                    }
+
+                    GridLayout {
+                        id: availableGrid
+                        anchors.fill: parent
+                        columns: 4; columnSpacing: 12; rowSpacing: 12
                         
-                        property string mId: model.moduleId
-                        property string mIcon: mId === "wifi" ? wifiIcon : mId === "bluetooth" ? bluetoothIcon : mId === "audio" ? "\ue050" : mId === "display" ? "\ue30d" : mId === "peace" ? "\ue15c" : mId === "color" ? "palette" : mId === "wallpaper" ? "wallpaper" : mId === "overview" ? "grid_view" : ""
-                        
-                        Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 24; color: Theme.on_surface_variant; text: mIcon }
-                        
-                        Rectangle {
-                            anchors.fill: parent; radius: 16
-                            color: addHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent"
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                            MouseArea { id: addHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { activeTiles.append({"moduleId": mId, "expanded": model.expanded}); availableTiles.remove(index, 1) } }
+                        Repeater {
+                            model: availableTiles
+                            delegate: Rectangle {
+                                property real cellW: (mainDashboardFlickable.width - 36) / 4
+                                Layout.preferredWidth: cellW
+                                Layout.fillWidth: false
+                                Layout.columnSpan: 1; Layout.preferredHeight: 64; radius: 16
+                                color: Theme.surface_container_highest
+                                
+                                property string mId: model.moduleId
+                                property string mIcon: mId === "wifi" ? wifiIcon : mId === "bluetooth" ? bluetoothIcon : mId === "audio" ? "\ue050" : mId === "display" ? "\ue30d" : mId === "peace" ? "\ue15c" : mId === "color" ? "palette" : mId === "wallpaper" ? "wallpaper" : mId === "overview" ? "grid_view" : ""
+                                
+                                Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 24; color: Theme.on_surface_variant; text: mIcon }
+                                
+                                Rectangle {
+                                    anchors.fill: parent; radius: 16
+                                    color: addHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent"
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    MouseArea { id: addHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { activeTiles.append({"moduleId": mId, "expanded": model.expanded}); availableTiles.remove(index, 1) } }
+                                }
+                            }
                         }
                     }
                 }
