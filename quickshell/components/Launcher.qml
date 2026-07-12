@@ -580,9 +580,9 @@ Item {
 
                                 Image {
                                     anchors.fill: parent
-                                    source: (modelData.clipImagePath !== undefined && modelData.clipImagePath !== "") ? "file://" + modelData.clipImagePath : (modelData.icon ? "image://icon/" + modelData.icon : "")
+                                    source: (modelData.clipImagePath !== undefined && modelData.clipImagePath !== "") ? "file://" + modelData.clipImagePath : (modelData.icon ? "image://icon/" + modelData.icon : "image://icon/application-x-executable")
                                     fillMode: Image.PreserveAspectCrop
-                                    asynchronous: true
+                                    asynchronous: false
                                     visible: (modelData.isFile !== true && modelData.isMath !== true && modelData.isSetting !== true && modelData.isClipboard !== true && modelData.isClearAll !== true) || (modelData.isClipboard === true && modelData.clipImagePath !== undefined && modelData.clipImagePath !== "")
                                     
                                     opacity: isCurrent ? 1.0 : (itemMouseArea.containsMouse ? 0.9 : 0.7)

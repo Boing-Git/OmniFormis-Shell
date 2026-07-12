@@ -13,6 +13,7 @@ ColumnLayout {
     id: moduleGrid
     
     property bool isEditorMode: false
+    property real baseCellWidth: (width / 4) - 12
     signal subMenuRequested(string menuName)
     signal openColorSchemeRequested()
     signal openSettingsRequested()
@@ -117,9 +118,14 @@ ColumnLayout {
         model: activeTiles
         delegate: DropArea {
             id: activeDropArea
-            width: activeGridView.cellWidth
-            height: activeGridView.cellHeight
+            
+            property bool isExpanded: model.expanded !== undefined ? model.expanded : false
+            
+            width: isExpanded ? (moduleGrid.baseCellWidth * 2) + 12 : moduleGrid.baseCellWidth
+            height: 64
             keys: ["active_module", "available_module"]
+            
+            Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
             
             z: dragArea.drag.active ? 100 : 1
 
@@ -127,12 +133,17 @@ ColumnLayout {
             property string dragMode: "active_module"
 
             onEntered: function(drag) {
-                if (drag.source.dragMode === "active_module") {
-                    let from = drag.source.visualIndex;
-                    let to = activeDropArea.visualIndex;
-                    if (from !== to && from !== undefined && to !== undefined) {
-                        activeVisualModel.items.move(from, to);
-                    }
+                if (!moduleGrid.isEditorMode) return;
+                if (!drag.source) return;
+                
+                // WARNING: If using a custom C++ QAbstractListModel or external JS array, 
+                // ensure items.move() splices the array properly and does not duplicate entries.
+                let from = drag.source.visualIndex;
+                let to = activeDropArea.visualIndex;
+                
+                if (from !== undefined && to !== undefined && from !== to && drag.source !== activeDropArea) {
+                    activeVisualModel.items.move(from, to);
+                    drag.source.visualIndex = to; // Anti-thrashing guard
                 }
             }
             onDropped: function(drag) {
@@ -153,10 +164,10 @@ ColumnLayout {
                 id: tileDelegate
                 property int visualIndex: DelegateModel.itemsIndex
 
-                width: activeDropArea.width - 12
-                height: activeDropArea.height - 12
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.verticalCenter: parent.verticalCenter
+                x: 0
+                y: 0
+                width: activeDropArea.width
+                height: activeDropArea.height
                 radius: 16
                 color: dragArea.drag.active ? Theme.surface_container_highest : (isActive ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.25) : Theme.surface_container)
                 scale: dragArea.drag.active ? 1.05 : 1.0
@@ -241,7 +252,7 @@ ColumnLayout {
                     anchors.fill: parent
                     opacity: moduleGrid.isEditorMode ? 1.0 : 0.0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3EmphasizedDecelerate } }
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
 
                     // Overlay to show edit mode is active, slightly dimming the content
                     Rectangle {
@@ -250,55 +261,68 @@ ColumnLayout {
                         Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3EmphasizedDecelerate } }
                     }
 
-                    // Drag Handle (Top Right) - 48x48dp Touch Target
+                    // Full Card Drag Handle
                     MouseArea {
                         id: dragArea
-                        width: 48; height: 48
-                        anchors.top: parent.top
-                        anchors.right: parent.right
+                        anchors.fill: parent
                         cursorShape: Qt.OpenHandCursor
                         
                         drag.target: tileDelegate
 
                         onPressed: {
                             cursorShape = Qt.ClosedHandCursor;
-                            activeGridView.interactive = false; // ensure GridView doesn't scroll
                         }
                         onReleased: {
                             cursorShape = Qt.OpenHandCursor;
-                            activeGridView.interactive = false;
                             tileDelegate.Drag.drop();
+                            tileDelegate.x = 0;
+                            tileDelegate.y = 0;
                             moduleGrid.saveLayout();
                         }
+                    }
 
+                    // Top-Left Drag Indicator Badge
+                    Text {
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.margins: 12
+                        font.family: "Material Symbols Outlined"; font.pixelSize: 20
+                        color: Theme.on_surface_variant
+                        text: "drag_indicator"
+                    }
+                    
+                    // Expand/Collapse Chevron Pill (Right Edge)
+                    Rectangle {
+                        width: 12
+                        height: 48
+                        radius: 6
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        anchors.rightMargin: -6
+                        color: Theme.secondary_container
+                        
                         Text {
                             anchors.centerIn: parent
-                            font.family: "Material Symbols Outlined"; font.pixelSize: 20
-                            color: Theme.on_surface_variant
-                            text: "drag_indicator"
+                            font.family: "Material Symbols Outlined"; font.pixelSize: 12
+                            color: Theme.on_secondary_container
+                            text: activeDropArea.isExpanded ? "expand_less" : "expand_more"
+                        }
+                        
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                model.expanded = !model.expanded
+                                moduleGrid.saveLayout()
+                            }
                         }
                     }
                 }
-                
-                states: [
-                    State {
-                        when: dragArea.drag.active
-                        ParentChange {
-                            target: tileDelegate
-                            parent: activeGridView
-                        }
-                        AnchorChanges {
-                            target: tileDelegate
-                            anchors.horizontalCenter: undefined
-                            anchors.verticalCenter: undefined
-                        }
-                    }
-                ]
+
+
                 
                 Drag.active: dragArea.drag.active
                 Drag.source: activeDropArea
-                Drag.hotSpot.x: width / 2
-                Drag.hotSpot.y: height / 2
                 Drag.keys: ["active_module"]
             }
         }
@@ -309,8 +333,8 @@ ColumnLayout {
         model: availableTiles
         delegate: DropArea {
             id: availableDropArea
-            width: availableGridView.cellWidth
-            height: availableGridView.cellHeight
+            width: moduleGrid.baseCellWidth
+            height: 64
             keys: ["available_module", "active_module"]
             
             z: availDragArea.drag.active ? 100 : 1
@@ -322,12 +346,15 @@ ColumnLayout {
             property int sourceIndex: model.index
 
             onEntered: function(drag) {
-                if (drag.source.dragMode === "available_module") {
-                    let from = drag.source.visualIndex;
-                    let to = availableDropArea.visualIndex;
-                    if (from !== to && from !== undefined && to !== undefined) {
-                        availableVisualModel.items.move(from, to);
-                    }
+                if (!moduleGrid.isEditorMode) return;
+                if (!drag.source) return;
+                
+                let from = drag.source.visualIndex;
+                let to = availableDropArea.visualIndex;
+                
+                if (from !== undefined && to !== undefined && from !== to && drag.source !== availableDropArea) {
+                    availableVisualModel.items.move(from, to);
+                    drag.source.visualIndex = to; // Anti-thrashing guard
                 }
             }
             onDropped: function(drag) {
@@ -348,10 +375,10 @@ ColumnLayout {
                 id: availDelegate
                 property int visualIndex: DelegateModel.itemsIndex
 
-                width: availableDropArea.width - 12
-                height: availableDropArea.height - 12
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.verticalCenter: parent.verticalCenter
+                x: 0
+                y: 0
+                width: availableDropArea.width
+                height: availableDropArea.height
                 radius: 16
                 
                 color: availDragArea.drag.active ? Theme.surface_container_highest : Theme.surface_container
@@ -372,52 +399,54 @@ ColumnLayout {
                 }
                 // --- END WORKING MODULE UI ---
 
-                // Drag Handle (Top Right)
-                MouseArea {
-                    id: availDragArea
-                    width: 48; height: 48
-                    anchors.top: parent.top
-                    anchors.right: parent.right
-                    cursorShape: Qt.OpenHandCursor
-                    
-                    drag.target: availDelegate
+                // ---- EDITOR OVERLAY ----
+                Item {
+                    anchors.fill: parent
+                    opacity: moduleGrid.isEditorMode ? 1.0 : 0.0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
 
-                    onPressed: {
-                        cursorShape = Qt.ClosedHandCursor;
+                    // Overlay to show edit mode is active, slightly dimming the content
+                    Rectangle {
+                        anchors.fill: parent; radius: 16
+                        color: availDragArea.drag.active ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.0) : (availDragArea.containsMouse ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.08) : Qt.rgba(0, 0, 0, 0.1))
+                        Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3EmphasizedDecelerate } }
                     }
-                    onReleased: {
-                        cursorShape = Qt.OpenHandCursor;
-                        availDelegate.Drag.drop();
-                        moduleGrid.saveLayout();
+
+                    // Full Card Drag Handle
+                    MouseArea {
+                        id: availDragArea
+                        anchors.fill: parent
+                        cursorShape: Qt.OpenHandCursor
+                        
+                        drag.target: availDelegate
+
+                        onPressed: {
+                            cursorShape = Qt.ClosedHandCursor;
+                        }
+                        onReleased: {
+                            cursorShape = Qt.OpenHandCursor;
+                            availDelegate.Drag.drop();
+                            availDelegate.x = 0;
+                            availDelegate.y = 0;
+                            moduleGrid.saveLayout();
+                        }
                     }
-                    
+
+                    // Top-Left Drag Indicator Badge
                     Text {
-                        anchors.centerIn: parent
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.margins: 12
                         font.family: "Material Symbols Outlined"; font.pixelSize: 20
                         color: Theme.on_surface_variant
                         text: "drag_indicator"
                     }
                 }
                 
-                states: [
-                    State {
-                        when: availDragArea.drag.active
-                        ParentChange {
-                            target: availDelegate
-                            parent: availableGridView
-                        }
-                        AnchorChanges {
-                            target: availDelegate
-                            anchors.horizontalCenter: undefined
-                            anchors.verticalCenter: undefined
-                        }
-                    }
-                ]
 
                 Drag.active: availDragArea.drag.active
                 Drag.source: availableDropArea
-                Drag.hotSpot.x: width / 2
-                Drag.hotSpot.y: height / 2
                 Drag.keys: ["available_module"]
             }
         }
@@ -430,7 +459,7 @@ ColumnLayout {
     // Background drop area to catch active tiles dropped at the end
     DropArea {
         Layout.fillWidth: true
-        Layout.preferredHeight: activeGridView.contentHeight > 76 ? activeGridView.contentHeight : 76
+        Layout.preferredHeight: activeFlow.implicitHeight > 64 ? activeFlow.implicitHeight : 64
         keys: ["available_module"]
         onDropped: function(drag) {
             if (drag.source.dragMode === "available_module") {
@@ -444,16 +473,17 @@ ColumnLayout {
             }
         }
         
-        GridView {
-            id: activeGridView
+        Flow {
+            id: activeFlow
             anchors.fill: parent
-            cellWidth: parent.width / 4
-            cellHeight: 76
-            model: activeVisualModel
-            interactive: false
+            spacing: 12
             
-            displaced: Transition {
+            move: Transition {
                 NumberAnimation { properties: "x,y"; duration: 250; easing.type: Easing.OutCubic }
+            }
+            
+            Repeater {
+                model: activeVisualModel
             }
         }
     }
@@ -472,7 +502,7 @@ ColumnLayout {
 
         DropArea {
             Layout.fillWidth: true
-            Layout.preferredHeight: availableGridView.contentHeight > 76 ? availableGridView.contentHeight : 76
+            Layout.preferredHeight: availableFlow.implicitHeight > 64 ? availableFlow.implicitHeight : 64
             keys: ["active_module"]
             onDropped: function(drag) {
                 if (drag.source.dragMode === "active_module") {
@@ -486,16 +516,17 @@ ColumnLayout {
                 }
             }
 
-            GridView {
-                id: availableGridView
+            Flow {
+                id: availableFlow
                 anchors.fill: parent
-                cellWidth: parent.width / 4
-                cellHeight: 76
-                model: availableVisualModel
-                interactive: false
+                spacing: 12
                 
-                displaced: Transition {
+                move: Transition {
                     NumberAnimation { properties: "x,y"; duration: 250; easing.type: Easing.OutCubic }
+                }
+                
+                Repeater {
+                    model: availableVisualModel
                 }
             }
         }

@@ -161,6 +161,7 @@ Item {
                         source: Quickshell.iconPath(modelData.appIcon || "", true)
                         implicitSize: 18
                         visible: modelData.appIcon !== "" && modelData.appIcon !== undefined
+                        asynchronous: false
                     }
 
                     Text {

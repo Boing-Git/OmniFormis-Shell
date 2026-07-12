@@ -1,28 +1,28 @@
 {
   "checksum": ":)",
-  "wallpaper": "/home/boing/Pictures/Wallpapers/Dharmx/minimal/a_sunset_over_a_mountain_range.png",
+  "wallpaper": "/home/boing/Pictures/Wallpapers/Dharmx/minimal/a_landscape_of_mountains_and_a_sunset_01.png",
   "alpha": "100",
   "special": {
-    "background": "#e8d7cf",
-    "foreground": "#221a15",
-    "cursor": "#8c4e28"
+    "background": "#d8dae0",
+    "foreground": "#181c20",
+    "cursor": "#31628d"
   },
   "colors": {
-    "color0": "#e8d7cf",
-    "color1": "#351602",
-    "color2": "#895235",
-    "color3": "#6e6a27",
-    "color4": "#8c4e28",
-    "color5": "#636032",
-    "color6": "#ffdbc9",
-    "color7": "#52443c",
-    "color8": "#f4ded4",
-    "color9": "#9a4b1b",
-    "color10": "#ae6843",
-    "color11": "#948e34",
-    "color12": "#b46433",
-    "color13": "#858143",
-    "color14": "#ffdbc9",
-    "color15": "#221a15"
+    "color0": "#d8dae0",
+    "color1": "#041c34",
+    "color2": "#3f5f83",
+    "color3": "#6a4789",
+    "color4": "#31628d",
+    "color5": "#695779",
+    "color6": "#d0e3fc",
+    "color7": "#42474e",
+    "color8": "#dee3eb",
+    "color9": "#23639b",
+    "color10": "#4f78a6",
+    "color11": "#845aa9",
+    "color12": "#3e7cb3",
+    "color13": "#836d96",
+    "color14": "#cfe5ff",
+    "color15": "#181c20"
   }
 }

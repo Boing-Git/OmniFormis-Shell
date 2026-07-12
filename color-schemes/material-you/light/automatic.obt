@@ -9,11 +9,11 @@
     /* --- MATUGEN COLOR MAPPING --- */
 
     /* Primary Accents (Blue mapping) */
-    --blue1: #ffdbc9;
-    --blue2: #ffdbc9;
-    --blue3: #8c4e28;
-    --blue4: #331200;
-    --blue5: #ffb68e;
+    --blue1: #cfe5ff;
+    --blue2: #cfe5ff;
+    --blue3: #31628d;
+    --blue4: #001d34;
+    --blue5: #9dcbfb;
 
     /* Error / Danger (Red mapping) */
     --red1: #E85E75;
@@ -23,26 +23,26 @@
     --red5: #7D1224;
 
     /* Secondary Accents (Pink mapping -> Secondary) */
-    --pink1: #ffdbc9;
-    --pink2: #ffdbc9;
-    --pink3: #765848;
-    --pink4: #2b160a;
+    --pink1: #d5e4f7;
+    --pink2: #d5e4f7;
+    --pink3: #526070;
+    --pink4: #0f1d2a;
     /* ИСПРАВЛЕНО: inverse_secondary -> on_secondary (это темный цвет в темной теме) */
     --pink5: #ffffff;
 
     /* Tertiary Accents (Teal mapping -> Tertiary) */
-    --teal1: #eae5ab;
-    --teal2: #eae5ab;
-    --teal3: #636032;
-    --teal4: #1e1c00;
+    --teal1: #f0dbff;
+    --teal2: #f0dbff;
+    --teal3: #695779;
+    --teal4: #241532;
     /* ИСПРАВЛЕНО: inverse_tertiary -> on_tertiary */
     --teal5: #ffffff;
 
     /* Purple mapping */
     --purple1: #997FDC;
-    --purple2: #e6beaa;
-    --purple3: #765848;
-    --purple4: #2b160a;
+    --purple2: #bac8da;
+    --purple3: #526070;
+    --purple4: #0f1d2a;
     --purple5: #3D2380;
 
     /* Green & Yellow (Static) */
@@ -59,23 +59,23 @@
     --yellow5: #6E520D;
 
     /* Neutrals / Greys (Surface Mapping) */
-    --grey1: #85746b;
-    --grey2: #d7c2b9;
-    --grey3: #f0dfd7;
-    --grey4: #f6e5dd;
-    --grey5: #fceae3;
-    --grey6: #fff8f6;
-    --grey7: #e8d7cf;
+    --grey1: #72777f;
+    --grey2: #c2c7cf;
+    --grey3: #e0e2e8;
+    --grey4: #e6e8ee;
+    --grey5: #eceef4;
+    --grey6: #f7f9ff;
+    --grey7: #d8dae0;
     --grey8: #000000;
 
     /* Text */
-    --white1: #221a15;
-    --white2: #52443c;
-    --white3: #52443c;
+    --white1: #181c20;
+    --white2: #42474e;
+    --white3: #42474e;
     --white4: #C2C2C2;
     --white5: #ADADAD;
 
-    --black1: #382e29;
+    --black1: #2d3135;
     --black2: #1F1F1F;
     --black3: #333333;
     --black4: #474747;

@@ -492,6 +492,7 @@ Item {
                                         width: Math.min(parent.width, parent.height) * 0.35
                                         height: width
                                         source: Quickshell.iconPath(overviewContainer.resolveIcon(winItem.modelData.appId), "application-x-executable")
+                                        asynchronous: false
                                     }
                                 }
 
