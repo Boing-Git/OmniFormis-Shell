@@ -7,7 +7,7 @@ import "../.."
 Item {
     id: notificationsRoot
     Layout.fillWidth: true
-    Layout.fillHeight: true
+    implicitHeight: mainLayout.implicitHeight
 
     property var historyList: []
 
@@ -25,7 +25,10 @@ Item {
     }
 
     ColumnLayout {
-        anchors.fill: parent
+        id: mainLayout
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
         spacing: Vars.spacingSmall
 
         // Empty State

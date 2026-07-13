@@ -12,6 +12,16 @@ if grep -qi "nixos" /etc/os-release; then
     mkdir -p ~/.config/hypr
     git clone https://github.com/Boing-Git/Hyprland-Dotfiles ~/.config/hypr
     
+    echo "Setting up hypr-manager CLI tool..."
+    mkdir -p ~/.local/bin
+    chmod +x ~/.config/hypr/manager.py
+    ln -sf ~/.config/hypr/manager.py ~/.local/bin/hypr-manager
+    
+    echo "Adding ~/.local/bin to Fish PATH..."
+    if command -v fish >/dev/null 2>&1; then
+        fish -c 'if not contains ~/.local/bin $fish_user_paths; set -Ua fish_user_paths ~/.local/bin; end'
+    fi
+    
     cp /etc/nixos/hardware-configuration.nix ./
     
     sudo nixos-rebuild switch --flake .#nixos
@@ -145,6 +155,11 @@ elif grep -qi "arch" /etc/os-release; then
     mkdir -p ~/.local/bin
     chmod +x ~/.config/hypr/manager.py
     ln -sf ~/.config/hypr/manager.py ~/.local/bin/hypr-manager
+    
+    echo "Adding ~/.local/bin to Fish PATH..."
+    if command -v fish >/dev/null 2>&1; then
+        fish -c 'if not contains ~/.local/bin $fish_user_paths; set -Ua fish_user_paths ~/.local/bin; end'
+    fi
     
     echo "Setting default shell to fish..."
     if [ "$SHELL" != "/usr/bin/fish" ]; then

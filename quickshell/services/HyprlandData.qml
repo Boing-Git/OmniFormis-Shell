@@ -64,7 +64,6 @@ Singleton {
                         tempWinByAddress[win.address] = win;
                     }
                     root.windowByAddress = tempWinByAddress;
-                    console.log("HyprlandData: updated window list, count =", root.windowList.length);
                 } catch (e) {
                     console.log("Failed to parse hyprctl clients", e);
                 }

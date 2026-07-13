@@ -12,6 +12,10 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 8
 
+    property int trackHeight: 40
+    property int gap: 4
+    property int handleWidth: 4
+
     property var audioNode: Pipewire.defaultAudioSink
     property real currentVolume: audioNode && audioNode.audio ? audioNode.audio.volume : 0.0
     property real currentBrightness: 0.5 // Default fallback
@@ -56,38 +60,33 @@ ColumnLayout {
         implicitWidth: 320
         implicitHeight: 48 // Strict M3 48dp minimum touch target bounding box
         padding: 0
-        
+
         value: currentVolume
         onMoved: {
             if (audioNode)
                 audioNode.audio.volume = value;
         }
 
-        // Internal geometry variables
-        property int trackHeight: 32
-        property int gap: 4
-        property int handleWidth: 12
-
         background: Item {
             x: volumeSlider.leftPadding
-            y: volumeSlider.topPadding + (volumeSlider.availableHeight - volumeSlider.trackHeight) / 2
+            y: volumeSlider.topPadding + (volumeSlider.availableHeight - sliders.trackHeight) / 2
             width: volumeSlider.availableWidth
-            height: volumeSlider.trackHeight
+            height: sliders.trackHeight
 
             // 1. LEFT TRACK (Active Fill)
             Item {
                 x: 0
                 y: 0
-                width: Math.max(0, (volumeSlider.visualPosition * (volumeSlider.availableWidth - volumeSlider.handleWidth)) - volumeSlider.gap)
+                width: Math.max(0, (volumeSlider.visualPosition * (volumeSlider.availableWidth - sliders.handleWidth)) - sliders.gap)
                 height: parent.height
-                clip: true 
+                clip: true
 
                 Rectangle {
                     width: volumeSlider.availableWidth
                     height: parent.height
                     radius: 12
-                    color: Theme.primary 
-                    
+                    color: Theme.primary
+
                     // Overlay Icon
                     Text {
                         x: 16 // Must match leftMargin
@@ -102,19 +101,19 @@ ColumnLayout {
 
             // 2. RIGHT TRACK (Inactive Base)
             Item {
-                x: (volumeSlider.visualPosition * (volumeSlider.availableWidth - volumeSlider.handleWidth)) + volumeSlider.handleWidth + volumeSlider.gap
+                x: (volumeSlider.visualPosition * (volumeSlider.availableWidth - sliders.handleWidth)) + sliders.handleWidth + sliders.gap
                 y: 0
                 width: Math.max(0, volumeSlider.availableWidth - x)
                 height: parent.height
-                clip: true 
+                clip: true
 
                 Rectangle {
-                    x: -parent.x 
+                    x: -parent.x
                     width: volumeSlider.availableWidth
                     height: parent.height
                     radius: 12
-                    color: Theme.surface_variant 
-                    
+                    color: Theme.surface_variant
+
                     // Base Icon
                     Text {
                         x: 16 // Must match leftMargin
@@ -132,11 +131,11 @@ ColumnLayout {
         handle: Rectangle {
             x: volumeSlider.leftPadding + volumeSlider.visualPosition * (volumeSlider.availableWidth - width)
             y: volumeSlider.topPadding + (volumeSlider.availableHeight - height) / 2
-            
-            width: volumeSlider.handleWidth
-            height: volumeSlider.implicitHeight 
+
+            width: sliders.handleWidth
+            height: volumeSlider.implicitHeight + 2
             radius: width / 2
-            color: Theme.on_surface 
+            color: Theme.primary
         }
     }
 
@@ -146,38 +145,33 @@ ColumnLayout {
         implicitWidth: 320
         implicitHeight: 48 // Strict M3 48dp minimum touch target bounding box
         padding: 0
-        
+
         value: currentBrightness
         onMoved: {
             currentBrightness = value;
             ddcSetTimer.restart();
         }
 
-        // Internal geometry variables
-        property int trackHeight: 32
-        property int gap: 4
-        property int handleWidth: 12
-
         background: Item {
             x: brightnessSlider.leftPadding
-            y: brightnessSlider.topPadding + (brightnessSlider.availableHeight - brightnessSlider.trackHeight) / 2
+            y: brightnessSlider.topPadding + (brightnessSlider.availableHeight - sliders.trackHeight) / 2
             width: brightnessSlider.availableWidth
-            height: brightnessSlider.trackHeight
+            height: sliders.trackHeight
 
             // 1. LEFT TRACK (Active Fill)
             Item {
                 x: 0
                 y: 0
-                width: Math.max(0, (brightnessSlider.visualPosition * (brightnessSlider.availableWidth - brightnessSlider.handleWidth)) - brightnessSlider.gap)
+                width: Math.max(0, (brightnessSlider.visualPosition * (brightnessSlider.availableWidth - sliders.handleWidth)) - sliders.gap)
                 height: parent.height
-                clip: true 
+                clip: true
 
                 Rectangle {
                     width: brightnessSlider.availableWidth
                     height: parent.height
                     radius: 12
-                    color: Theme.primary 
-                    
+                    color: Theme.primary
+
                     // Overlay Icon
                     Text {
                         x: 16 // Must match leftMargin
@@ -192,19 +186,19 @@ ColumnLayout {
 
             // 2. RIGHT TRACK (Inactive Base)
             Item {
-                x: (brightnessSlider.visualPosition * (brightnessSlider.availableWidth - brightnessSlider.handleWidth)) + brightnessSlider.handleWidth + brightnessSlider.gap
+                x: (brightnessSlider.visualPosition * (brightnessSlider.availableWidth - sliders.handleWidth)) + sliders.handleWidth + sliders.gap
                 y: 0
                 width: Math.max(0, brightnessSlider.availableWidth - x)
                 height: parent.height
-                clip: true 
+                clip: true
 
                 Rectangle {
-                    x: -parent.x 
+                    x: -parent.x
                     width: brightnessSlider.availableWidth
                     height: parent.height
                     radius: 12
-                    color: Theme.surface_variant 
-                    
+                    color: Theme.surface_variant
+
                     // Base Icon
                     Text {
                         x: 16 // Must match leftMargin
@@ -222,11 +216,11 @@ ColumnLayout {
         handle: Rectangle {
             x: brightnessSlider.leftPadding + brightnessSlider.visualPosition * (brightnessSlider.availableWidth - width)
             y: brightnessSlider.topPadding + (brightnessSlider.availableHeight - height) / 2
-            
-            width: brightnessSlider.handleWidth
-            height: brightnessSlider.implicitHeight 
+
+            width: sliders.handleWidth
+            height: brightnessSlider.implicitHeight
             radius: width / 2
-            color: Theme.on_surface 
+            color: Theme.primary
         }
     }
 }

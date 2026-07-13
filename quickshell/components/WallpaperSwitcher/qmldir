@@ -1,0 +1,3 @@
+module WallpaperSwitcher
+WallpaperGrid 1.0 WallpaperGrid.qml
+WallpaperControls 1.0 WallpaperControls.qml

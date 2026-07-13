@@ -13,7 +13,8 @@ ColumnLayout {
     id: moduleGridRoot
     
     property bool isEditorMode: false
-    property real baseCellWidth: (width / 4) - 12
+    property int activeMaxRow: 4
+    property real baseCellWidth: (width - (12 * 3)) / 4
     signal subMenuRequested(string menuName)
     signal openColorSchemeRequested()
     signal openSettingsRequested()
@@ -58,24 +59,173 @@ ColumnLayout {
         }
     }
 
+    function getDefaultColSpan(moduleId) {
+        return (moduleId === "wifi" || moduleId === "bluetooth" || moduleId === "display" || moduleId === "color" || moduleId === "wallpaper" || moduleId === "overview") ? 2 : 1;
+    }
+
     function saveLayout() {
+        let maxRow = 0;
         let activeArr = [];
         for (let i = 0; i < activeTiles.count; i++) {
-            activeArr.push({ "moduleId": activeTiles.get(i).moduleId, "expanded": activeTiles.get(i).expanded });
+            let item = activeTiles.get(i);
+            if (item.yIndex > maxRow) maxRow = item.yIndex;
+            activeArr.push({
+                "moduleId": item.moduleId,
+                "colSpan": item.colSpan !== undefined ? item.colSpan : moduleGridRoot.getDefaultColSpan(item.moduleId),
+                "xIndex": item.xIndex !== undefined ? item.xIndex : 0,
+                "yIndex": item.yIndex !== undefined ? item.yIndex : 0
+            });
         }
+        moduleGridRoot.activeMaxRow = maxRow + 1;
         layoutSettings.activeLayout = JSON.stringify(activeArr);
 
         let availArr = [];
         for (let i = 0; i < availableTiles.count; i++) {
-            availArr.push({ "moduleId": availableTiles.get(i).moduleId, "expanded": availableTiles.get(i).expanded });
+            availArr.push({ "moduleId": availableTiles.get(i).moduleId, "colSpan": 1 });
         }
         layoutSettings.availableLayout = JSON.stringify(availArr);
     }
 
-    function activateModule(moduleId) {
+    function findEmptySlot(colSpan) {
+        let occupied = {};
+        for (let i = 0; i < activeTiles.count; i++) {
+            let item = activeTiles.get(i);
+            if (item.xIndex === -1) continue;
+            occupied[item.xIndex + "," + item.yIndex] = true;
+            if (item.colSpan === 2) occupied[(item.xIndex + 1) + "," + item.yIndex] = true;
+        }
+        
+        for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < (colSpan === 2 ? 3 : 4); x++) {
+                if (!occupied[x + "," + y] && (colSpan === 1 || !occupied[(x + 1) + "," + y])) {
+                    return { x: x, y: y };
+                }
+            }
+        }
+        return { x: 0, y: 0 };
+    }
+
+    function moveModule(moduleId, targetX, targetY) {
+        let sourceIdx = -1;
+        let sourceItem = null;
+        for (let i = 0; i < activeTiles.count; i++) {
+            if (activeTiles.get(i).moduleId === moduleId) {
+                sourceIdx = i;
+                sourceItem = activeTiles.get(i);
+                break;
+            }
+        }
+        if (sourceIdx === -1) return;
+
+        if (sourceItem.colSpan === 2 && targetX > 2) targetX = 2;
+
+        let oldX = sourceItem.xIndex;
+        let oldY = sourceItem.yIndex;
+
+        activeTiles.setProperty(sourceIdx, "xIndex", targetX);
+        activeTiles.setProperty(sourceIdx, "yIndex", targetY);
+
+        let displaced = [];
+        for (let i = 0; i < activeTiles.count; i++) {
+            if (i !== sourceIdx) {
+                let item = activeTiles.get(i);
+                let collides = false;
+                if (item.xIndex === targetX && item.yIndex === targetY) collides = true;
+                if (item.colSpan === 2 && item.xIndex + 1 === targetX && item.yIndex === targetY) collides = true;
+                if (sourceItem.colSpan === 2 && targetX + 1 === item.xIndex && targetY === item.yIndex) collides = true;
+                
+                if (collides) {
+                    displaced.push({idx: i, item: { colSpan: item.colSpan }});
+                    activeTiles.setProperty(i, "xIndex", -1);
+                    activeTiles.setProperty(i, "yIndex", -1);
+                }
+            }
+        }
+
+        for (let d of displaced) {
+            let item = d.item;
+            let idx = d.idx;
+            
+            let fitsOld = true;
+            if (item.colSpan === 2 && oldX > 2) fitsOld = false;
+            
+            if (fitsOld) {
+                let occupied = false;
+                for (let j = 0; j < activeTiles.count; j++) {
+                    if (j !== idx) {
+                        let other = activeTiles.get(j);
+                        if (other.xIndex === -1) continue;
+                        
+                        if (other.xIndex === oldX && other.yIndex === oldY) occupied = true;
+                        if (other.colSpan === 2 && other.xIndex + 1 === oldX && other.yIndex === oldY) occupied = true;
+                        if (item.colSpan === 2 && oldX + 1 === other.xIndex && oldY === other.yIndex) occupied = true;
+                    }
+                }
+                if (!occupied) {
+                    activeTiles.setProperty(idx, "xIndex", oldX);
+                    activeTiles.setProperty(idx, "yIndex", oldY);
+                    continue;
+                }
+            }
+            
+            let pos = findEmptySlot(item.colSpan);
+            activeTiles.setProperty(idx, "xIndex", pos.x);
+            activeTiles.setProperty(idx, "yIndex", pos.y);
+        }
+
+        saveLayout();
+    }
+
+    function resizeModule(moduleId, targetColSpan) {
+        let idx = -1;
+        let item = null;
+        for (let i = 0; i < activeTiles.count; i++) {
+            if (activeTiles.get(i).moduleId === moduleId) {
+                idx = i;
+                item = activeTiles.get(i);
+                break;
+            }
+        }
+        if (idx === -1) return;
+        
+        if (targetColSpan === 2 && item.xIndex === 3) return;
+        
+        activeTiles.setProperty(idx, "colSpan", targetColSpan);
+        
+        if (targetColSpan === 2) {
+            let displaced = [];
+            for (let i = 0; i < activeTiles.count; i++) {
+                if (i !== idx) {
+                    let other = activeTiles.get(i);
+                    if (other.xIndex === item.xIndex + 1 && other.yIndex === item.yIndex) displaced.push(i);
+                    else if (other.colSpan === 2 && other.xIndex + 1 === item.xIndex + 1 && other.yIndex === item.yIndex) displaced.push(i);
+                }
+            }
+            
+            for (let i of displaced) {
+                let otherColSpan = activeTiles.get(i).colSpan;
+                activeTiles.setProperty(i, "xIndex", -1);
+                activeTiles.setProperty(i, "yIndex", -1);
+                let pos = findEmptySlot(otherColSpan);
+                activeTiles.setProperty(i, "xIndex", pos.x);
+                activeTiles.setProperty(i, "yIndex", pos.y);
+            }
+        }
+        saveLayout();
+    }
+
+    function activateModule(moduleId, targetX, targetY) {
+        if (targetX === undefined) targetX = -1;
+        if (targetY === undefined) targetY = -1;
         for (let i = 0; i < availableTiles.count; i++) {
             if (availableTiles.get(i).moduleId === moduleId) {
-                let payload = { "moduleId": availableTiles.get(i).moduleId, "expanded": false };
+                let colSpan = moduleGridRoot.getDefaultColSpan(moduleId);
+                let pos = { x: targetX, y: targetY };
+                if (targetX === -1) {
+                    pos = findEmptySlot(colSpan);
+                }
+                
+                let payload = { "moduleId": availableTiles.get(i).moduleId, "colSpan": colSpan, "xIndex": pos.x, "yIndex": pos.y };
                 availableTiles.remove(i);
                 activeTiles.append(payload);
                 saveLayout();
@@ -87,7 +237,7 @@ ColumnLayout {
     function deactivateModule(moduleId) {
         for (let i = 0; i < activeTiles.count; i++) {
             if (activeTiles.get(i).moduleId === moduleId) {
-                let payload = { "moduleId": activeTiles.get(i).moduleId, "expanded": false };
+                let payload = { "moduleId": activeTiles.get(i).moduleId, "colSpan": 1 };
                 activeTiles.remove(i);
                 availableTiles.append(payload);
                 saveLayout();
@@ -98,40 +248,74 @@ ColumnLayout {
 
     function loadLayout() {
         let defaultActive = [
-            {"moduleId": "wifi", "expanded": false},
-            {"moduleId": "bluetooth", "expanded": false},
-            {"moduleId": "audio", "expanded": false},
-            {"moduleId": "display", "expanded": false}
+            {"moduleId": "wifi", "colSpan": 2, "xIndex": 0, "yIndex": 0},
+            {"moduleId": "bluetooth", "colSpan": 2, "xIndex": 2, "yIndex": 0},
+            {"moduleId": "audio", "colSpan": 1, "xIndex": 0, "yIndex": 1},
+            {"moduleId": "display", "colSpan": 2, "xIndex": 1, "yIndex": 1}
         ];
         let defaultAvailable = [
-            {"moduleId": "peace", "expanded": false},
-            {"moduleId": "color", "expanded": false},
-            {"moduleId": "wallpaper", "expanded": false},
-            {"moduleId": "overview", "expanded": false}
+            {"moduleId": "peace", "colSpan": 1},
+            {"moduleId": "color", "colSpan": 1},
+            {"moduleId": "wallpaper", "colSpan": 1},
+            {"moduleId": "overview", "colSpan": 1}
         ];
         
         activeTiles.clear();
         availableTiles.clear();
 
+        let seen = {};
+
         try {
             let activeArr = JSON.parse(layoutSettings.activeLayout);
             if (!activeArr || activeArr.length === 0) activeArr = defaultActive;
             for (let i = 0; i < activeArr.length; i++) {
-                activeTiles.append(activeArr[i]);
+                if (!seen[activeArr[i].moduleId]) {
+                    seen[activeArr[i].moduleId] = true;
+                    if (activeArr[i].colSpan === undefined) activeArr[i].colSpan = moduleGridRoot.getDefaultColSpan(activeArr[i].moduleId);
+                    if (activeArr[i].xIndex === undefined) {
+                        activeArr[i].xIndex = i % 4;
+                        activeArr[i].yIndex = Math.floor(i / 4);
+                    }
+                    activeTiles.append(activeArr[i]);
+                }
             }
         } catch(e) {
-            for (let i = 0; i < defaultActive.length; i++) activeTiles.append(defaultActive[i]);
+            for (let i = 0; i < defaultActive.length; i++) {
+                if (!seen[defaultActive[i].moduleId]) {
+                    seen[defaultActive[i].moduleId] = true;
+                    activeTiles.append(defaultActive[i]);
+                }
+            }
         }
         
         try {
             let availArr = JSON.parse(layoutSettings.availableLayout);
             if (!availArr || availArr.length === 0) availArr = defaultAvailable;
             for (let i = 0; i < availArr.length; i++) {
-                availableTiles.append(availArr[i]);
+                if (!seen[availArr[i].moduleId]) {
+                    seen[availArr[i].moduleId] = true;
+                    availableTiles.append(availArr[i]);
+                }
             }
         } catch(e) {
-            for (let i = 0; i < defaultAvailable.length; i++) availableTiles.append(defaultAvailable[i]);
+            for (let i = 0; i < defaultAvailable.length; i++) {
+                if (!seen[defaultAvailable[i].moduleId]) {
+                    seen[defaultAvailable[i].moduleId] = true;
+                    availableTiles.append(defaultAvailable[i]);
+                }
+            }
         }
+        
+        // Ensure all valid modules exist somewhere (self-healing)
+        let allModules = [...defaultActive, ...defaultAvailable];
+        for (let i = 0; i < allModules.length; i++) {
+            if (!seen[allModules[i].moduleId]) {
+                seen[allModules[i].moduleId] = true;
+                availableTiles.append(allModules[i]);
+            }
+        }
+        
+        saveLayout();
     }
 
     // ==========================================
@@ -140,51 +324,29 @@ ColumnLayout {
     DelegateModel {
         id: activeVisualModel
         model: activeTiles
-        delegate: DropArea {
-            id: activeDropArea
+        delegate: Item {
+            id: activeDelegateWrapper
             
-            property bool isExpanded: model.expanded !== undefined ? model.expanded : false
+            property int colSpan: model.colSpan !== undefined ? model.colSpan : 1
+            property int xIndex: model.xIndex !== undefined ? model.xIndex : 0
+            property int yIndex: model.yIndex !== undefined ? model.yIndex : 0
             
-            width: isExpanded ? (moduleGridRoot.baseCellWidth * 2) + 12 : moduleGridRoot.baseCellWidth
+            width: colSpan === 2 ? (moduleGridRoot.baseCellWidth * 2) + 12 : moduleGridRoot.baseCellWidth
             height: 64
-            keys: ["m3_module"]
+            
+            x: xIndex * (moduleGridRoot.baseCellWidth + 12)
+            y: yIndex * (64 + 12)
             
             Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+            Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+            Behavior on y { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
             
             z: dragArea.drag.active ? 100 : 1
 
             property int visualIndex: DelegateModel.itemsIndex
             property string dragMode: "active_module"
             property string moduleId: model.moduleId
-            property var rootItem: moduleGridRoot
-
-            onEntered: function(drag) {
-                if (!moduleGridRoot.isEditorMode) return;
-                if (!drag.source) return;
-                
-                // WARNING: If using a custom C++ QAbstractListModel or external JS array, 
-                // ensure items.move() splices the array properly and does not duplicate entries.
-                let from = drag.source.visualIndex;
-                let to = activeDropArea.visualIndex;
-                
-                if (from !== undefined && to !== undefined && from !== to && drag.source !== activeDropArea) {
-                    activeVisualModel.items.move(from, to);
-                    drag.source.visualIndex = to; // Anti-thrashing guard
-                }
-            }
-            onDropped: function(drag) {
-                if (drag.source.dragMode === "available_module") {
-                    let from = drag.source.sourceIndex; // from availableTiles
-                    if (from >= 0 && from < availableTiles.count) {
-                        let mIdVal = availableTiles.get(from).moduleId;
-                        availableTiles.remove(from, 1);
-                        activeTiles.insert(activeDropArea.visualIndex, { "moduleId": mIdVal, "expanded": false });
-                        moduleGridRoot.saveLayout();
-                    }
-                } else {
-                    moduleGridRoot.saveLayout();
-                }
-            }
+            property var gridRoot: moduleGridRoot
 
             Rectangle {
                 id: tileDelegate
@@ -192,14 +354,20 @@ ColumnLayout {
 
                 x: 0
                 y: 0
-                width: activeDropArea.width
-                height: activeDropArea.height
-                radius: 16
-                color: dragArea.drag.active ? Theme.surface_container_highest : (isActive ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.25) : Theme.surface_container)
+                width: activeDelegateWrapper.width
+                height: activeDelegateWrapper.height
+                radius: isActive ? 16 : height / 2
+                color: dragArea.drag.active ? Theme.surface_container_highest : (isActive ? Theme.primary : Theme.surface_container_high)
                 scale: dragArea.drag.active ? 1.05 : 1.0
+                
+                Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                 
                 Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: 150 } }
+                
+                border.color: moduleGridRoot.isEditorMode ? Theme.outline_variant : "transparent"
+                border.width: 1
+                Behavior on border.color { ColorAnimation { duration: 250 } }
                 
                 property string moduleId: model.moduleId
                 
@@ -208,6 +376,8 @@ ColumnLayout {
                                         (moduleId === "audio" ? (moduleGridRoot.audioNode && !moduleGridRoot.audioNode.audio.muted) : false) || 
                                         (moduleId === "display" ? false : false) ||
                                         (moduleId === "peace" ? NotificationService.peaceMode : false)
+                                        
+                property bool hasSubMenu: moduleId === "wifi" || moduleId === "bluetooth" || moduleId === "display" || moduleId === "color" || moduleId === "wallpaper" || moduleId === "overview"
                                         
                 property string mIcon: moduleId === "wifi" ? moduleGridRoot.wifiIcon :
                                        moduleId === "bluetooth" ? moduleGridRoot.bluetoothIcon :
@@ -251,19 +421,19 @@ ColumnLayout {
                 }
                                           
                 function doAction() {
-                    if (moduleId === "wifi") moduleGridRoot.subMenuRequested("wifi");
-                    else if (moduleId === "bluetooth") moduleGridRoot.subMenuRequested("bluetooth");
-                    else if (moduleId === "display") moduleGridRoot.subMenuRequested("display");
-                    else if (moduleId === "color") moduleGridRoot.openColorSchemeRequested()
-                    else if (moduleId === "wallpaper") moduleGridRoot.openWallpaperRequested()
-                    else if (moduleId === "overview") moduleGridRoot.openOverviewRequested()
+                    if (moduleId === "wifi") activeDelegateWrapper.gridRoot.subMenuRequested("wifi");
+                    else if (moduleId === "bluetooth") activeDelegateWrapper.gridRoot.subMenuRequested("bluetooth");
+                    else if (moduleId === "display") activeDelegateWrapper.gridRoot.subMenuRequested("display");
+                    else if (moduleId === "color") activeDelegateWrapper.gridRoot.openColorSchemeRequested()
+                    else if (moduleId === "wallpaper") activeDelegateWrapper.gridRoot.openWallpaperRequested()
+                    else if (moduleId === "overview") activeDelegateWrapper.gridRoot.openOverviewRequested()
                     else doToggle();
                 }
                 
                 function doToggle() {
                     if (moduleId === "wifi") Networking.wifiEnabled = !Networking.wifiEnabled;
-                    else if (moduleId === "bluetooth") { if (moduleGridRoot.adapter) moduleGridRoot.adapter.enabled = !moduleGridRoot.adapter.enabled }
-                    else if (moduleId === "audio") { if (moduleGridRoot.audioNode) moduleGridRoot.audioNode.audio.muted = !moduleGridRoot.audioNode.audio.muted }
+                    else if (moduleId === "bluetooth") { if (activeDelegateWrapper.gridRoot.adapter) activeDelegateWrapper.gridRoot.adapter.enabled = !activeDelegateWrapper.gridRoot.adapter.enabled }
+                    else if (moduleId === "audio") { if (activeDelegateWrapper.gridRoot.audioNode) activeDelegateWrapper.gridRoot.audioNode.audio.muted = !activeDelegateWrapper.gridRoot.audioNode.audio.muted }
                     else if (moduleId === "peace") NotificationService.peaceMode = !NotificationService.peaceMode;
                     else doAction();
                 }
@@ -275,34 +445,26 @@ ColumnLayout {
                     anchors.margins: 12
                     clip: true
                     
-                    // State 1: The Collapsed UI (Pure Centered Icon)
+                    // ColSpan 1 UI (Centered Icon)
                     Item {
-                        id: collapsedUI
                         anchors.fill: parent
-                        opacity: activeDropArea.isExpanded ? 0.0 : 1.0
-                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                        visible: opacity > 0
+                        visible: activeDelegateWrapper.colSpan === 1
                         
                         Text {
                             anchors.centerIn: parent
-                            width: 32
-                            height: 32
-                            verticalAlignment: Text.AlignVCenter
-                            horizontalAlignment: Text.AlignHCenter
                             font.family: "Material Symbols Outlined"
                             font.pixelSize: 24
-                            color: tileDelegate.isActive ? Theme.primary : Theme.on_surface_variant
+                            color: tileDelegate.isActive ? Theme.on_primary : Theme.on_surface_variant
+                            Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
                             text: tileDelegate.mIcon
                         }
                     }
-                    
-                    // State 2: The Expanded UI (Left-Aligned List Item)
+
+                    // The Expanded UI (Left-Aligned List Item)
                     Item {
                         id: expandedUI
                         anchors.fill: parent
-                        opacity: activeDropArea.isExpanded ? 1.0 : 0.0
-                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                        visible: opacity > 0
+                        visible: activeDelegateWrapper.colSpan === 2
                         
                         RowLayout {
                             anchors.fill: parent
@@ -318,7 +480,8 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     font.family: "Material Symbols Outlined"
                                     font.pixelSize: 24
-                                    color: tileDelegate.isActive ? Theme.primary : Theme.on_surface_variant
+                                    color: tileDelegate.isActive ? Theme.on_primary : Theme.on_surface_variant
+                                    Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
                                     text: tileDelegate.mIcon
                                 }
                             }
@@ -335,7 +498,8 @@ ColumnLayout {
                                     font.family: Vars.fontFamily
                                     font.pixelSize: 16
                                     font.weight: 600
-                                    color: Theme.on_surface
+                                    color: tileDelegate.isActive ? Theme.on_primary : Theme.on_surface_variant
+                                    Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
                                     elide: Text.ElideRight
                                     Layout.fillWidth: true
                                 }
@@ -343,7 +507,8 @@ ColumnLayout {
                                 Text {
                                     Layout.alignment: Qt.AlignLeft
                                     horizontalAlignment: Text.AlignLeft
-                                    color: Theme.on_surface_variant
+                                    color: tileDelegate.isActive ? Theme.on_primary : Theme.on_surface_variant
+                                    Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
                                     font.family: Vars.fontFamily
                                     font.pixelSize: 14
                                     elide: Text.ElideRight
@@ -357,7 +522,34 @@ ColumnLayout {
                     
                     MouseArea { 
                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor; 
-                        onClicked: { if (!moduleGridRoot.isEditorMode) tileDelegate.doAction() } 
+                        onClicked: { if (!activeDelegateWrapper.gridRoot.isEditorMode) tileDelegate.doToggle() } 
+                    }
+
+                    // Sub-menu Chevron
+                    Rectangle {
+                        visible: tileDelegate.hasSubMenu && activeDelegateWrapper.colSpan === 2
+                        width: 32
+                        height: 32
+                        radius: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        color: "transparent"
+                        
+                        Text {
+                            anchors.centerIn: parent
+                            font.family: "Material Symbols Outlined"; font.pixelSize: 24
+                            color: tileDelegate.isActive ? Theme.on_primary : Theme.on_surface_variant
+                            Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                            text: "chevron_right"
+                        }
+                        
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (!activeDelegateWrapper.gridRoot.isEditorMode) tileDelegate.doAction()
+                            }
+                        }
                     }
                 }
                 // --- END WORKING MODULE UI ---
@@ -384,51 +576,71 @@ ColumnLayout {
                         
                         drag.target: tileDelegate
 
-                        onPressed: {
-                            cursorShape = Qt.ClosedHandCursor;
-                        }
                         onReleased: {
                             cursorShape = Qt.OpenHandCursor;
                             tileDelegate.Drag.drop();
                             tileDelegate.x = 0;
                             tileDelegate.y = 0;
-                            rootItem.saveLayout();
+                            activeDelegateWrapper.gridRoot.saveLayout();
                         }
                     }
-
-                    // Top-Left Drag Indicator Badge
-                    Text {
+                    // Top-Left Remove Button (-)
+                    Rectangle {
+                        width: 24; height: 24; radius: 12
                         anchors.top: parent.top
                         anchors.left: parent.left
-                        anchors.margins: 12
-                        font.family: "Material Symbols Outlined"; font.pixelSize: 20
-                        color: Theme.on_surface_variant
-                        text: "drag_indicator"
-                    }
-                    
-                    // Expand/Collapse Chevron Pill (Right Edge)
-                    Rectangle {
-                        width: 12
-                        height: 48
-                        radius: 6
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.right: parent.right
-                        anchors.rightMargin: -6
-                        color: Theme.secondary_container
+                        anchors.topMargin: -4
+                        anchors.leftMargin: -4
+                        color: Theme.error
                         
-                        Text {
+                        
+                        Text { 
                             anchors.centerIn: parent
-                            font.family: "Material Symbols Outlined"; font.pixelSize: 12
-                            color: Theme.on_secondary_container
-                            text: activeDropArea.isExpanded ? "expand_less" : "expand_more"
+                            text: "remove"
+                            font.family: "Material Symbols Outlined"
+                            font.pixelSize: 16
+                            color: Theme.on_error 
                         }
                         
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                model.expanded = !model.expanded
-                                moduleGridRoot.saveLayout()
+                            onClicked: activeDelegateWrapper.gridRoot.deactivateModule(tileDelegate.moduleId)
+                        }
+                    }
+
+                    // Resize Pill Handle (Right Edge)
+                    Rectangle {
+                        width: 4
+                        height: 32
+                        radius: 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        anchors.rightMargin: 4
+                        color: Theme.on_surface_variant
+                        
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -8 // increase hit area
+                            cursorShape: Qt.SizeHorCursor
+                            preventStealing: true
+                            
+                            property real startRootX: 0
+                            
+                            onPressed: (mouse) => { 
+                                let pt = mapToItem(activeGrid, mouse.x, mouse.y);
+                                startRootX = pt.x; 
+                            }
+                            onPositionChanged: (mouse) => {
+                                let pt = mapToItem(activeGrid, mouse.x, mouse.y);
+                                let deltaX = pt.x - startRootX;
+                                if (deltaX > 20 && activeDelegateWrapper.colSpan === 1) {
+                                    activeDelegateWrapper.gridRoot.resizeModule(activeDelegateWrapper.moduleId, 2);
+                                    startRootX = pt.x;
+                                } else if (deltaX < -20 && activeDelegateWrapper.colSpan === 2) {
+                                    activeDelegateWrapper.gridRoot.resizeModule(activeDelegateWrapper.moduleId, 1);
+                                    startRootX = pt.x;
+                                }
                             }
                         }
                     }
@@ -437,7 +649,7 @@ ColumnLayout {
 
                 
                 Drag.active: dragArea.drag.active
-                Drag.source: activeDropArea
+                Drag.source: activeDelegateWrapper
                 z: dragArea.drag.active ? 100 : 1
                 Drag.keys: ["m3_module"]
             }
@@ -448,202 +660,65 @@ ColumnLayout {
     // VISUAL GRIDS
     // ==========================================
     
-    // Background drop area to catch active tiles dropped at the end
-    DropArea {
+    // Background 4x4 coordinate grid
+    Item {
+        id: activeGrid
         Layout.fillWidth: true
-        Layout.preferredHeight: activeFlow.implicitHeight > 64 ? activeFlow.implicitHeight : 64
-        keys: ["m3_module"]
-        onDropped: function(drop) {
-            if (drop.source && drop.source.moduleId) {
-                moduleGridRoot.activateModule(drop.source.moduleId);
-                drop.accept();
-            }
-            moduleGridRoot.saveLayout();
-        }
         
-        Flow {
-            id: activeFlow
+        property int displayRows: moduleGridRoot.isEditorMode ? 4 : Math.max(1, moduleGridRoot.activeMaxRow)
+        Layout.preferredHeight: (64 * displayRows) + (12 * Math.max(0, displayRows - 1))
+        
+        Behavior on Layout.preferredHeight { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+        
+        GridLayout {
             anchors.fill: parent
-            spacing: 12
-            
-            move: Transition {
-                NumberAnimation { properties: "x,y"; duration: 250; easing.type: Easing.OutCubic }
-            }
+            columns: 4
+            rows: 4
+            columnSpacing: 12
+            rowSpacing: 12
             
             Repeater {
-                model: activeVisualModel
+                model: 16
+                DropArea {
+                    id: cellDrop
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    keys: ["m3_module"]
+                    
+                    property int xIndex: index % 4
+                    property int yIndex: Math.floor(index / 4)
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: moduleGridRoot.isEditorMode ? Theme.surface_variant : "transparent"
+                        opacity: moduleGridRoot.isEditorMode ? 0.3 : 0
+                        radius: 16
+                        border.color: cellDrop.containsDrag ? Theme.primary : "transparent"
+                        border.width: 2
+                        Behavior on opacity { NumberAnimation { duration: 250 } }
+                    }
+
+                    onDropped: (drag) => {
+                        if (drag.source.dragMode === "active_module") {
+                            moduleGridRoot.moveModule(drag.source.moduleId, xIndex, yIndex);
+                        } else if (drag.source.dragMode === "available_module") {
+                            moduleGridRoot.activateModule(drag.source.moduleId, xIndex, yIndex);
+                        }
+                        drag.accept();
+                    }
+                }
             }
+        }
+        
+        Repeater {
+            model: activeVisualModel
         }
     }
 
-    DelegateModel {
-        id: availableVisualModel
-        model: availableTiles
-        delegate: DropArea {
-            id: availableDropArea
-            width: GridView.view ? GridView.view.cellWidth : 80
-            height: GridView.view ? GridView.view.cellHeight : 80
-            keys: ["m3_module"]
-            
-            z: availDragArea.drag.active ? 100 : 1
-            
-            property int visualIndex: DelegateModel.itemsIndex
-            property string dragMode: "available_module"
-            property string moduleId: model.moduleId
-            property var rootItem: moduleGridRoot
-
-            onPositionChanged: function(drag) {
-                if (!moduleGridRoot.isEditorMode) return;
-                if (!drag.source) return;
-                if (drag.source.dragMode !== "available_module") return;
-                
-                let from = drag.source.visualIndex;
-                let hoverIndex = availableDropArea.visualIndex;
-                
-                if (from !== undefined && hoverIndex !== undefined && from !== hoverIndex && drag.source !== availableDropArea) {
-                    let isLeftHalf = drag.x < availableDropArea.width / 2;
-                    let targetIndex = hoverIndex;
-                    
-                    if (from < hoverIndex && !isLeftHalf) {
-                        targetIndex = hoverIndex;
-                    } else if (from < hoverIndex && isLeftHalf) {
-                        targetIndex = hoverIndex - 1;
-                    } else if (from > hoverIndex && isLeftHalf) {
-                        targetIndex = hoverIndex;
-                    } else if (from > hoverIndex && !isLeftHalf) {
-                        targetIndex = hoverIndex + 1;
-                    }
-                    
-                    if (from !== targetIndex) {
-                        availableVisualModel.items.move(from, targetIndex);
-                        drag.source.visualIndex = targetIndex;
-                    }
-                }
-            }
-            
-            Rectangle {
-                id: availDelegate
-                anchors.centerIn: parent
-                width: GridView.view ? GridView.view.cellWidth - 16 : 100
-                height: GridView.view ? GridView.view.cellHeight - 16 : 48
-                radius: 16
-                
-                color: availDragArea.drag.active ? Theme.surface_container_highest : Theme.surface_container_high
-                scale: availDragArea.drag.active ? 1.05 : 1.0
-                
-                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                Behavior on color { ColorAnimation { duration: 150 } }
-
-                property string mIcon: moduleId === "wifi" ? moduleGridRoot.wifiIcon : moduleId === "bluetooth" ? moduleGridRoot.bluetoothIcon : moduleId === "audio" ? "\ue050" : moduleId === "display" ? "\ue30d" : moduleId === "peace" ? "\ue15c" : moduleId === "color" ? "palette" : moduleId === "wallpaper" ? "wallpaper" : moduleId === "overview" ? "grid_view" : ""
-                property string mName: moduleId.charAt(0).toUpperCase() + moduleId.slice(1)
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 12
-                    spacing: 12
-                    
-                    Text {
-                        Layout.alignment: Qt.AlignVCenter
-                        font.family: "Material Symbols Outlined"
-                        font.pixelSize: 24
-                        color: Theme.on_surface_variant
-                        text: availDelegate.mIcon
-                    }
-                    Text {
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.fillWidth: true
-                        font.family: Vars.fontFamily
-                        font.pixelSize: 14
-                        font.weight: 500
-                        color: Theme.on_surface_variant
-                        text: availDelegate.mName
-                        elide: Text.ElideRight
-                    }
-                }
-
-                MouseArea {
-                    id: availDragArea
-                    anchors.fill: parent
-                    cursorShape: Qt.OpenHandCursor
-                    drag.target: availDelegate
-
-                    onPressed: { cursorShape = Qt.ClosedHandCursor; }
-                    onReleased: {
-                        cursorShape = Qt.OpenHandCursor;
-                        availDelegate.Drag.drop();
-                        availDelegate.x = 0;
-                        availDelegate.y = 0;
-                        rootItem.saveLayout();
-                    }
-                }
-                
-                Drag.active: availDragArea.drag.active
-                Drag.source: availableDropArea
-                Drag.keys: ["m3_module"]
-            }
-        }
-    }
-
-    // ==========================================
-    // MODULE STASH (HOLDING AREA)
-    // ==========================================
-    ColumnLayout {
-        id: moduleStashContainer
-        Layout.fillWidth: true
-        Layout.topMargin: 16
-        visible: moduleGridRoot.isEditorMode
-        spacing: 12
-
-        Text {
-            text: "Available Modules"
-            font.family: Vars.fontFamily
-            font.pixelSize: 14
-            font.weight: Font.DemiBold
-            color: Theme.on_surface_variant
-        }
-
-        DropArea {
-            id: stashDropArea
-            Layout.fillWidth: true
-            Layout.preferredHeight: Math.ceil(availableTiles.count / 2) * 64 + 16 > 64 ? Math.ceil(availableTiles.count / 2) * 64 + 16 : 64
-            keys: ["m3_module"]
-
-            onDropped: function(drop) {
-                if (drop.source && drop.source.moduleId) {
-                    moduleGridRoot.deactivateModule(drop.source.moduleId);
-                    drop.accept();
-                }
-                moduleGridRoot.saveLayout();
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: stashDropArea.containsDrag ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.08) : Theme.surface
-                border.color: Theme.outline_variant
-                border.width: 1
-                radius: 16
-                
-                Behavior on color { ColorAnimation { duration: 200; easing.type: Easing.OutCubic } }
-
-                GridView {
-                    id: availableFlow
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    
-                    cellWidth: width / 2
-                    cellHeight: 64
-                    
-                    // Allow scrollbar width if needed, but clip:false helps.
-                    boundsBehavior: Flickable.StopAtBounds
-                    clip: !moduleGridRoot.isEditorMode
-
-                    move: Transition {
-                        NumberAnimation { properties: "x,y"; duration: 250; easing.type: Easing.OutCubic }
-                    }
-                    
-                    model: availableVisualModel
-                }
-            }
-        }
+    ModuleStore {
+        isEditorMode: moduleGridRoot.isEditorMode
+        moduleGridRoot: moduleGridRoot
+        availableTiles: availableTiles
+        baseCellWidth: moduleGridRoot.baseCellWidth
     }
 }

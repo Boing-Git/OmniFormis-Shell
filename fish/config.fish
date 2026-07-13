@@ -43,3 +43,5 @@ if status is-interactive
     # Custom fish config
     source ~/.config/caelestia/user-config.fish 2> /dev/null
 end
+fish_add_path ~/.local/bin
+set -U fish_user_paths ~/.local/bin $fish_user_paths

@@ -138,13 +138,14 @@ Item {
                         
                         // Edit Button
                         Rectangle {
-                            width: 48; height: 48; radius: 16
+                            width: 48; height: 48; radius: root.isEditorMode ? 12 : height / 2
                             color: editHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (editHover.containsMouse || root.isEditorMode ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
                             Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: root.isEditorMode ? Theme.primary : Theme.on_surface; text: "edit" }
                             MouseArea { 
                                 id: editHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; 
                                 onClicked: root.isEditorMode = !root.isEditorMode 
                             }
+                            Behavior on radius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
                             Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3Standard } }
                         }
                         
@@ -152,9 +153,26 @@ Item {
                         Rectangle {
                             width: 48; height: 48; radius: 16
                             color: refreshHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (refreshHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
-                            Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: Theme.on_surface; text: "refresh" }
+                            Text { 
+                                id: refreshIcon
+                                anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: Theme.on_surface; text: "refresh" 
+                                RotationAnimation {
+                                    id: refreshAnim
+                                    target: refreshIcon
+                                    property: "rotation"
+                                    from: 0; to: 360
+                                    duration: 700
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: Vars.m3ExpressiveSpatialSlow
+                                }
+                            }
                             MouseArea { 
                                 id: refreshHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; 
+                                onClicked: {
+                                    refreshAnim.restart();
+                                    Quickshell.execDetached({ command: ["hyprctl", "reload"] });
+                                    Quickshell.execDetached({ command: ["bash", "-c", "qs kill; sleep 0.1; qs"] });
+                                }
                             }
                             Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3Standard } }
                         }
@@ -163,10 +181,26 @@ Item {
                         Rectangle {
                             width: 48; height: 48; radius: 16
                             color: settingsHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (settingsHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
-                            Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: Theme.on_surface; text: "settings" }
+                            Text { 
+                                id: settingsIcon
+                                anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: Theme.on_surface; text: "settings" 
+                                RotationAnimation {
+                                    id: settingsAnim
+                                    target: settingsIcon
+                                    property: "rotation"
+                                    from: 0; to: 360
+                                    duration: 700
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: Vars.m3ExpressiveSpatialSlow
+                                }
+                            }
                             MouseArea { 
                                 id: settingsHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; 
-                                onClicked: { root.expanded = false; root.openSettingsRequested() } 
+                                onClicked: { 
+                                    settingsAnim.restart();
+                                    root.expanded = false; 
+                                    root.openSettingsRequested();
+                                } 
                             }
                             Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3Standard } }
                         }

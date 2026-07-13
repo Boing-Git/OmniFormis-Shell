@@ -1,28 +1,28 @@
 {
   "checksum": ":)",
-  "wallpaper": "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/Fantasy-Garden.png",
+  "wallpaper": "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/Pastel-Window.png",
   "alpha": "100",
   "special": {
-    "background": "#dfdacc",
-    "foreground": "#1d1c13",
-    "cursor": "#695f11"
+    "background": "#dadada",
+    "foreground": "#1a1c1c",
+    "cursor": "#3e616b"
   },
   "colors": {
-    "color0": "#dfdacc",
-    "color1": "#2e2902",
-    "color2": "#756b31",
-    "color3": "#34734f",
-    "color4": "#695f11",
-    "color5": "#416651",
-    "color6": "#f4e9b4",
-    "color7": "#4a4739",
-    "color8": "#e8e2d0",
-    "color9": "#726608",
-    "color10": "#998c3f",
-    "color11": "#459568",
-    "color12": "#958718",
-    "color13": "#55856a",
-    "color14": "#fae983",
-    "color15": "#1d1c13"
+    "color0": "#dadada",
+    "color1": "#072f2f",
+    "color2": "#416b77",
+    "color3": "#684781",
+    "color4": "#3e616b",
+    "color5": "#665672",
+    "color6": "#d1e8f0",
+    "color7": "#41484a",
+    "color8": "#dde4e6",
+    "color9": "#346c7a",
+    "color10": "#538998",
+    "color11": "#8359a2",
+    "color12": "#517e8b",
+    "color13": "#806c8f",
+    "color14": "#4c808f",
+    "color15": "#1a1c1c"
   }
 }

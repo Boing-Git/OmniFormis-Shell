@@ -2,4 +2,4 @@
 # VERSION: 3.0
 SETUVAR --export STARSHIP_CONFIG:/home/boing/\x2econfig/color\x2dschemes/current/starship\x2etoml
 SETUVAR __fish_initialized:4300
-SETUVAR fish_user_paths:/home/boing/\x2elocal/bin
+SETUVAR fish_user_paths:/home/boing/\x2elocal/bin\x1e/var/tmp

@@ -265,7 +265,7 @@ Item {
                                         anchors.centerIn: parent
                                         text: wsContainer.wsId
                                         font.family: Vars.fontFamily
-                                        font.pixelSize: Math.floor(overviewPanel.wsHeight * 0.6)
+                                        font.pixelSize: Math.round(overviewPanel.wsHeight * 0.6) | 0
                                         font.weight: 600
                                         color: wsContainer.isFocused ? Theme.on_primary_container : Theme.on_surface_variant
                                         opacity: 0.15
@@ -380,7 +380,6 @@ Item {
                                             return winA?.floating ? 1 : -1;
                                         return (winB?.focusHistoryID ?? 0) - (winA?.focusHistoryID ?? 0);
                                     });
-                                    console.log("ScriptModel: filtered to", result.length, "windows from", tpls.length, "toplevels");
                                     return result;
                                 }
                             }
