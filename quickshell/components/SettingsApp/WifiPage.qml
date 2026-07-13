@@ -17,26 +17,52 @@ Item {
     property var panelRef
     property var wifiDevice
 
+    property bool authOverlayVisible: false
+    property string pendingSsid: ""
+    property bool authError: false
     property string selectedNetworkForInfo: ""
     property string selectedNetworkPassword: ""
 
     Process {
         id: nmcliPwdProcess
         property string targetSsid: ""
-        command: ["pkexec", "nmcli", "-s", "-g", "802-11-wireless-security.psk", "connection", "show", targetSsid]
+        command: ["nmcli", "-s", "-g", "802-11-wireless-security.psk", "connection", "show", targetSsid]
         stdout: StdioCollector {
             onStreamFinished: {
-                let res = this.text.trim();
-                rootWifiPage.selectedNetworkPassword = res ? res : "Authentication failed or not found";
+                rootWifiPage.selectedNetworkPassword = this.text.trim();
+            }
+        }
+    }
+
+    Process {
+        id: authProcess
+        property string pwd: ""
+        command: ["bash", "-c", "echo '" + pwd.replace(/'/g, "'\\''") + "' | sudo -S true"]
+        onExited: (code) => {
+            if (code === 0) {
+                // Success!
+                rootWifiPage.selectedNetworkForInfo = rootWifiPage.pendingSsid;
+                rootWifiPage.selectedNetworkPassword = "Fetching...";
+                nmcliPwdProcess.targetSsid = rootWifiPage.pendingSsid;
+                nmcliPwdProcess.running = true;
+                
+                rootWifiPage.authOverlayVisible = false;
+                authPwdInput.text = "";
+                rootWifiPage.authError = false;
+            } else {
+                rootWifiPage.authError = true;
+                authPwdInput.selectAll();
+                authPwdInput.forceActiveFocus();
             }
         }
     }
 
     function showPasswordFor(ssid) {
-        rootWifiPage.selectedNetworkForInfo = ssid;
-        rootWifiPage.selectedNetworkPassword = "Fetching...";
-        nmcliPwdProcess.targetSsid = ssid;
-        nmcliPwdProcess.running = true;
+        rootWifiPage.pendingSsid = ssid;
+        rootWifiPage.authOverlayVisible = true;
+        rootWifiPage.authError = false;
+        authPwdInput.text = "";
+        authPwdInput.forceActiveFocus();
     }
 
     ColumnLayout {
@@ -471,6 +497,91 @@ Item {
                             anchors.fill: parent; cursorShape: Qt.PointingHandCursor; hoverEnabled: true
                             onClicked: { Quickshell.execDetached({ command: ["wl-copy", rootWifiPage.selectedNetworkPassword] }); }
                         }
+                    }
+                }
+            }
+
+            Item { Layout.fillHeight: true }
+        }
+    }
+
+    // Password Auth Page Overlay
+    Rectangle {
+        id: authPageOverlay
+        anchors.fill: parent
+        color: Theme.surface_container_low
+        visible: rootWifiPage.authOverlayVisible
+        opacity: visible ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3ExpressiveSpatialSlow } }
+        z: 101 // Above info page overlay
+
+        // Intercept mouse events so they don't fall through
+        MouseArea { anchors.fill: parent; hoverEnabled: true }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: Vars.spacingMedium
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 16
+
+                Rectangle {
+                    width: 40; height: 40; radius: 20
+                    color: backAuthHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (backAuthHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
+                    Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Theme.on_surface; text: "\ue5c4" }
+                    MouseArea { id: backAuthHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: rootWifiPage.authOverlayVisible = false }
+                    Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3Standard } }
+                }
+
+                Text { text: "Authentication Required"; font.family: Vars.fontFamily; font.pixelSize: 20; font.weight: 600; color: Theme.on_surface }
+                Item { Layout.fillWidth: true }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 180
+                radius: 16
+                color: Theme.surface_container
+
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    spacing: 16
+                    
+                    Text { text: "Enter system password to view Wi-Fi credentials for:"; font.family: Vars.fontFamily; font.pixelSize: 14; color: Theme.on_surface; Layout.alignment: Qt.AlignHCenter }
+                    Text { text: rootWifiPage.pendingSsid; font.family: Vars.fontFamily; font.pixelSize: 18; font.weight: 500; color: Theme.on_surface; Layout.alignment: Qt.AlignHCenter }
+                    
+                    Rectangle {
+                        Layout.preferredWidth: 260
+                        Layout.preferredHeight: 48
+                        radius: 8
+                        color: Theme.surface_container_highest
+                        border.color: rootWifiPage.authError ? Theme.error : (authPwdInput.activeFocus ? Theme.primary : "transparent")
+                        border.width: 2
+                        
+                        TextInput {
+                            id: authPwdInput
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            verticalAlignment: TextInput.AlignVCenter
+                            font.family: Vars.fontFamily
+                            font.pixelSize: 16
+                            color: rootWifiPage.authError ? Theme.error : Theme.on_surface
+                            echoMode: TextInput.Password
+                            clip: true
+                            
+                            Keys.onReturnPressed: {
+                                authProcess.pwd = authPwdInput.text;
+                                authProcess.running = true;
+                            }
+                        }
+                    }
+                    
+                    Text { 
+                        text: "Incorrect password"
+                        font.family: Vars.fontFamily; font.pixelSize: 12; color: Theme.error
+                        visible: rootWifiPage.authError
+                        Layout.alignment: Qt.AlignHCenter
                     }
                 }
             }

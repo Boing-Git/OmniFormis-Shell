@@ -87,7 +87,7 @@ ColumnLayout {
                 border.width: 1
                 Behavior on border.color { ColorAnimation { duration: 250 } }
 
-                property string mIcon: moduleId === "wifi" ? availableDropArea.gridRoot.wifiIcon : moduleId === "bluetooth" ? availableDropArea.gridRoot.bluetoothIcon : moduleId === "audio" ? "\ue050" : moduleId === "display" ? "\ue30d" : moduleId === "peace" ? "\ue15c" : moduleId === "color" ? "palette" : moduleId === "wallpaper" ? "wallpaper" : moduleId === "overview" ? "grid_view" : ""
+                property string mIcon: moduleId === "wifi" ? availableDropArea.gridRoot.wifiIcon : moduleId === "bluetooth" ? availableDropArea.gridRoot.bluetoothIcon : moduleId === "audio" ? "\ue050" : moduleId === "display" ? "\ue30d" : moduleId === "peace" ? "\ue15c" : moduleId === "color" ? "palette" : moduleId === "wallpaper" ? "wallpaper" : moduleId === "overview" ? "grid_view" : moduleId === "game_mode" ? "sports_esports" : ""
                 
                 Text {
                     anchors.centerIn: parent

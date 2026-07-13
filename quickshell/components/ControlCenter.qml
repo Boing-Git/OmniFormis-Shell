@@ -221,6 +221,7 @@ Item {
                     // Modular Components
                     CC.ModuleGrid {
                         isEditorMode: root.isEditorMode
+                        gameMode: root.gameMode
                         onSubMenuRequested: (menuName) => { root.currentSubMenu = menuName; }
                         onOpenColorSchemeRequested: { root.expanded = false; root.openColorSchemeRequested() }
                         onOpenSettingsRequested: { root.expanded = false; root.openSettingsRequested() }

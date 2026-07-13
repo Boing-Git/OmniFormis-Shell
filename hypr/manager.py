@@ -190,7 +190,7 @@ def main():
             
         # Restart quickshell if GameMode was changed
         if getattr(args, "GameMode", None) is not None:
-            subprocess.Popen("pkill -9 .quickshell-wra; qs", shell=True)
+            subprocess.Popen("qs kill; sleep 0.1; qs -d", shell=True)
 
 if __name__ == "__main__":
     main()

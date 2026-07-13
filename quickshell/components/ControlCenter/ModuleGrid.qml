@@ -13,6 +13,7 @@ ColumnLayout {
     id: moduleGridRoot
     
     property bool isEditorMode: false
+    property bool gameMode: false
     property int activeMaxRow: 4
     property real baseCellWidth: (width - (12 * 3)) / 4
     signal subMenuRequested(string menuName)
@@ -257,7 +258,8 @@ ColumnLayout {
             {"moduleId": "peace", "colSpan": 1},
             {"moduleId": "color", "colSpan": 1},
             {"moduleId": "wallpaper", "colSpan": 1},
-            {"moduleId": "overview", "colSpan": 1}
+            {"moduleId": "overview", "colSpan": 1},
+            {"moduleId": "game_mode", "colSpan": 1}
         ];
         
         activeTiles.clear();
@@ -375,7 +377,8 @@ ColumnLayout {
                                         (moduleId === "bluetooth" ? moduleGridRoot.adapterState : false) || 
                                         (moduleId === "audio" ? (moduleGridRoot.audioNode && !moduleGridRoot.audioNode.audio.muted) : false) || 
                                         (moduleId === "display" ? false : false) ||
-                                        (moduleId === "peace" ? NotificationService.peaceMode : false)
+                                        (moduleId === "peace" ? NotificationService.peaceMode : false) ||
+                                        (moduleId === "game_mode" ? moduleGridRoot.gameMode : false)
                                         
                 property bool hasSubMenu: moduleId === "wifi" || moduleId === "bluetooth" || moduleId === "display" || moduleId === "color" || moduleId === "wallpaper" || moduleId === "overview"
                                         
@@ -386,7 +389,8 @@ ColumnLayout {
                                        moduleId === "peace" ? "\ue15c" :
                                        moduleId === "color" ? "palette" :
                                        moduleId === "wallpaper" ? "wallpaper" :
-                                       moduleId === "overview" ? "grid_view" : ""
+                                       moduleId === "overview" ? "grid_view" : 
+                                       moduleId === "game_mode" ? "sports_esports" : ""
                                        
                 property string mTitle: moduleId === "wifi" ? "Wi-Fi" :
                                         moduleId === "bluetooth" ? "Bluetooth" :
@@ -395,7 +399,8 @@ ColumnLayout {
                                         moduleId === "peace" ? "Peace" :
                                         moduleId === "color" ? "Colors" :
                                         moduleId === "wallpaper" ? "Wallpaper" :
-                                        moduleId === "overview" ? "Overview" : ""
+                                        moduleId === "overview" ? "Overview" : 
+                                        moduleId === "game_mode" ? "Game Mode" : ""
                                         
                 function getExpandedSubtitle() {
                     switch(moduleId) {
@@ -415,6 +420,8 @@ ColumnLayout {
                             return "Switcher";
                         case "overview":
                             return "Workspaces";
+                        case "game_mode":
+                            return isActive ? "On" : "Off";
                         default: 
                             return "";
                     }
@@ -435,6 +442,7 @@ ColumnLayout {
                     else if (moduleId === "bluetooth") { if (activeDelegateWrapper.gridRoot.adapter) activeDelegateWrapper.gridRoot.adapter.enabled = !activeDelegateWrapper.gridRoot.adapter.enabled }
                     else if (moduleId === "audio") { if (activeDelegateWrapper.gridRoot.audioNode) activeDelegateWrapper.gridRoot.audioNode.audio.muted = !activeDelegateWrapper.gridRoot.audioNode.audio.muted }
                     else if (moduleId === "peace") NotificationService.peaceMode = !NotificationService.peaceMode;
+                    else if (moduleId === "game_mode") Quickshell.execDetached({ command: ["hypr-manager", "--GameMode", moduleGridRoot.gameMode ? "false" : "true"] });
                     else doAction();
                 }
 

@@ -17,7 +17,7 @@ ColumnLayout {
     property var allVars: []
 
     function updateVariable(key, val) {
-        var proc = Qt.createQmlObject('import Quickshell.Io; Process { command: ["hypr-manager", "set", "' + key + '", "' + val + '"]; onExited: destroy() }', rootPage);
+        var proc = Qt.createQmlObject('import Quickshell.Io; Process { command: ["hypr-manager", "--' + key + '", "' + val + '"]; onExited: destroy() }', rootPage);
         proc.running = true;
     }
 

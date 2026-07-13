@@ -90,6 +90,12 @@ PanelWindow {
     Item {
         anchors.fill: parent
 
+        MouseArea {
+            anchors.fill: parent
+            z: -1
+            onClicked: closeAll()
+        }
+
         RowLayout {
             anchors.fill: parent
             anchors.leftMargin: Vars.spacingSmall

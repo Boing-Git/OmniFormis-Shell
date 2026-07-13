@@ -34,6 +34,7 @@ Item {
     HyprlandFocusGrab {
         active: root.expanded && root.focusWindow !== null
         windows: root.focusWindow ? [root.focusWindow] : []
+        onCleared: root.expanded = false
     }
     
     onExpandedChanged: {
@@ -91,13 +92,7 @@ Item {
                     RowLayout {
                         spacing: Vars.spacingMedium
 
-                        Rectangle {
-                            width: 40; height: 40; radius: Vars.radiusMedium
-                            color: backHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (backHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
-                            Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Theme.on_surface; text: "\ue5cd" }
-                            MouseArea { id: backHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.expanded = false }
-                            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.m3Standard } }
-                        }
+
 
                         Text {
                             text: "palette"
