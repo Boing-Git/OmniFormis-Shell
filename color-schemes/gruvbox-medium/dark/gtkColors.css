@@ -3,19 +3,19 @@
 * Generated with Matugen
 */
 
-@define-color accent_color #bdae93;
-@define-color accent_fg_color #282828;
-@define-color accent_bg_color #bdae93;
-@define-color window_bg_color #282828;
-@define-color window_fg_color #ebdbb2;
-@define-color headerbar_bg_color #282828;
-@define-color headerbar_fg_color #ebdbb2;
-@define-color popover_bg_color #282828;
-@define-color popover_fg_color #ebdbb2;
-@define-color view_bg_color #282828;
-@define-color view_fg_color #ebdbb2;
-@define-color card_bg_color #282828;
-@define-color card_fg_color #ebdbb2;
+@define-color accent_color #b57614;
+@define-color accent_fg_color #fbf1c7;
+@define-color accent_bg_color #b57614;
+@define-color window_bg_color #d5c4a1;
+@define-color window_fg_color #3c3836;
+@define-color headerbar_bg_color #d5c4a1;
+@define-color headerbar_fg_color #3c3836;
+@define-color popover_bg_color #d5c4a1;
+@define-color popover_fg_color #3c3836;
+@define-color view_bg_color #fbf1c7;
+@define-color view_fg_color #3c3836;
+@define-color card_bg_color #fbf1c7;
+@define-color card_fg_color #3c3836;
 @define-color sidebar_bg_color @window_bg_color;
 @define-color sidebar_fg_color @window_fg_color;
 @define-color sidebar_border_color @window_bg_color;

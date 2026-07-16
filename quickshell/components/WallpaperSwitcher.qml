@@ -35,6 +35,7 @@ Item {
         category: "WallpaperSwitcher"
         property string matugenScheme: "scheme-tonal-spot"
         property string wallpaperDir: ""
+        property string currentWallpaper: ""
     }
 
     signal closeRequested()
@@ -70,7 +71,7 @@ Item {
         width: root.expanded ? 900 : 100
         height: root.expanded ? 550 : 40
         
-        color: Theme.surface_container_low
+        color: Vars.translucent ? Qt.rgba(Theme.surface_container_low.r, Theme.surface_container_low.g, Theme.surface_container_low.b, 0.85) : Theme.surface_container_low
         radius: root.gameMode ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
         
         opacity: root.expanded || panel.width > 105 ? 1.0 : 0.0
@@ -121,6 +122,7 @@ Item {
     function executeWallpaperChange(filePath) {
         console.log("[USER ACTION] Wallpaper selected: " + filePath);
         root.currentWallpaper = filePath;
+        settings.currentWallpaper = filePath;
 
         matugenProc.command = ["matugen", "image", filePath, "-m", "light", "-t", settings.matugenScheme, "--source-color-index", "0"];
         matugenProc.running = true;

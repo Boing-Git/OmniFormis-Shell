@@ -12,14 +12,17 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 # ==========================================
 def parse_qml_theme(filepath):
     c = {}
-    base_name = os.path.basename(filepath)
-    name = base_name.replace('-light', '').replace('-dark', '').replace(' light', '').replace(' dark', '').replace('.qml', '').title()
-    if not name:
-        name = "AutoTheme"
+    name = None
+    found_from_comment = False
     try:
         with open(filepath, 'r') as f:
             for line in f:
                 line = line.strip()
+                if line.startswith('//') and not found_from_comment:
+                    comment_name = line.lstrip('/').strip()
+                    if comment_name:
+                        name = comment_name
+                        found_from_comment = True
                 if not line or line.startswith('//'): continue
                 match = re.search(r'readonly property color (\w+):\s*"([^"]+)"', line)
                 if match:
@@ -29,7 +32,19 @@ def parse_qml_theme(filepath):
     except Exception as e:
         print(f"Error reading {filepath}: {e}")
         sys.exit(1)
-    return c, name
+        
+    if not found_from_comment or not name:
+        base_name = os.path.basename(filepath)
+        name = base_name.replace('.qml', '')
+        
+    name = re.sub(r'(?i)[-\s]*(light|dark)[-\s]*', ' ', name)
+    name = name.replace('-', ' ').replace('_', ' ')
+    name = ' '.join(name.split()).title()
+    
+    if not name:
+        name = "AutoTheme"
+        
+    return c, name, found_from_comment
 
 def process_template(template_content, light_map, dark_map, is_dark_mode=True):
     pattern = r'\{\{\s*colors\.([a-zA-Z0-9_]+)\.(light|dark)\.hex[^\}]*\}\}'
@@ -65,10 +80,16 @@ def process_template(template_content, light_map, dark_map, is_dark_mode=True):
     return template_content
 
 def cmd_theme_generate(light_file, dark_file):
-    light_map, light_name = parse_qml_theme(light_file)
-    dark_map, dark_name = parse_qml_theme(dark_file)
+    light_map, light_name, light_has_comment = parse_qml_theme(light_file)
+    dark_map, dark_name, dark_has_comment = parse_qml_theme(dark_file)
     
-    theme_name = light_name
+    if light_has_comment:
+        theme_name = light_name
+    elif dark_has_comment:
+        theme_name = dark_name
+    else:
+        theme_name = light_name if len(light_name) >= len(dark_name) else dark_name
+        
     dir_name = theme_name.lower().replace(' ', '-')
 
     config_path = os.path.expanduser('~/.config/matugen/config.toml')
@@ -143,6 +164,27 @@ def cmd_theme_list():
     print("Available Themes:")
     for t in sorted(themes):
         print(f"  - {t}")
+
+def cmd_theme_toggle():
+    current_link = os.path.expanduser('~/.config/color-schemes/current/quickTheme.qml')
+    if not os.path.exists(current_link):
+        print("No current theme linked.")
+        sys.exit(1)
+        
+    real_path = os.path.realpath(current_link)
+    parts = real_path.split('/')
+    if len(parts) < 3:
+        print("Invalid theme path structure.")
+        sys.exit(1)
+        
+    current_mode = parts[-2]
+    current_theme = parts[-3]
+    
+    new_mode = "light" if current_mode == "dark" else "dark"
+    set_script = os.path.expanduser('~/.config/color-schemes/set-theme.sh')
+    
+    print(f"Toggling to {current_theme} ({new_mode})")
+    subprocess.Popen([set_script, current_theme, new_mode])
 
 # ==========================================
 # QUICKSHELL VARIABLES & MANAGEMENT (QS)
@@ -545,6 +587,7 @@ def main():
     theme_gen.add_argument("dark_file", help="Path to dark theme QML")
     
     theme_subparsers.add_parser("list", help="List available themes")
+    theme_subparsers.add_parser("toggle", help="Toggle between light and dark mode")
 
     # 2. qs
     parser_qs = subparsers.add_parser("qs", help="Quickshell management")
@@ -593,6 +636,8 @@ def main():
             cmd_theme_generate(args.light_file, args.dark_file)
         elif args.theme_command == "list":
             cmd_theme_list()
+        elif args.theme_command == "toggle":
+            cmd_theme_toggle()
         else:
             parser_theme.print_help()
             sys.exit(1)

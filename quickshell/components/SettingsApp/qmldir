@@ -1,7 +1,6 @@
 module SettingsApp
 SettingsSidebar 1.0 SettingsSidebar.qml
-HyprlandPage 1.0 HyprlandPage.qml
 WifiPage 1.0 WifiPage.qml
 BluetoothPage 1.0 BluetoothPage.qml
-QuickshellPage 1.0 QuickshellPage.qml
 BezierEditorPage 1.0 BezierEditorPage.qml
+UnifiedSettingsPage 1.0 UnifiedSettingsPage.qml

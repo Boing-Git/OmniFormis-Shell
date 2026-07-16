@@ -107,7 +107,7 @@ Item {
         width: mainContainer.isVisible ? 352 : 132 // 320 + 32 and 100 + 32 padding
         height: 80 // 48 + 32 padding
         radius: Vars.radiusLarge
-        color: Theme.surface
+        color: Vars.translucent ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.85) : Theme.surface
 
         layer.enabled: true
         layer.effect: MultiEffect {

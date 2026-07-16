@@ -64,7 +64,7 @@ Item {
         width: root.expanded ? 900 : 100
         height: root.expanded ? 550 : 40
         
-        color: Theme.surface
+        color: Vars.translucent ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.85) : Theme.surface
         radius: root.gameMode ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
         
         opacity: root.expanded || panel.width > 105 ? 1.0 : 0.0

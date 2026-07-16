@@ -13,11 +13,11 @@ Item {
     // Only show the floating window if expanded is true
     property bool isActive: settingsContent.expanded
 
-    Window {
+    FloatingWindow {
         id: floatingWindow
         visible: root.isActive
-        width: 900
-        height: 650
+        implicitWidth: 900
+        implicitHeight: 650
         color: "transparent"
         
         // When the floating window is closed by the WM, update expanded state
@@ -29,8 +29,9 @@ Item {
         
         SettingsApp {
             id: settingsContent
-            anchors.fill: parent
-            anchors.margins: 10
+            width: floatingWindow.width - 20
+            height: floatingWindow.height - 20
+            anchors.centerIn: parent
             
             expanded: false
             gameMode: false

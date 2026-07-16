@@ -115,7 +115,7 @@ local vars = {
 
     -- General
     -- Enable resize on border
-    resize_on_border = false,
+    resize_on_border = true,
     -- Enable screen tearing
     allow_tearing = false,
 

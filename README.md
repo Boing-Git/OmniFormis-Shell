@@ -68,6 +68,14 @@ The `color-schemes/` directory acts as the brain for system-wide color coordinat
 * Fuzzel Launcher
 * Spotify (via imperative `spicetify` hooks)
 
+#### Generating a New Theme
+You can easily generate and scaffold a new theme based on Material You using the built-in `omniformis` CLI tool and your QML templates.
+
+```bash
+omniformis theme generate color-schemes/template_light.qml color-schemes/template_dark.qml
+```
+*Note: Make sure your template files include a comment on the first line (e.g., `// Gruvbox Dark Medium`) so the generator can automatically extract the proper theme name!*
+
 ## 📁 Repository Structure
 
 ```text

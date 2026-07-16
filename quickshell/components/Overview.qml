@@ -157,7 +157,7 @@ Item {
                 height: overviewContainer.visibleState ? targetHeight : 40
 
                 radius: overviewContainer.gameMode ? 0 : (overviewContainer.visibleState ? Vars.radiusExtraLarge : height / 2)
-                color: Theme.surface_container_high
+                color: Vars.translucent ? Qt.rgba(Theme.surface_container_high.r, Theme.surface_container_high.g, Theme.surface_container_high.b, 0.85) : Theme.surface_container_high
                 
                 opacity: overviewContainer.visibleState ? 1.0 : 0.0
                 

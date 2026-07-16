@@ -79,7 +79,7 @@ Item {
         width: root.expanded ? 600 : 100
         height: root.expanded ? 660 : 40
         
-        color: Theme.surface
+        color: Vars.translucent ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.85) : Theme.surface
         radius: root.gameMode ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
         
         opacity: root.expanded || panel.width > 105 ? 1.0 : 0.0
@@ -127,7 +127,7 @@ Item {
                     // Header Row
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: Vars.spacingMedium
+                        spacing: 2
                         
                         RowLayout {
                             spacing: 8
@@ -138,9 +138,9 @@ Item {
                         
                         // Edit Button
                         Rectangle {
-                            width: 48; height: 48; radius: root.isEditorMode ? 12 : height / 2
+                            width: 36; height: 36; radius: root.isEditorMode ? 10 : height / 2
                             color: editHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (editHover.containsMouse || root.isEditorMode ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
-                            Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: root.isEditorMode ? Theme.primary : Theme.on_surface; text: "edit" }
+                            Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: root.isEditorMode ? Theme.primary : Theme.on_surface; text: "edit" }
                             MouseArea { 
                                 id: editHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; 
                                 onClicked: root.isEditorMode = !root.isEditorMode 
@@ -151,11 +151,11 @@ Item {
                         
                         // Refresh Button (Mock)
                         Rectangle {
-                            width: 48; height: 48; radius: 16
+                            width: 36; height: 36; radius: 12
                             color: refreshHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (refreshHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
                             Text { 
                                 id: refreshIcon
-                                anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: Theme.on_surface; text: "refresh" 
+                                anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Theme.on_surface; text: "refresh" 
                                 RotationAnimation {
                                     id: refreshAnim
                                     target: refreshIcon
@@ -179,11 +179,11 @@ Item {
                         
                         // Settings Button
                         Rectangle {
-                            width: 48; height: 48; radius: 16
+                            width: 36; height: 36; radius: 12
                             color: settingsHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (settingsHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
                             Text { 
                                 id: settingsIcon
-                                anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: Theme.on_surface; text: "settings" 
+                                anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Theme.on_surface; text: "settings" 
                                 RotationAnimation {
                                     id: settingsAnim
                                     target: settingsIcon
@@ -207,9 +207,9 @@ Item {
                         
                         // Power Button
                         Rectangle {
-                            width: 48; height: 48; radius: 16
+                            width: 36; height: 36; radius: 12
                             color: powerHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (powerHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
-                            Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: Theme.on_surface; text: "power_settings_new" }
+                            Text { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Theme.on_surface; text: "power_settings_new" }
                             MouseArea { 
                                 id: powerHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; 
                                 onClicked: { root.expanded = false; root.openPowerMenuRequested() } 

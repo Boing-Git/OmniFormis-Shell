@@ -20,7 +20,12 @@ var paddingSmall = 8
 var paddingMedium = 16
 var paddingLarge = 24
 
-var fontFamily = "Rubik"
+var wallpaperMaskEnabled = true;
+var wallpaperMaskScale = 0.7;
+var wallpaperMaskShape = "Circle";
+var wallpaperMaskColor = "transparent";
+
+var fontFamily = "Google Sans Flex"
 var m3Standard = [0.2, 0.0, 0.0, 1.0];
 var m3StandardDecelerate = [0.0, 0.0, 0.0, 1.0];
 var m3StandardAccelerate = [0.3, 0.0, 1.0, 1.0];

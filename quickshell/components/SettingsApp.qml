@@ -28,7 +28,7 @@ Item {
     property bool isFloatingInstance: false
     signal detachToggled(bool isFloating)
     
-    property string currentSection: "hyprland" // "hyprland", "wifi", "bluetooth"
+    property string currentSection: "General"
     
     // Wi-Fi
     property var wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi)
@@ -77,10 +77,10 @@ Item {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         
-        width: root.expanded ? 900 : 100
-        height: root.expanded ? 650 : 40
+        width: root.expanded ? (root.isFloatingInstance ? root.width : 900) : 100
+        height: root.expanded ? (root.isFloatingInstance ? root.height : 650) : 40
         
-        color: Theme.surface_container_low
+        color: Vars.translucent ? Qt.rgba(Theme.surface_container_low.r, Theme.surface_container_low.g, Theme.surface_container_low.b, 0.85) : Theme.surface_container_low
         radius: root.gameMode ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
         
         opacity: root.expanded || panel.width > 105 ? 1.0 : 0.0
@@ -175,39 +175,42 @@ Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     currentIndex: {
-                        if (root.currentSection === "hyprland") return 0;
-                        if (root.currentSection === "quickshell") return 1;
-                        if (root.currentSection === "bezier") return 2;
-                        if (root.currentSection === "wifi") return 3;
-                        return 4;
+                        if (root.currentSection === "bezier") return 1;
+                        if (root.currentSection === "wifi") return 2;
+                        if (root.currentSection === "bluetooth") return 3;
+                        return 0; // "General", "Appearance", "Input" map to UnifiedSettingsPage
                     }
 
-                    // 0: Hyprland Settings
-                    HyprlandPage {
-                        id: hyprlandPage
+                    // 0: Unified Settings (Hyprland + Quickshell)
+                    UnifiedSettingsPage {
+                        id: unifiedPage
+                        activeCategory: root.currentSection === "bezier" || root.currentSection === "wifi" || root.currentSection === "bluetooth" ? "General" : root.currentSection
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
                     }
 
-                    // 1: Quickshell Settings
-                    QuickshellPage {
-                        id: quickshellPage
-                    }
-
-                    // 2: Bezier Editor
+                    // 1: Bezier Editor
                     BezierEditorPage {
                         id: bezierPage
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
                     }
 
-                    // 3: Wi-Fi Settings
+                    // 2: Wi-Fi Settings
                     WifiPage {
                         id: wifiPage
                         wifiDevice: root.wifiDevice
                         panelRef: root.panel
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
                     }
 
-                    // 4: Bluetooth Settings
+                    // 3: Bluetooth Settings
                     BluetoothPage {
                         id: bluetoothPage
                         adapter: root.adapter
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
                     }
                 }
             }

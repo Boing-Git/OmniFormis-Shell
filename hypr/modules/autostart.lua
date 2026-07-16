@@ -11,7 +11,7 @@ local vars = require("modules.variables")
 --
  hl.on("hyprland.start", function () 
     hl.exec_cmd("hyprctl setcursor " .. vars.cursor_theme .. " " .. tostring(vars.env_hyprcursor_size))
-    hl.exec_cmd("quickshell")
+    hl.exec_cmd("qs")
     hl.exec_cmd("blanket")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")

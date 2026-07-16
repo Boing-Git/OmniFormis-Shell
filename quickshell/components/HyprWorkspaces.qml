@@ -30,8 +30,8 @@ Item {
 
     // When the focused workspace changes, show overlay briefly
     onCurrentWorkspaceChanged: {
-        overlayVisible = true
-        overlayTimer.restart()
+        overlayVisible = true;
+        overlayTimer.restart();
     }
 
     function handleScroll(delta) {
@@ -59,18 +59,36 @@ Item {
     Rectangle {
         id: bg
         layer.enabled: true
-        layer.effect: MultiEffect { shadowEnabled: !mainContainer.gameMode; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
+        layer.effect: MultiEffect {
+            shadowEnabled: !mainContainer.gameMode
+            shadowBlur: 1.0
+            shadowColor: Qt.rgba(0, 0, 0, 0.25)
+            shadowVerticalOffset: 4
+            shadowHorizontalOffset: 0
+        }
         anchors.centerIn: parent
-        color: Theme.surface_container_high
+        color: Vars.translucent ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.85) : Theme.surface
         radius: height / 2
         clip: true
         opacity: (overlayVisible && !mainContainer.forceHidePill) ? 1.0 : 0.0
         visible: opacity > 0
-        Behavior on opacity { enabled: !mainContainer.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutCubic } }
+        Behavior on opacity {
+            enabled: !mainContainer.gameMode
+            NumberAnimation {
+                duration: Vars.animationDuration
+                easing.type: Easing.OutCubic
+            }
+        }
 
         width: overlayVisible ? workspaceLayout.implicitWidth + Vars.spacingLarge : 100
         height: 40
-        Behavior on width { enabled: !mainContainer.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutCubic } }
+        Behavior on width {
+            enabled: !mainContainer.gameMode
+            NumberAnimation {
+                duration: Vars.animationDuration
+                easing.type: Easing.OutCubic
+            }
+        }
 
         RowLayout {
             id: workspaceLayout
@@ -97,7 +115,7 @@ Item {
                         }
                     }
 
-                    color: isFocused ? Theme.primary_container : (wsMouseArea.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (wsMouseArea.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent"))
+                    color: isFocused ? Theme.primary : (wsMouseArea.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (wsMouseArea.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent"))
 
                     Behavior on color {
                         enabled: !mainContainer.gameMode
@@ -115,7 +133,7 @@ Item {
                         anchors.centerIn: parent
                         text: wsId
 
-                        color: isFocused ? Theme.on_primary_container : Theme.on_surface_variant
+                        color: isFocused ? Theme.on_primary : Theme.on_surface_variant
                         opacity: isFocused ? 1.0 : 0.5
                     }
                     MouseArea {

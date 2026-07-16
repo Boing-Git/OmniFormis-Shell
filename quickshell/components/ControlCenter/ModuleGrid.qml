@@ -14,6 +14,7 @@ ColumnLayout {
     
     property bool isEditorMode: false
     property bool gameMode: false
+    property bool systemModeIsDark: Theme.surface.r < 0.5
     property int activeMaxRow: 4
     property real baseCellWidth: (width - (12 * 3)) / 4
     signal subMenuRequested(string menuName)
@@ -259,8 +260,11 @@ ColumnLayout {
             {"moduleId": "color", "colSpan": 1},
             {"moduleId": "wallpaper", "colSpan": 1},
             {"moduleId": "overview", "colSpan": 1},
-            {"moduleId": "game_mode", "colSpan": 1}
+            {"moduleId": "game_mode", "colSpan": 1},
+            {"moduleId": "system_mode", "colSpan": 1}
         ];
+        
+        let validModules = ["wifi", "bluetooth", "audio", "display", "peace", "color", "wallpaper", "overview", "game_mode", "system_mode"];
         
         activeTiles.clear();
         availableTiles.clear();
@@ -271,7 +275,7 @@ ColumnLayout {
             let activeArr = JSON.parse(layoutSettings.activeLayout);
             if (!activeArr || activeArr.length === 0) activeArr = defaultActive;
             for (let i = 0; i < activeArr.length; i++) {
-                if (!seen[activeArr[i].moduleId]) {
+                if (validModules.indexOf(activeArr[i].moduleId) !== -1 && !seen[activeArr[i].moduleId]) {
                     seen[activeArr[i].moduleId] = true;
                     if (activeArr[i].colSpan === undefined) activeArr[i].colSpan = moduleGridRoot.getDefaultColSpan(activeArr[i].moduleId);
                     if (activeArr[i].xIndex === undefined) {
@@ -283,7 +287,7 @@ ColumnLayout {
             }
         } catch(e) {
             for (let i = 0; i < defaultActive.length; i++) {
-                if (!seen[defaultActive[i].moduleId]) {
+                if (validModules.indexOf(defaultActive[i].moduleId) !== -1 && !seen[defaultActive[i].moduleId]) {
                     seen[defaultActive[i].moduleId] = true;
                     activeTiles.append(defaultActive[i]);
                 }
@@ -294,14 +298,14 @@ ColumnLayout {
             let availArr = JSON.parse(layoutSettings.availableLayout);
             if (!availArr || availArr.length === 0) availArr = defaultAvailable;
             for (let i = 0; i < availArr.length; i++) {
-                if (!seen[availArr[i].moduleId]) {
+                if (validModules.indexOf(availArr[i].moduleId) !== -1 && !seen[availArr[i].moduleId]) {
                     seen[availArr[i].moduleId] = true;
                     availableTiles.append(availArr[i]);
                 }
             }
         } catch(e) {
             for (let i = 0; i < defaultAvailable.length; i++) {
-                if (!seen[defaultAvailable[i].moduleId]) {
+                if (validModules.indexOf(defaultAvailable[i].moduleId) !== -1 && !seen[defaultAvailable[i].moduleId]) {
                     seen[defaultAvailable[i].moduleId] = true;
                     availableTiles.append(defaultAvailable[i]);
                 }
@@ -311,7 +315,7 @@ ColumnLayout {
         // Ensure all valid modules exist somewhere (self-healing)
         let allModules = [...defaultActive, ...defaultAvailable];
         for (let i = 0; i < allModules.length; i++) {
-            if (!seen[allModules[i].moduleId]) {
+            if (validModules.indexOf(allModules[i].moduleId) !== -1 && !seen[allModules[i].moduleId]) {
                 seen[allModules[i].moduleId] = true;
                 availableTiles.append(allModules[i]);
             }
@@ -378,7 +382,8 @@ ColumnLayout {
                                         (moduleId === "audio" ? (moduleGridRoot.audioNode && !moduleGridRoot.audioNode.audio.muted) : false) || 
                                         (moduleId === "display" ? false : false) ||
                                         (moduleId === "peace" ? NotificationService.peaceMode : false) ||
-                                        (moduleId === "game_mode" ? moduleGridRoot.gameMode : false)
+                                        (moduleId === "game_mode" ? moduleGridRoot.gameMode : false) ||
+                                        (moduleId === "system_mode" ? moduleGridRoot.systemModeIsDark : false)
                                         
                 property bool hasSubMenu: moduleId === "wifi" || moduleId === "bluetooth" || moduleId === "display" || moduleId === "color" || moduleId === "wallpaper" || moduleId === "overview"
                                         
@@ -390,7 +395,8 @@ ColumnLayout {
                                        moduleId === "color" ? "palette" :
                                        moduleId === "wallpaper" ? "wallpaper" :
                                        moduleId === "overview" ? "grid_view" : 
-                                       moduleId === "game_mode" ? "sports_esports" : ""
+                                       moduleId === "game_mode" ? "sports_esports" :
+                                       moduleId === "system_mode" ? (moduleGridRoot.systemModeIsDark ? "dark_mode" : "light_mode") : ""
                                        
                 property string mTitle: moduleId === "wifi" ? "Wi-Fi" :
                                         moduleId === "bluetooth" ? "Bluetooth" :
@@ -400,7 +406,8 @@ ColumnLayout {
                                         moduleId === "color" ? "Colors" :
                                         moduleId === "wallpaper" ? "Wallpaper" :
                                         moduleId === "overview" ? "Overview" : 
-                                        moduleId === "game_mode" ? "Game Mode" : ""
+                                        moduleId === "game_mode" ? "Game Mode" : 
+                                        moduleId === "system_mode" ? "System Mode" : ""
                                         
                 function getExpandedSubtitle() {
                     switch(moduleId) {
@@ -422,6 +429,8 @@ ColumnLayout {
                             return "Workspaces";
                         case "game_mode":
                             return isActive ? "On" : "Off";
+                        case "system_mode":
+                            return moduleGridRoot.systemModeIsDark ? "Dark" : "Light";
                         default: 
                             return "";
                     }
@@ -443,6 +452,7 @@ ColumnLayout {
                     else if (moduleId === "audio") { if (activeDelegateWrapper.gridRoot.audioNode) activeDelegateWrapper.gridRoot.audioNode.audio.muted = !activeDelegateWrapper.gridRoot.audioNode.audio.muted }
                     else if (moduleId === "peace") NotificationService.peaceMode = !NotificationService.peaceMode;
                     else if (moduleId === "game_mode") Quickshell.execDetached({ command: ["omniformis", "hypr", "--GameMode", moduleGridRoot.gameMode ? "false" : "true"] });
+                    else if (moduleId === "system_mode") Quickshell.execDetached({ command: ["omniformis", "theme", "toggle"] });
                     else doAction();
                 }
 

@@ -4,14 +4,21 @@ import Quickshell
 import Quickshell.Services.Mpris
 import "../../Variables/variables.js" as Vars
 import "../.."
+import QtQuick.Effects
 
 Rectangle {
     id: mediaPlayerRoot
-    
+
+    FontLoader {
+        id: filledIconFont
+        source: "../../assets/MaterialSymbolsRounded-Filled.ttf"
+    }
+
     property var preferredMprisPlayer: null
     property var mprisPlayer: {
         let vals = Mpris.players.values;
-        if (vals.length === 0) return null;
+        if (vals.length === 0)
+            return null;
         if (preferredMprisPlayer && vals.indexOf(preferredMprisPlayer) !== -1) {
             return preferredMprisPlayer;
         }
@@ -20,16 +27,58 @@ Rectangle {
     property bool isPlaying: mprisPlayer ? mprisPlayer.isPlaying : false
 
     Layout.fillWidth: true
-    Layout.preferredHeight: 220
+    Layout.preferredHeight: 164
     radius: 16
-    color: Theme.surface_container_highest
-    clip: true
+    color: "transparent"
+
+    Rectangle {
+        id: rootMask
+        anchors.fill: parent
+        radius: 24
+        color: Theme.surface
+        layer.enabled: true
+        layer.samples: 4
+        visible: false
+    }
+
+    // Background Image
+    Image {
+        id: bgArt
+        anchors.fill: parent
+        source: mprisPlayer && mprisPlayer.trackArtUrl ? mprisPlayer.trackArtUrl : ""
+        fillMode: Image.PreserveAspectCrop
+        visible: false
+    }
+
+    MultiEffect {
+        anchors.fill: parent
+        source: bgArt
+        visible: bgArt.source !== ""
+        autoPaddingEnabled: false
+
+        blurEnabled: true
+        blurMax: 64
+        blur: 1.0
+        saturation: 1.2
+
+        maskEnabled: true
+        maskSource: rootMask
+    }
+
+    // Translucent overlay
+    Rectangle {
+        anchors.fill: parent
+        color: Qt.rgba(Theme.surface_container_highest.r, Theme.surface_container_highest.g, Theme.surface_container_highest.b, Vars.translucent ? 0.75 : 0.90)
+        radius: 16
+    }
+
     property int slideDirection: 1
 
     property real timeScale: mprisPlayer && mprisPlayer.length > 10000000 ? 1000000 : (mprisPlayer && mprisPlayer.length > 10000 ? 1000 : 1)
 
     function formatTime(val) {
-        if (isNaN(val) || val <= 0) return "0:00";
+        if (isNaN(val) || val <= 0)
+            return "0:00";
         let totalSeconds = Math.floor(val / timeScale);
         let mins = Math.floor(totalSeconds / 60);
         let secs = Math.floor(totalSeconds % 60);
@@ -47,303 +96,342 @@ Rectangle {
         }
     }
 
-    // Background Image Sliding Container
-    Item {
-        id: albumArtContainer
+    RowLayout {
         anchors.fill: parent
-        property string currentUrl: mprisPlayer && mprisPlayer.trackArtUrl ? mprisPlayer.trackArtUrl : ""
-        property string oldUrl: ""
+        anchors.margins: 16
+        spacing: 16
 
-        onCurrentUrlChanged: {
-            if (oldUrl !== "" && currentUrl !== "" && oldUrl !== currentUrl) {
-                albumArtOld.source = oldUrl;
-                albumArtOld.x = 0;
-                albumArtOld.visible = true;
-                
-                albumArtNew.x = mediaPlayerRoot.slideDirection * width;
-                
-                slideOutOld.to = -mediaPlayerRoot.slideDirection * width;
-                slideAnim.restart();
-            } else if (currentUrl !== "") {
-                albumArtNew.x = 0;
-                albumArtOld.visible = false;
-            } else {
-                albumArtOld.visible = false;
-            }
-            oldUrl = currentUrl;
-            mediaPlayerRoot.slideDirection = 1;
-        }
-
-        Image {
-            id: albumArtOld
-            width: parent.width; height: parent.height
-            fillMode: Image.PreserveAspectCrop
-            visible: false
-        }
-
-        Image {
-            id: albumArtNew
-            width: parent.width; height: parent.height
-            source: albumArtContainer.currentUrl
-            fillMode: Image.PreserveAspectCrop
-            opacity: source !== "" ? 1.0 : 0.0
-            Behavior on opacity { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: albumArtNew.source !== "" ? Vars.customEmphasizedDecelerate : Vars.customEmphasizedAccelerate } }
-        }
-
-        ParallelAnimation {
-            id: slideAnim
-            NumberAnimation { 
-                id: slideOutOld
-                target: albumArtOld; property: "x"; duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow 
-            }
-            NumberAnimation { 
-                target: albumArtNew; property: "x"; to: 0; duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow 
-            }
-            onFinished: {
-                albumArtOld.visible = false;
-            }
-        }
-    }
-    
-    // Corner masks to simulate rounding against the Control Center background
-    Item {
-        id: cornerMasks
-        anchors.fill: parent
-        visible: albumArtContainer.currentUrl !== ""
-
-        property real r: 16
-        property color maskColor: Theme.surface_container_low
-        z: 5 // Bring to front above the gradient overlay
-        
-        // Top-Left
+        // Left: Album Art
         Item {
-            x: 0; y: 0; width: cornerMasks.r; height: cornerMasks.r; clip: true
+            width: 132
+            height: 132
+
             Rectangle {
-                x: -cornerMasks.r; y: -cornerMasks.r; width: cornerMasks.r * 4; height: cornerMasks.r * 4; radius: cornerMasks.r * 2
-                color: "transparent"; border.color: cornerMasks.maskColor; border.width: cornerMasks.r
-            }
-        }
-        // Top-Right
-        Item {
-            x: parent.width - cornerMasks.r; y: 0; width: cornerMasks.r; height: cornerMasks.r; clip: true
-            Rectangle {
-                x: -cornerMasks.r * 2; y: -cornerMasks.r; width: cornerMasks.r * 4; height: cornerMasks.r * 4; radius: cornerMasks.r * 2
-                color: "transparent"; border.color: cornerMasks.maskColor; border.width: cornerMasks.r
-            }
-        }
-        // Bottom-Left
-        Item {
-            x: 0; y: parent.height - cornerMasks.r; width: cornerMasks.r; height: cornerMasks.r; clip: true
-            Rectangle {
-                x: -cornerMasks.r; y: -cornerMasks.r * 2; width: cornerMasks.r * 4; height: cornerMasks.r * 4; radius: cornerMasks.r * 2
-                color: "transparent"; border.color: cornerMasks.maskColor; border.width: cornerMasks.r
-            }
-        }
-        // Bottom-Right
-        Item {
-            x: parent.width - cornerMasks.r; y: parent.height - cornerMasks.r; width: cornerMasks.r; height: cornerMasks.r; clip: true
-            Rectangle {
-                x: -cornerMasks.r * 2; y: -cornerMasks.r * 2; width: cornerMasks.r * 4; height: cornerMasks.r * 4; radius: cornerMasks.r * 2
-                color: "transparent"; border.color: cornerMasks.maskColor; border.width: cornerMasks.r
-            }
-        }
-    }
-    
-    // Fallback background icon when no album art
-    Item {
-        anchors.fill: parent
-        visible: !mprisPlayer || !mprisPlayer.trackArtUrl
-        
-        Text {
-            anchors.centerIn: parent
-            font.family: "Material Symbols Outlined"
-            font.pixelSize: 120
-            color: Theme.primary
-            opacity: 0.15
-            text: "\ue405" // audiotrack
-        }
-    }
-
-    Rectangle {
-        anchors.fill: parent
-        visible: mprisPlayer && mprisPlayer.trackArtUrl !== ""
-        z: 1
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "transparent" }
-            GradientStop { position: 0.4; color: "transparent" }
-            GradientStop { position: 1.0; color: Qt.rgba(0,0,0,0.95) }
-        }
-    }
-
-    ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: Vars.spacingLarge
-        spacing: Vars.spacingSmall
-        
-        // Spacer to push content down if needed, or rely on fillHeight
-        Item { Layout.fillWidth: true; Layout.fillHeight: true }
-
-        // Metadata and Controls row
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Vars.spacingMedium
-            
-            // Text Column
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 4
-                
-                Text { 
-                    text: mprisPlayer ? (mprisPlayer.trackTitle || (mprisPlayer.metadata ? mprisPlayer.metadata["xesam:title"] : null) || mprisPlayer.identity || "Unknown Title") : "No Media Playing"
-                    font.family: Vars.fontFamily
-                    font.pixelSize: 20
-                    font.weight: 700
-                    color: mprisPlayer && mprisPlayer.trackArtUrl ? "white" : Theme.on_surface
-                    Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
-                Text { 
-                    text: mprisPlayer && mprisPlayer.trackArtist ? mprisPlayer.trackArtist : "Artist"
-                    font.family: Vars.fontFamily
-                    font.pixelSize: 14
-                    color: mprisPlayer && mprisPlayer.trackArtUrl ? "white" : Theme.on_surface
-                    Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    opacity: 0.8
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
-                Text { 
-                    text: mprisPlayer && mprisPlayer.trackAlbum ? mprisPlayer.trackAlbum : ""
-                    font.family: Vars.fontFamily
-                    font.pixelSize: 12
-                    color: mprisPlayer && mprisPlayer.trackArtUrl ? "white" : Theme.on_surface
-                    Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    opacity: 0.6
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                    visible: text !== ""
-                }
-            }
-            
-            RowLayout {
-                spacing: 12
-                Layout.alignment: Qt.AlignBottom
-                
-                Rectangle {
-                    width: 32; height: 32; radius: 16; color: "transparent"
-                    Text { 
-                        anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 24
-                        color: mprisPlayer && mprisPlayer.trackArtUrl ? "white" : Theme.on_primary_container; text: "\ue045" 
-                        Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    }
-                    MouseArea { anchors.fill: parent; onClicked: { mediaPlayerRoot.slideDirection = -1; if(mprisPlayer) mprisPlayer.previous(); } cursorShape: Qt.PointingHandCursor }
-                }
-                
-                Rectangle {
-                    width: 56; height: 56; radius: 28; color: mprisPlayer && mprisPlayer.trackArtUrl ? "white" : Theme.primary
-                    Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    Text { 
-                        anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 32; color: mprisPlayer && mprisPlayer.trackArtUrl ? "black" : Theme.on_surface
-                        Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                        text: mprisPlayer && mprisPlayer.isPlaying ? "\ue034" : "\ue037"
-                    }
-                    MouseArea { 
-                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                        onClicked: if(mprisPlayer) {
-                            if (typeof mprisPlayer.togglePlaying === "function") mprisPlayer.togglePlaying();
-                            else if (typeof mprisPlayer.playPause === "function") mprisPlayer.playPause();
-                        } 
-                    }
-                }
-
-                Rectangle {
-                    width: 32; height: 32; radius: 16; color: "transparent"
-                    Text { 
-                        anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 24
-                        color: mprisPlayer && mprisPlayer.trackArtUrl ? "white" : Theme.on_primary_container; text: "\ue044" 
-                        Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    }
-                    MouseArea { anchors.fill: parent; onClicked: { mediaPlayerRoot.slideDirection = 1; if(mprisPlayer) mprisPlayer.next(); } cursorShape: Qt.PointingHandCursor }
-                }
-            }
-        }
-
-        Item { Layout.preferredHeight: 16 }
-
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 4
-            radius: 2
-            color: mprisPlayer && mprisPlayer.trackArtUrl ? Qt.rgba(1,1,1,0.3) : Qt.rgba(Theme.on_primary_container.r, Theme.on_primary_container.g, Theme.on_primary_container.b, 0.2)
-            
-            Rectangle {
-                height: parent.height
-                width: mprisPlayer && mprisPlayer.length > 0 && mprisPlayer.position !== undefined ? parent.width * (mprisPlayer.position / mprisPlayer.length) : 0
-                radius: 2
-                color: mprisPlayer && mprisPlayer.trackArtUrl ? "white" : Theme.on_primary_container
-                Behavior on width { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-                Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-            }
-            
-            MouseArea {
+                id: imageMask
                 anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                function seekToMouse(mouse) {
-                    if(mprisPlayer && mprisPlayer.length > 0) {
-                        let ratio = Math.max(0, Math.min(1, mouse.x / width));
-                        let newPos = ratio * mprisPlayer.length;
-                        if (mprisPlayer.canSeek) {
-                            mprisPlayer.position = newPos; 
+                radius: 12
+                color: "black"
+                layer.enabled: true
+                layer.samples: 4
+                visible: false
+            }
+
+            // Fallback icon
+            Rectangle {
+                anchors.fill: parent
+                radius: 12
+                color: Theme.surface_container
+                visible: !mprisPlayer || !mprisPlayer.trackArtUrl
+
+                Text {
+                    anchors.centerIn: parent
+                    font.family: "Material Symbols Outlined"
+                    font.pixelSize: 48
+                    color: Theme.on_surface_variant
+                    text: "\ue405"
+                }
+            }
+
+            Image {
+                id: albumImage
+                anchors.fill: parent
+                source: mprisPlayer && mprisPlayer.trackArtUrl ? mprisPlayer.trackArtUrl : ""
+                fillMode: Image.PreserveAspectCrop
+                visible: false
+            }
+
+            MultiEffect {
+                source: albumImage
+                anchors.fill: parent
+                maskEnabled: true
+                maskSource: imageMask
+                visible: albumImage.source !== ""
+            }
+        }
+
+        // Right: Metadata and Controls
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 0
+
+            // Top section: Titles and Play Button
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 12
+
+                // Metadata Column
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+                    Layout.alignment: Qt.AlignTop
+
+                    Text {
+                        text: mprisPlayer ? (mprisPlayer.trackTitle || (mprisPlayer.metadata ? mprisPlayer.metadata["xesam:title"] : null) || mprisPlayer.identity || "Unknown Title") : "No Media Playing"
+                        font.family: Vars.fontFamily
+                        font.pixelSize: 18
+                        font.weight: 700
+                        color: Theme.on_surface
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+                    Text {
+                        text: mprisPlayer && mprisPlayer.trackArtist ? mprisPlayer.trackArtist : "Artist"
+                        font.family: Vars.fontFamily
+                        font.pixelSize: 14
+                        color: Theme.on_surface_variant
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+
+                    Item {
+                        Layout.preferredHeight: 4
+                    } // Spacer
+
+                    Text {
+                        text: formatTime(mprisPlayer ? mprisPlayer.position : 0) + " / " + formatTime(mprisPlayer ? mprisPlayer.length : 0)
+                        font.family: Vars.fontFamily
+                        font.pixelSize: 13
+                        color: Theme.on_surface_variant
+                    }
+                }
+
+                // Player Selector and Play/Pause Button
+                RowLayout {
+                    Layout.alignment: Qt.AlignBottom | Qt.AlignRight
+                    spacing: 12
+
+                    // Player Selector Pill
+                    Rectangle {
+                        Layout.alignment: Qt.AlignVCenter
+                        width: playerSelectorRow.implicitWidth + 24
+                        height: 32
+                        radius: 16
+                        color: Qt.rgba(Theme.on_surface_variant.r, Theme.on_surface_variant.g, Theme.on_surface_variant.b, 0.15)
+                        visible: Mpris.players.values.length > 1
+
+                        RowLayout {
+                            id: playerSelectorRow
+                            anchors.centerIn: parent
+                            spacing: 4
+                            Text {
+                                text: mprisPlayer ? (mprisPlayer.identity || "Unknown") : "Player"
+                                font.family: Vars.fontFamily
+                                font.pixelSize: 13
+                                color: Theme.on_surface_variant
+                                font.weight: 500
+                            }
+                            Text {
+                                font.family: "Material Symbols Rounded"
+                                font.pixelSize: 18
+                                color: Theme.on_surface_variant
+                                font.weight: 700
+                                text: "\ue5cf" // expand_more
+                            }
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: playerDropdown.visible = !playerDropdown.visible
+                        }
+                    }
+
+                    // Play/Pause Button
+                    Rectangle {
+                        Layout.alignment: Qt.AlignVCenter
+                        width: 52
+                        height: 52
+                        radius: 18
+                        color: Theme.primary
+
+                        Text {
+                            anchors.centerIn: parent
+                            font.family: filledIconFont.name
+                            font.pixelSize: 28
+                            color: Theme.on_primary
+                            text: mprisPlayer && mprisPlayer.isPlaying ? "\ue034" : "\ue037" // pause : play_arrow
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: if (mprisPlayer) {
+                                if (typeof mprisPlayer.togglePlaying === "function")
+                                    mprisPlayer.togglePlaying();
+                                else if (typeof mprisPlayer.playPause === "function")
+                                    mprisPlayer.playPause();
+                            }
                         }
                     }
                 }
-                onPressed: (mouse) => seekToMouse(mouse)
-                onPositionChanged: (mouse) => { if (pressed) seekToMouse(mouse) }
+            }
+
+            Item {
+                Layout.fillHeight: true
+            } // pushes bottom controls down
+
+            // Bottom Section: Progress and Prev/Next
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                Layout.alignment: Qt.AlignBottom
+
+                // Previous
+                Text {
+                    font.family: filledIconFont.name
+                    font.pixelSize: 26
+                    color: Theme.on_surface_variant
+                    text: "\ue045" // skip_previous
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            mediaPlayerRoot.slideDirection = -1;
+                            if (mprisPlayer)
+                                mprisPlayer.previous();
+                        }
+                    }
+                }
+
+                // Progress Bar Container
+                Item {
+                    id: progressContainer
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 24
+
+                    property bool isDragging: false
+                    property real dragRatio: 0
+                    property real playRatio: {
+                        if (isDragging)
+                            return dragRatio;
+                        return mprisPlayer && mprisPlayer.length > 0 && mprisPlayer.position !== undefined ? Math.max(0, Math.min(1, mprisPlayer.position / mprisPlayer.length)) : 0;
+                    }
+
+                    // Vertical handle (the `|` in the image)
+                    Rectangle {
+                        id: handle
+                        anchors.verticalCenter: parent.verticalCenter
+                        x: progressContainer.playRatio * (parent.width - width)
+                        width: 4
+                        height: 30
+                        radius: 5
+                        color: Theme.on_surface
+                    }
+
+                    // Squiggly played track
+                    Canvas {
+                        id: squigglyCanvas
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: parent.left
+                        width: Math.max(0, handle.x - 6)
+                        height: 12
+
+                        property color waveColor: Theme.primary
+                        property real phase: 0
+
+                        NumberAnimation on phase {
+                            from: 0
+                            to: Math.PI * 2
+                            duration: 1500
+                            loops: Animation.Infinite
+                            running: mprisPlayer && mprisPlayer.isPlaying
+                        }
+
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.clearRect(0, 0, width, height);
+                            if (width <= 0)
+                                return;
+                            ctx.beginPath();
+                            var amplitude = 3;
+                            var frequency = 0.25;
+                            ctx.lineWidth = 4;
+                            ctx.lineCap = "round";
+                            ctx.lineJoin = "round";
+                            ctx.strokeStyle = waveColor;
+
+                            for (var x = 0; x <= width; x++) {
+                                var y = height / 2 + Math.sin(x * frequency - phase) * amplitude;
+                                if (x === 0)
+                                    ctx.moveTo(x, y);
+                                else
+                                    ctx.lineTo(x, y);
+                            }
+                            ctx.stroke();
+                        }
+
+                        onWidthChanged: requestPaint()
+                        onWaveColorChanged: requestPaint()
+                        onPhaseChanged: requestPaint()
+                    }
+
+                    // Unplayed track
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: handle.right
+                        anchors.leftMargin: 6
+                        anchors.right: parent.right
+                        height: 4
+                        radius: 2
+                        color: Qt.rgba(Theme.on_surface_variant.r, Theme.on_surface_variant.g, Theme.on_surface_variant.b, 0.3)
+
+                        // Unplayed part dot (from the image)
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.right: parent.right
+                            width: 4
+                            height: 4
+                            radius: 2
+                            color: Qt.rgba(Theme.on_surface_variant.r, Theme.on_surface_variant.g, Theme.on_surface_variant.b, 0.6)
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+
+                        onPressed: mouse => {
+                            progressContainer.isDragging = true;
+                            progressContainer.dragRatio = Math.max(0, Math.min(1, mouse.x / width));
+                        }
+
+                        onPositionChanged: mouse => {
+                            if (pressed) {
+                                progressContainer.dragRatio = Math.max(0, Math.min(1, mouse.x / width));
+                            }
+                        }
+
+                        onReleased: mouse => {
+                            if (progressContainer.isDragging) {
+                                progressContainer.dragRatio = Math.max(0, Math.min(1, mouse.x / width));
+                                progressContainer.isDragging = false;
+                                if (mprisPlayer && mprisPlayer.length > 0 && mprisPlayer.canSeek) {
+                                    mprisPlayer.position = progressContainer.dragRatio * mprisPlayer.length;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Next
+                Text {
+                    font.family: filledIconFont.name
+                    font.pixelSize: 26
+                    color: Theme.on_surface_variant
+                    text: "\ue044" // skip_next
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            mediaPlayerRoot.slideDirection = 1;
+                            if (mprisPlayer)
+                                mprisPlayer.next();
+                        }
+                    }
+                }
             }
         }
     }
 
-    // MPRIS Player Selector Toggle
-    Rectangle {
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.margins: Vars.spacingMedium
-        width: selectorRow.width + Vars.spacingLarge
-        height: 28
-        radius: height / 2
-        color: selectorMouse.containsMouse ? Qt.rgba(255,255,255, 0.2) : Qt.rgba(255,255,255, 0.1)
-        visible: Mpris.players.values.length > 1
-        z: 5
-        
-        RowLayout {
-            id: selectorRow
-            anchors.centerIn: parent
-            spacing: 4
-            Text {
-                text: mprisPlayer ? (mprisPlayer.identity || "Unknown") : ""
-                font.family: Vars.fontFamily
-                font.pixelSize: 13
-                font.weight: 600
-                color: mprisPlayer && mprisPlayer.trackArtUrl ? "white" : Theme.on_surface
-            }
-            Text {
-                font.family: "Material Symbols Outlined"
-                font.pixelSize: 16
-                color: mprisPlayer && mprisPlayer.trackArtUrl ? "white" : Theme.on_surface
-                text: playerDropdown.visible ? "\ue5ce" : "\ue5cf" // expand_less / expand_more
-            }
-        }
-        
-        MouseArea {
-            id: selectorMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: playerDropdown.visible = !playerDropdown.visible
-        }
-    }
-    
     // MPRIS Player Dropdown
     Rectangle {
         id: playerDropdown
@@ -359,12 +447,12 @@ Rectangle {
         border.width: 1
         visible: false
         z: 10
-        
+
         Column {
             id: playerColumn
             anchors.fill: parent
             anchors.margins: 4
-            
+
             Repeater {
                 model: Mpris.players.values
                 delegate: Rectangle {
@@ -372,13 +460,13 @@ Rectangle {
                     height: 36
                     radius: Vars.radiusSmall
                     color: itemMouse.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent"
-                    
+
                     RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: 12
                         anchors.rightMargin: 12
                         spacing: 12
-                        
+
                         Text {
                             text: modelData.identity || "Unknown"
                             font.family: Vars.fontFamily
@@ -388,7 +476,7 @@ Rectangle {
                             elide: Text.ElideRight
                             verticalAlignment: Text.AlignVCenter
                         }
-                        
+
                         Text {
                             font.family: "Material Symbols Outlined"
                             font.pixelSize: 18
@@ -398,7 +486,7 @@ Rectangle {
                             verticalAlignment: Text.AlignVCenter
                         }
                     }
-                    
+
                     MouseArea {
                         id: itemMouse
                         anchors.fill: parent
@@ -413,4 +501,6 @@ Rectangle {
             }
         }
     }
+
+    // Root masks have been replaced with MultiEffect source masking and Rectangle radius
 }

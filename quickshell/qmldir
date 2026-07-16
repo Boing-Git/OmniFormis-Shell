@@ -25,3 +25,9 @@ PolkitDialog 1.0 components/PolkitDialog.qml
 Overview 1.0 components/Overview.qml
 singleton HyprlandData 1.0 services/HyprlandData.qml
 ModuleStore 1.0 components/ControlCenter/ModuleStore.qml
+WallpaperOverlay 1.0 components/WallpaperOverlay.qml
+M3Shapes 1.0 components/M3Shapes.qml
+AnalogClock 1.0 components/Widgets/AnalogClock.qml
+DesktopClock 1.0 components/Widgets/DesktopClock.qml
+
+DesktopCalender 1.0 components/Widgets/DesktopCalender.qml

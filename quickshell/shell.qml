@@ -98,6 +98,17 @@ ShellRoot {
         }
     }
 
+    WallpaperOverlay {
+        // This will sit on the WlrLayer.Background
+    }
+
+    DesktopClock {
+        // Draggable analog clock on the WlrLayer.Bottom
+    }
+    DesktopCalender {
+        // Draggable analog clock on the WlrLayer.Bottom
+    }
+
     Overview {
         visibleState: root.overviewVisible
         onCloseRequested: {
@@ -109,7 +120,6 @@ ShellRoot {
     NotificationDaemon {
         id: notifDaemon
     }
-
 
     TopPills {
         id: topPills

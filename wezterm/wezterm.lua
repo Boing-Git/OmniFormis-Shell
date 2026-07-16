@@ -40,8 +40,8 @@ config.window_decorations = "NONE"
 config.window_background_opacity = 0.7
 
 -- Basic sane defaults
-config.font = wezterm.font('JetBrainsMono Nerd Font Propo')
-config.font_size = 11.5
+config.font = wezterm.font('Google Sans Code')
+config.font_size = 12.5
 config.hide_tab_bar_if_only_one_tab = true
 config.use_fancy_tab_bar = false
 

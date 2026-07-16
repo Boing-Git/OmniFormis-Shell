@@ -368,6 +368,15 @@ ColumnLayout {
                         testAnim.stop();
                         animBox.x = 20;
                         animBoxRef.x = 20;
+                        
+                        var newCurve = [rootPage.p1x, rootPage.p1y, rootPage.p2x, rootPage.p2y];
+                        var refCurve = (rootPage.referenceCurve !== "None" && Vars[rootPage.referenceCurve]) ? Vars[rootPage.referenceCurve] : [0,0,1,1];
+                        
+                        anim1.easing.bezierCurve = newCurve;
+                        anim2.easing.bezierCurve = refCurve;
+                        anim3.easing.bezierCurve = newCurve;
+                        anim4.easing.bezierCurve = refCurve;
+                        
                         testAnim.start();
                     }
                 }
@@ -376,27 +385,27 @@ ColumnLayout {
                     id: testAnim
                     ParallelAnimation {
                         NumberAnimation { 
+                            id: anim1
                             target: animBox; property: "x"; to: animBox.parent.width - animBox.width - 20; duration: 600
                             easing.type: Easing.BezierSpline
-                            easing.bezierCurve: [rootPage.p1x, rootPage.p1y, rootPage.p2x, rootPage.p2y]
                         }
                         NumberAnimation { 
+                            id: anim2
                             target: animBoxRef; property: "x"; to: animBoxRef.parent.width - animBoxRef.width - 20; duration: 600
                             easing.type: Easing.BezierSpline
-                            easing.bezierCurve: (rootPage.referenceCurve !== "None" && Vars[rootPage.referenceCurve]) ? Vars[rootPage.referenceCurve] : [0,0,1,1]
                         }
                     }
                     PauseAnimation { duration: 200 }
                     ParallelAnimation {
                         NumberAnimation { 
+                            id: anim3
                             target: animBox; property: "x"; to: 20; duration: 600 
                             easing.type: Easing.BezierSpline
-                            easing.bezierCurve: [rootPage.p1x, rootPage.p1y, rootPage.p2x, rootPage.p2y]
                         }
                         NumberAnimation { 
+                            id: anim4
                             target: animBoxRef; property: "x"; to: 20; duration: 600 
                             easing.type: Easing.BezierSpline
-                            easing.bezierCurve: (rootPage.referenceCurve !== "None" && Vars[rootPage.referenceCurve]) ? Vars[rootPage.referenceCurve] : [0,0,1,1]
                         }
                     }
                 }
