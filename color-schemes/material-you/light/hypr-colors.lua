@@ -1,5 +1,5 @@
 return {
-    image = "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/Candle-Photo.png",
+    image = "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/CuteCat.png",
 
     background = "0xfffff8f6",
 
@@ -7,9 +7,9 @@ return {
 
     error_container = "0xffffdad6",
 
-    inverse_on_surface = "0xffffede7",
+    inverse_on_surface = "0xffffede8",
 
-    inverse_primary = "0xffffb59b",
+    inverse_primary = "0xffffb59c",
 
     inverse_surface = "0xff392e2b",
 
@@ -21,19 +21,19 @@ return {
 
     on_primary = "0xffffffff",
 
-    on_primary_container = "0xff380d00",
+    on_primary_container = "0xff380c00",
 
-    on_primary_fixed = "0xff380d00",
+    on_primary_fixed = "0xff380c00",
 
-    on_primary_fixed_variant = "0xff72361e",
+    on_primary_fixed_variant = "0xff72351f",
 
     on_secondary = "0xffffffff",
 
-    on_secondary_container = "0xff2c160d",
+    on_secondary_container = "0xff2c160e",
 
-    on_secondary_fixed = "0xff2c160d",
+    on_secondary_fixed = "0xff2c160e",
 
-    on_secondary_fixed_variant = "0xff5d4035",
+    on_secondary_fixed_variant = "0xff5d4036",
 
     on_surface = "0xff231a16",
 
@@ -45,19 +45,19 @@ return {
 
     on_tertiary_fixed = "0xff221b00",
 
-    on_tertiary_fixed_variant = "0xff50471a",
+    on_tertiary_fixed_variant = "0xff51461a",
 
     outline = "0xff85736d",
 
     outline_variant = "0xffd8c2bb",
 
-    primary = "0xff8f4c33",
+    primary = "0xff8f4c34",
 
     primary_container = "0xffffdbcf",
 
     primary_fixed = "0xffffdbcf",
 
-    primary_fixed_dim = "0xffffb59b",
+    primary_fixed_dim = "0xffffb59c",
 
     scrim = "0xff000000",
 
@@ -67,17 +67,17 @@ return {
 
     secondary_fixed = "0xffffdbcf",
 
-    secondary_fixed_dim = "0xffe7bdaf",
+    secondary_fixed_dim = "0xffe7bdb0",
 
     shadow = "0xff000000",
 
-    source_color = "0xffa75434",
+    source_color = "0xff914a30",
 
     surface = "0xfffff8f6",
 
     surface_bright = "0xfffff8f6",
 
-    surface_container = "0xfffceae4",
+    surface_container = "0xfffceae5",
 
     surface_container_high = "0xfff7e4df",
 
@@ -89,16 +89,16 @@ return {
 
     surface_dim = "0xffe8d6d1",
 
-    surface_tint = "0xff8f4c33",
+    surface_tint = "0xff8f4c34",
 
-    surface_variant = "0xfff5ded6",
+    surface_variant = "0xfff5ded7",
 
     tertiary = "0xff695e2f",
 
-    tertiary_container = "0xfff2e2a7",
+    tertiary_container = "0xfff3e2a7",
 
-    tertiary_fixed = "0xfff2e2a7",
+    tertiary_fixed = "0xfff3e2a7",
 
-    tertiary_fixed_dim = "0xffd5c68e",
+    tertiary_fixed_dim = "0xffd6c68e",
 
 }

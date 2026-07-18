@@ -7,14 +7,14 @@ require('base16-colorscheme').setup({
   base03 = "#d8c2bb",
   base04 = "#53433e",
   base05 = "#231a16",
-  base06 = "#ffede7",
+  base06 = "#ffede8",
   base07 = "#fff8f6",
 
   base08 = "#574e27",
   base09 = "#695e2f",
   base0A = "#77574c",
-  base0B = "#8f4c33",
-  base0C = "#f2e2a7",
+  base0B = "#8f4c34",
+  base0C = "#f3e2a7",
   base0D = "#ffdbcf",
   base0E = "#ffdbcf",
   base0F = "#584038",
@@ -34,7 +34,7 @@ end
 -- Make selected text stand out more
 vim.api.nvim_set_hl(0, 'Visual', {
   bg = '#ffdbcf',
-  fg = '#380d00', -- normal text contrast
+  fg = '#380c00', -- normal text contrast
 })
 
 -- Make "string" text contrast better
@@ -60,5 +60,5 @@ set_hl_mutliple({ 'TSFunction', 'Function' }, {
 })
 
 set_hl_mutliple({ 'Keyword', 'TSKeyword', 'TSKeywordFunction', 'TSRepeat' }, {
-  fg = '#ffb59b',
+  fg = '#ffb59c',
 })

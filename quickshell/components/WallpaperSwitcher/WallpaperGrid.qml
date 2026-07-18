@@ -10,9 +10,11 @@ GridView {
     Layout.fillWidth: true
     Layout.fillHeight: true
     clip: true
-    cellWidth: Math.floor(parent.width / 4)
+    cellWidth: Math.floor(parent.width / 3)
     cellHeight: cellWidth * 0.5625 + 48
     boundsBehavior: Flickable.StopAtBounds
+    flickDeceleration: 100
+    maximumFlickVelocity: 4000
 
     focus: true
     keyNavigationEnabled: true
@@ -22,10 +24,11 @@ GridView {
     property var rootRef: null
     property var pathInputRef: null
     signal wallpaperSelected(string path)
-    signal requestFocusSearch()
+    signal requestFocusSearch
 
-    Keys.onEscapePressed: if (rootRef) rootRef.expanded = false
-    Keys.onUpPressed: (event) => {
+    Keys.onEscapePressed: if (rootRef)
+        rootRef.expanded = false
+    Keys.onUpPressed: event => {
         if (currentIndex < 4) {
             requestFocusSearch();
         } else {
@@ -33,20 +36,21 @@ GridView {
         }
         event.accepted = true;
     }
-    Keys.onDownPressed: (event) => {
+    Keys.onDownPressed: event => {
         moveCurrentIndexDown();
         event.accepted = true;
     }
-    Keys.onLeftPressed: (event) => {
+    Keys.onLeftPressed: event => {
         moveCurrentIndexLeft();
         event.accepted = true;
     }
-    Keys.onRightPressed: (event) => {
+    Keys.onRightPressed: event => {
         moveCurrentIndexRight();
         event.accepted = true;
     }
-    Keys.onReturnPressed: (event) => {
-        if (currentItem) currentItem.triggerSelection();
+    Keys.onReturnPressed: event => {
+        if (currentItem)
+            currentItem.triggerSelection();
         event.accepted = true;
     }
 
@@ -60,7 +64,7 @@ GridView {
         }
 
         property bool isCurrentFocus: delegateItem.GridView.isCurrentItem && gridView.activeFocus
-        
+
         Rectangle {
             anchors.fill: parent
             anchors.margins: Vars.spacingSmall
@@ -71,7 +75,13 @@ GridView {
             border.width: isCurrentFocus || (rootRef && rootRef.currentWallpaper === filePath) ? 2 : 1
             clip: true
 
-            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+            Behavior on color {
+                ColorAnimation {
+                    duration: Vars.animationDuration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Vars.customStandard
+                }
+            }
 
             ColumnLayout {
                 anchors.fill: parent
@@ -82,8 +92,14 @@ GridView {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.margins: isCurrentFocus ? 4 : 0
-                    
-                    Behavior on Layout.margins { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+
+                    Behavior on Layout.margins {
+                        NumberAnimation {
+                            duration: Vars.animationDuration
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Vars.customExpressiveSpatialSlow
+                        }
+                    }
 
                     Loader {
                         id: mediaLoader
@@ -99,10 +115,14 @@ GridView {
                             source: "file://" + filePath
                             fillMode: Image.PreserveAspectCrop
                             asynchronous: true
-                            sourceSize.width: 400
-                            sourceSize.height: 400
+                            sourceSize.width: 600
+                            sourceSize.height: 600
                             opacity: status === Image.Ready ? 1.0 : 0.0
-                            Behavior on opacity { NumberAnimation { duration: Vars.animationDuration } }
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Vars.animationDuration
+                                }
+                            }
                         }
                     }
 
@@ -141,7 +161,7 @@ GridView {
                 Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 52
-                    
+
                     Text {
                         anchors.fill: parent
                         anchors.margins: 8
@@ -156,8 +176,14 @@ GridView {
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         lineHeight: 1.1
-                        
-                        Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Vars.animationDuration
+                                easing.type: Easing.BezierSpline
+                                easing.bezierCurve: Vars.customExpressiveSpatialSlow
+                            }
+                        }
                     }
                 }
             }
@@ -167,10 +193,15 @@ GridView {
                 anchors.fill: parent
                 hoverEnabled: true
                 preventStealing: false
+                cursorShape: Qt.PointingHandCursor
+                onEntered: {
+                    gridView.currentIndex = index;
+                }
                 onClicked: {
                     gridView.currentIndex = index;
                     delegateItem.triggerSelection();
-                    if (rootRef) rootRef.expanded = false;
+                    if (rootRef)
+                        rootRef.expanded = false;
                 }
             }
         }

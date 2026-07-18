@@ -77,7 +77,7 @@ Item {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         
-        width: root.expanded ? (root.isFloatingInstance ? root.width : 900) : 100
+        width: root.expanded ? (root.isFloatingInstance ? root.width : 1100) : 100
         height: root.expanded ? (root.isFloatingInstance ? root.height : 650) : 40
         
         color: Vars.translucent ? Qt.rgba(Theme.surface_container_low.r, Theme.surface_container_low.g, Theme.surface_container_low.b, 0.85) : Theme.surface_container_low

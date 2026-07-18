@@ -29,7 +29,7 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: Vars.spacingSmall
+        spacing: 8
 
         // Empty State
         Rectangle {

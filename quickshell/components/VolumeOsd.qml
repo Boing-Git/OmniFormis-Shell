@@ -13,7 +13,7 @@ Item {
     width: osdBackground.width
     height: osdBackground.height
 
-    property int trackHeight: 40
+    property int trackHeight: 38
     property int gap: 4
     property int handleWidth: 4
 
@@ -144,7 +144,7 @@ Item {
         anchors.centerIn: parent
 
         width: mainContainer.isVisible ? 320 : 100
-        height: 48 // Generous M3 geometry for Expressive styling
+        height: 44 // Generous M3 geometry for Expressive styling
         padding: 0
 
         opacity: mainContainer.isVisible ? 1.0 : 0.0
@@ -180,55 +180,52 @@ Item {
             width: bg.availableWidth
             height: mainContainer.trackHeight
 
-            // 1. LEFT TRACK (Active Fill)
-            Item {
+            property real leftRadiusLarge: 12
+            property real leftRadiusSmall: 4
+            property real handlePos: bg.visualPosition * (width - mainContainer.handleWidth)
+
+            // 1. LEFT TRACK (Colored fill — no icon, no dot for 0-to-+ sliders)
+            Rectangle {
+                id: osdLeftTrack
                 x: 0
                 y: 0
-                width: Math.max(0, (bg.visualPosition * (bg.availableWidth - mainContainer.handleWidth)) - mainContainer.gap)
+                width: Math.max(parent.leftRadiusLarge * 2, parent.handlePos - mainContainer.gap)
                 height: parent.height
-                clip: true
+                color: Theme.primary
 
-                Rectangle {
-                    width: bg.availableWidth
-                    height: parent.height
-                    radius: 12
-                    color: Theme.primary
-
-                    // Overlay Icon
-                    Text {
-                        x: 16 // Must match leftMargin
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: mainContainer.volumeIcon
-                        font.family: "Material Symbols Outlined"
-                        font.pixelSize: 20
-                        color: Theme.on_primary
-                    }
-                }
+                topLeftRadius: parent.leftRadiusLarge
+                bottomLeftRadius: parent.leftRadiusLarge
+                topRightRadius: parent.leftRadiusSmall
+                bottomRightRadius: parent.leftRadiusSmall
             }
 
-            // 2. RIGHT TRACK (Inactive Base)
-            Item {
-                x: (bg.visualPosition * (bg.availableWidth - mainContainer.handleWidth)) + mainContainer.handleWidth + mainContainer.gap
+            // 2. RIGHT TRACK (Inactive — icon + dot at right end)
+            Rectangle {
+                id: osdRightTrack
+                x: parent.handlePos + mainContainer.handleWidth + mainContainer.gap
                 y: 0
-                width: Math.max(0, bg.availableWidth - x)
+                width: Math.max(parent.leftRadiusLarge * 2, parent.width - x)
                 height: parent.height
-                clip: true
+                color: Theme.surface_variant
 
-                Rectangle {
-                    x: -parent.x
-                    width: bg.availableWidth
-                    height: parent.height
-                    radius: 12
-                    color: Theme.surface_variant
+                topLeftRadius: parent.leftRadiusSmall
+                bottomLeftRadius: parent.leftRadiusSmall
+                topRightRadius: parent.leftRadiusLarge
+                bottomRightRadius: parent.leftRadiusLarge
 
-                    // Base Icon
-                    Text {
-                        x: 16 // Must match leftMargin
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: mainContainer.volumeIcon
-                        font.family: "Material Symbols Outlined"
-                        font.pixelSize: 20
-                        color: Theme.on_surface_variant
+                // Icon at right end
+                Text {
+                    x: parent.width - parent.parent.leftRadiusLarge - width / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: mainContainer.volumeIcon
+                    font.family: "Material Symbols Outlined"
+                    font.pixelSize: 20
+                    color: Theme.on_surface_variant
+                    opacity: osdRightTrack.width > parent.parent.leftRadiusLarge * 2.5 ? 0.6 : 0.0
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 150
+                        }
                     }
                 }
             }
@@ -240,7 +237,7 @@ Item {
             y: bg.topPadding + (bg.availableHeight - height) / 2
 
             width: mainContainer.handleWidth
-            height: 48 // Fixed to 48dp to ensure physical overhang and avoid implicitHeight collapse
+            height: mainContainer.trackHeight + 2
             radius: width / 2
             color: Theme.primary
         }

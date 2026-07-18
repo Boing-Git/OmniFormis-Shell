@@ -13,12 +13,15 @@ ColumnLayout {
     spacing: 8
 
     property int trackHeight: 40
-    property int gap: 4
+    property int gap: 2
     property int handleWidth: 4
+    property real leftRadiusLarge: 12
+    property real leftRadiusSmall: 4
+    property real dotSize: 6
 
     property var audioNode: Pipewire.defaultAudioSink
     property real currentVolume: audioNode && audioNode.audio ? audioNode.audio.volume : 0.0
-    property real currentBrightness: 0.5 // Default fallback
+    property real currentBrightness: 1 // Default fallback
 
     Component.onCompleted: {
         ddcQueryProcess.running = true;
@@ -73,55 +76,50 @@ ColumnLayout {
             width: volumeSlider.availableWidth
             height: sliders.trackHeight
 
-            // 1. LEFT TRACK (Active Fill)
-            Item {
+            property real handlePos: volumeSlider.visualPosition * (width - sliders.handleWidth)
+
+            // 1. LEFT TRACK (Colored fill — no icon, no dot for 0-to-+ sliders)
+            Rectangle {
+                id: volLeftTrack
                 x: 0
                 y: 0
-                width: Math.max(0, (volumeSlider.visualPosition * (volumeSlider.availableWidth - sliders.handleWidth)) - sliders.gap)
+                width: Math.max(sliders.leftRadiusLarge * 2, parent.handlePos - sliders.gap)
                 height: parent.height
-                clip: true
+                color: Theme.primary
 
-                Rectangle {
-                    width: volumeSlider.availableWidth
-                    height: parent.height
-                    radius: 12
-                    color: Theme.primary
-
-                    // Overlay Icon
-                    Text {
-                        x: 16 // Must match leftMargin
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: audioNode && audioNode.audio.muted ? "\ue04f" : "\ue050"
-                        font.family: "Material Symbols Outlined"
-                        font.pixelSize: 20
-                        color: Theme.on_primary
-                    }
-                }
+                topLeftRadius: sliders.leftRadiusLarge
+                bottomLeftRadius: sliders.leftRadiusLarge
+                topRightRadius: sliders.leftRadiusSmall
+                bottomRightRadius: sliders.leftRadiusSmall
             }
 
-            // 2. RIGHT TRACK (Inactive Base)
-            Item {
-                x: (volumeSlider.visualPosition * (volumeSlider.availableWidth - sliders.handleWidth)) + sliders.handleWidth + sliders.gap
+            // 2. RIGHT TRACK (Inactive — icon + dot at right end)
+            Rectangle {
+                id: volRightTrack
+                x: parent.handlePos + sliders.handleWidth + sliders.gap
                 y: 0
-                width: Math.max(0, volumeSlider.availableWidth - x)
+                width: Math.max(sliders.leftRadiusLarge * 2, parent.width - x)
                 height: parent.height
-                clip: true
+                color: Theme.surface_variant
 
-                Rectangle {
-                    x: -parent.x
-                    width: volumeSlider.availableWidth
-                    height: parent.height
-                    radius: 12
-                    color: Theme.surface_variant
+                topLeftRadius: sliders.leftRadiusSmall
+                bottomLeftRadius: sliders.leftRadiusSmall
+                topRightRadius: sliders.leftRadiusLarge
+                bottomRightRadius: sliders.leftRadiusLarge
 
-                    // Base Icon
-                    Text {
-                        x: 16 // Must match leftMargin
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: audioNode && audioNode.audio.muted ? "\ue04f" : "\ue050"
-                        font.family: "Material Symbols Outlined"
-                        font.pixelSize: 20
-                        color: Theme.on_surface_variant
+                // Icon at right end
+                Text {
+                    x: parent.width - sliders.leftRadiusLarge - width / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: audioNode && audioNode.audio.muted ? "\ue04f" : "\ue050"
+                    font.family: "Material Symbols Outlined"
+                    font.pixelSize: 20
+                    color: Theme.on_surface_variant
+                    opacity: volRightTrack.width > sliders.leftRadiusLarge * 2.5 ? 0.6 : 0.0
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 150
+                        }
                     }
                 }
             }
@@ -133,7 +131,7 @@ ColumnLayout {
             y: volumeSlider.topPadding + (volumeSlider.availableHeight - height) / 2
 
             width: sliders.handleWidth
-            height: volumeSlider.implicitHeight + 2
+            height: sliders.trackHeight + 2
             radius: width / 2
             color: Theme.primary
         }
@@ -158,55 +156,50 @@ ColumnLayout {
             width: brightnessSlider.availableWidth
             height: sliders.trackHeight
 
-            // 1. LEFT TRACK (Active Fill)
-            Item {
+            property real handlePos: brightnessSlider.visualPosition * (width - sliders.handleWidth)
+
+            // 1. LEFT TRACK (Colored fill — no icon, no dot for 0-to-+ sliders)
+            Rectangle {
+                id: brightLeftTrack
                 x: 0
                 y: 0
-                width: Math.max(0, (brightnessSlider.visualPosition * (brightnessSlider.availableWidth - sliders.handleWidth)) - sliders.gap)
+                width: Math.max(sliders.leftRadiusLarge * 2, parent.handlePos - sliders.gap)
                 height: parent.height
-                clip: true
+                color: Theme.primary
 
-                Rectangle {
-                    width: brightnessSlider.availableWidth
-                    height: parent.height
-                    radius: 12
-                    color: Theme.primary
-
-                    // Overlay Icon
-                    Text {
-                        x: 16 // Must match leftMargin
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "\ue518"
-                        font.family: "Material Symbols Outlined"
-                        font.pixelSize: 20
-                        color: Theme.on_primary
-                    }
-                }
+                topLeftRadius: sliders.leftRadiusLarge
+                bottomLeftRadius: sliders.leftRadiusLarge
+                topRightRadius: sliders.leftRadiusSmall
+                bottomRightRadius: sliders.leftRadiusSmall
             }
 
-            // 2. RIGHT TRACK (Inactive Base)
-            Item {
-                x: (brightnessSlider.visualPosition * (brightnessSlider.availableWidth - sliders.handleWidth)) + sliders.handleWidth + sliders.gap
+            // 2. RIGHT TRACK (Inactive — icon + dot at right end)
+            Rectangle {
+                id: brightRightTrack
+                x: parent.handlePos + sliders.handleWidth + sliders.gap
                 y: 0
-                width: Math.max(0, brightnessSlider.availableWidth - x)
+                width: Math.max(sliders.leftRadiusLarge * 2, parent.width - x)
                 height: parent.height
-                clip: true
+                color: Theme.surface_variant
 
-                Rectangle {
-                    x: -parent.x
-                    width: brightnessSlider.availableWidth
-                    height: parent.height
-                    radius: 12
-                    color: Theme.surface_variant
+                topLeftRadius: sliders.leftRadiusSmall
+                bottomLeftRadius: sliders.leftRadiusSmall
+                topRightRadius: sliders.leftRadiusLarge
+                bottomRightRadius: sliders.leftRadiusLarge
 
-                    // Base Icon
-                    Text {
-                        x: 16 // Must match leftMargin
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "\ue518"
-                        font.family: "Material Symbols Outlined"
-                        font.pixelSize: 20
-                        color: Theme.on_surface_variant
+                // Icon at right end
+                Text {
+                    x: parent.width - sliders.leftRadiusLarge - width / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "\ue518"
+                    font.family: "Material Symbols Outlined"
+                    font.pixelSize: 20
+                    color: Theme.on_surface_variant
+                    opacity: brightRightTrack.width > sliders.leftRadiusLarge * 2.5 ? 0.6 : 0.0
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 150
+                        }
                     }
                 }
             }
@@ -218,7 +211,7 @@ ColumnLayout {
             y: brightnessSlider.topPadding + (brightnessSlider.availableHeight - height) / 2
 
             width: sliders.handleWidth
-            height: brightnessSlider.implicitHeight
+            height: sliders.trackHeight + 2
             radius: width / 2
             color: Theme.primary
         }

@@ -13,10 +13,10 @@ import "WallpaperSwitcher"
 
 Item {
     id: root
-    
+
     Layout.preferredWidth: 100
     Layout.preferredHeight: 40
-    
+
     property bool expanded: false
     property bool forceHidePill: false
     property var focusWindow: null
@@ -38,14 +38,14 @@ Item {
         property string currentWallpaper: ""
     }
 
-    signal closeRequested()
+    signal closeRequested
 
     HyprlandFocusGrab {
         active: root.expanded && root.focusWindow !== null
         windows: root.focusWindow ? [root.focusWindow] : []
         onCleared: root.expanded = false
     }
-    
+
     onExpandedChanged: {
         if (!expanded) {
             controls.clearSearch();
@@ -64,30 +64,69 @@ Item {
     Rectangle {
         id: panel
         layer.enabled: true
-        layer.effect: MultiEffect { shadowEnabled: !root.gameMode; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
+        layer.effect: MultiEffect {
+            shadowEnabled: !root.gameMode
+            shadowBlur: 1.0
+            shadowColor: Qt.rgba(0, 0, 0, 0.25)
+            shadowVerticalOffset: 4
+            shadowHorizontalOffset: 0
+        }
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
-        
-        width: root.expanded ? 900 : 100
-        height: root.expanded ? 550 : 40
-        
+
+        width: root.expanded ? 1100 : 100
+        height: root.expanded ? 650 : 40
+
         color: Vars.translucent ? Qt.rgba(Theme.surface_container_low.r, Theme.surface_container_low.g, Theme.surface_container_low.b, 0.85) : Theme.surface_container_low
         radius: root.gameMode ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
-        
+
         opacity: root.expanded || panel.width > 105 ? 1.0 : 0.0
         visible: opacity > 0
 
-        Behavior on radius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on width { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on height { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+        Behavior on radius {
+            enabled: !root.gameMode
+            NumberAnimation {
+                duration: Vars.animationDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Vars.customExpressiveSpatialSlow
+            }
+        }
+        Behavior on width {
+            enabled: !root.gameMode
+            NumberAnimation {
+                duration: Vars.animationDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Vars.customExpressiveSpatialSlow
+            }
+        }
+        Behavior on height {
+            enabled: !root.gameMode
+            NumberAnimation {
+                duration: Vars.animationDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Vars.customExpressiveSpatialSlow
+            }
+        }
 
         Item {
             anchors.fill: parent
             anchors.margins: Vars.spacingLarge
-            
+
             opacity: root.expanded ? 1.0 : 0.0
             visible: opacity > 0
-            Behavior on opacity { enabled: !root.gameMode; SequentialAnimation { PauseAnimation { duration: root.expanded ? Vars.animationDuration : 0 } NumberAnimation { duration: root.expanded ? Vars.animationDuration : Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: root.expanded ? Vars.customEmphasizedDecelerate : Vars.customEmphasizedAccelerate } } }
+            Behavior on opacity {
+                enabled: !root.gameMode
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: root.expanded ? Vars.animationDuration : 0
+                    }
+                    NumberAnimation {
+                        duration: root.expanded ? Vars.animationDuration : Vars.animationDuration
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root.expanded ? Vars.customEmphasizedDecelerate : Vars.customEmphasizedAccelerate
+                    }
+                }
+            }
 
             ColumnLayout {
                 anchors.fill: parent
@@ -107,8 +146,8 @@ Item {
                     id: gridView
                     model: sortFilterProxyModel.proxyModel
                     rootRef: root
-                    
-                    onWallpaperSelected: (path) => {
+
+                    onWallpaperSelected: path => {
                         executeWallpaperChange(path);
                     }
                     onRequestFocusSearch: {
@@ -143,15 +182,25 @@ Item {
             }
         }
         onExited: (code, status) => {
-            Quickshell.execDetached({ command: ['bash', '-c', '.config/quickshell/sync_colors.py'] });
-            Quickshell.execDetached({ command: ['bash', '-c', 'pkill quickshell; sleep 0.2; quickshell'] });
+            if (code === 0) {
+                // Chain the commands: Run sync_colors FIRST, and only if it succeeds (&&), kill and restart quickshell
+                Quickshell.execDetached({
+                    command: ['bash', '-c', 'pkill quickshell; sleep 0.2; quickshell']
+                });
+            } else {
+                console.error("[USER ACTION] Matugen failed with exit code: " + code + ". Skipping color sync.");
+            }
         }
     }
 
-    ListModel { id: wallpaperModel }
+    ListModel {
+        id: wallpaperModel
+    }
 
-    ListModel { id: proxyModelObj }
-    
+    ListModel {
+        id: proxyModelObj
+    }
+
     QtObject {
         id: sortFilterProxyModel
         property string filterText: controls.filterText
@@ -161,7 +210,10 @@ Item {
             for (var i = 0; i < wallpaperModel.count; i++) {
                 var item = wallpaperModel.get(i);
                 if (Vars.fuzzyMatch(filterText, item.fileName)) {
-                    proxyModelObj.append({ "filePath": item.filePath, "fileName": item.fileName });
+                    proxyModelObj.append({
+                        "filePath": item.filePath,
+                        "fileName": item.fileName
+                    });
                 }
             }
         }
@@ -180,7 +232,10 @@ Item {
                     var path = lines[i].trim();
                     if (path.length > 0) {
                         var name = path.substring(path.lastIndexOf('/') + 1);
-                        wallpaperModel.append({ "filePath": path, "fileName": name });
+                        wallpaperModel.append({
+                            "filePath": path,
+                            "fileName": name
+                        });
                     }
                 }
                 sortFilterProxyModel.updateVisualGrid();
@@ -188,7 +243,9 @@ Item {
         }
     }
 
-    ListModel { id: autocompleteModel }
+    ListModel {
+        id: autocompleteModel
+    }
 
     Process {
         id: autocompleteProc
@@ -199,7 +256,9 @@ Item {
                 for (var i = 0; i < lines.length; i++) {
                     var path = lines[i].trim();
                     if (path.length > 0) {
-                        autocompleteModel.append({ "path": path });
+                        autocompleteModel.append({
+                            "path": path
+                        });
                     }
                 }
             }

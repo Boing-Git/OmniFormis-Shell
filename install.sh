@@ -21,8 +21,10 @@ if grep -qi "nixos" /etc/os-release; then
     if command -v fish >/dev/null 2>&1; then
         fish -c 'if not contains ~/.local/bin $fish_user_paths; set -Ua fish_user_paths ~/.local/bin; end'
     fi
-    
+
     cp /etc/nixos/hardware-configuration.nix ./
+
+    ln -sf ~/Dotfiles/fastfetch/Nixos.jsonc ~/Dotfiles/fastfetch/config.jsonc
     
     sudo nixos-rebuild switch --flake .#nixos
 
@@ -172,3 +174,6 @@ else
     echo "Unsupported OS! This script only supports NixOS and Arch Linux."
     exit 1
 fi
+
+cp  ~/Dotfiles/fastfetch/Arch.jsonc ~/.config/fastfetch/config.jsonc
+cp  ~/Dotfiles/fastfetch/Logos/Arch.png ~/.config/fastfetch/Arch.png

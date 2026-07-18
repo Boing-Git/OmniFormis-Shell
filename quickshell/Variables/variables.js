@@ -1,6 +1,6 @@
 .pragma library
 var animationDuration = 240;
-var translucent = true;
+var translucent = false;
 
 var overviewGridRows = 2;
 var overviewGridColumns = 5;
@@ -21,9 +21,12 @@ var paddingMedium = 16
 var paddingLarge = 24
 
 var wallpaperMaskEnabled = true;
-var wallpaperMaskScale = 0.7;
-var wallpaperMaskShape = "Circle";
+var wallpaperMaskScale = 1.05;
+var wallpaperMaskShape = "Clamshell";
 var wallpaperMaskColor = "transparent";
+var wallpaperMaskOffsetX = 199;
+var wallpaperMaskOffsetY = 55;
+var clockShape = "4SidedCookie";
 
 var fontFamily = "Google Sans Flex"
 var m3Standard = [0.2, 0.0, 0.0, 1.0];

@@ -91,7 +91,7 @@ Item {
     Flickable {
         Layout.fillWidth: true; Layout.fillHeight: true
         contentHeight: wifiContent.childrenRect.height; clip: true
-        flickDeceleration: 1000; maximumFlickVelocity: 4000
+        flickDeceleration: 100; maximumFlickVelocity: 4000
 
         ColumnLayout {
             id: wifiContent

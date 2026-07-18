@@ -1,0 +1,136 @@
+{
+    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    "logo": {
+        "type": "auto",
+        "source": "~/Dotfiles/fastfetch/Logos/Nixos.txt",
+        "width": 15,
+        "height": 15
+    },
+    "display": {
+        "color": "cyan",
+    },
+    "modules": [
+        {
+            "type": "title",
+            "format": "   Oh! dear you fell into the rabbit hole of ricing",
+            "keyColor": "magenta",
+            "color": "magenta"
+        },
+        {
+            "type": "custom",
+            "format": "╭────────────────────────────────────────────────────╮"
+        },
+        {
+            "type": "title",
+            "key": "    User",
+            "keyColor": "blue",
+            "format": "{1}@{2}",
+            "color": "white"
+        },
+        {
+            "type": "os",
+            "key": "   󰣇 OS",
+            "keyColor": "blue",
+            "format": "{2}",
+            "color": "white"
+        },
+        {
+            "type": "   kernel",
+            "key": "    Kernel",
+            "keyColor": "blue",
+            "format": "{2}",
+            "color": "white"
+        },
+        {
+            "type": "packages",
+            "key": "   󰏗 Packages",
+            "keyColor": "blue",
+            "color": "white"
+        },
+        {
+            "type": "cpu",
+            "key": "    CPU",
+            "keyColor": "blue",
+            "format": "{1} ({3}) @ {7}",
+            "color": "white"
+        },
+        {
+            "type": "gpu",
+            "key": "   󰊴 GPU",
+            "keyColor": "blue",
+            "format": "{1} {2}",
+            "color": "white"
+        },
+        {
+            "type": "memory",
+            "key": "   󰍛 Memory",
+            "keyColor": "blue",
+            "format": "{1} / {2} ({3})",
+            "color": "white"
+        },
+        {
+            "type": "custom",
+            "format": "╰────────────────────────────────────────────────────╯"
+        },
+        {
+            "type": "custom",
+            "format": "╭────────────────────────────────────────────────────╮"
+        },
+        {
+            "type": "display",
+            "key": "   󰍹 Display",
+            "keyColor": "yellow",
+            "format": "{1}x{2} @ {3}Hz ({7})",
+            "color": "white"
+        },
+        {
+            "type": "wm",
+            "key": "   󱗃 WM",
+            "keyColor": "yellow",
+            "format": "{2}",
+            "color": "white"
+        },
+        {
+            "type": "uptime",
+            "key": "   󰅐 Uptime",
+            "keyColor": "magenta",
+            "color": "white"
+        },
+        {
+            "type": "disk",
+            "key": "   OS Age",
+            "keyColor": "magenta",
+            "format": "{days} days",
+            "folders": "/",
+            "color": "white"
+        },
+        {
+            "type": "disk",
+            "key": "   󱦟 Disk",
+            "keyColor": "magenta",
+            "format": "{1} / {2} ({3})",
+            "folders": "/",
+            "color": "white"
+        },
+        {
+            "type": "custom",
+            "format": "╰────────────────────────────────────────────────────╯"
+        },
+        {
+            "type": "colors",
+            "symbol": "circle",
+            "paddingLeft": 2,
+            "colors": [
+                "black",
+                "red",
+                "green",
+                "yellow",
+                "blue",
+                "magenta",
+                "cyan",
+                "white"
+            ]
+        },
+        "break"
+    ]
+}

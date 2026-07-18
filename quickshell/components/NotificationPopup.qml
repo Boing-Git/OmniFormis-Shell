@@ -61,7 +61,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
 
         width: root.expanded ? 380 : 100
-        height: root.expanded ? contentColumn.implicitHeight + Vars.spacingMedium * 2 + 8 : 40
+        height: root.expanded ? contentColumn.implicitHeight + 24 : 40
 
         color: Theme.surface_container_high
         radius: root.gameMode ? 0 : (root.expanded ? Vars.radiusLarge : height / 2)
@@ -76,7 +76,7 @@ Item {
         // EXPANDED UI
         Item {
             anchors.fill: parent
-            anchors.margins: Vars.spacingMedium
+            anchors.margins: 12
 
             opacity: root.expanded ? 1.0 : 0.0
             visible: opacity > 0
@@ -85,12 +85,12 @@ Item {
             ColumnLayout {
                 id: contentColumn
                 anchors.fill: parent
-                spacing: Vars.spacingSmall
+                spacing: 8
 
                 // Header
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: Vars.spacingSmall
+                    spacing: 8
 
                     Text {
                         text: "\ue7f4"

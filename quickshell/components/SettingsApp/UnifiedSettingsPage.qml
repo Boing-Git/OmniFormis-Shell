@@ -131,7 +131,7 @@ ColumnLayout {
         clip: true
         spacing: 4
         model: settingsModel
-        flickDeceleration: 1000
+        flickDeceleration: 100
         maximumFlickVelocity: 4000
         focus: true
         KeyNavigation.up: searchInput
@@ -267,6 +267,10 @@ ColumnLayout {
                 id: delegateMouse
                 anchors.fill: parent
                 hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onEntered: {
+                    settingsList.currentIndex = delegateRoot.delegateIndex;
+                }
                 onClicked: {
                     settingsList.currentIndex = delegateRoot.delegateIndex;
                 }
@@ -276,10 +280,12 @@ ColumnLayout {
                 id: delegateRow
                 anchors.fill: parent
                 anchors.margins: Vars.spacingLarge
-                spacing: Vars.spacingMedium
+                spacing: 24
 
                 ColumnLayout {
-                    Layout.fillWidth: true
+                    Layout.preferredWidth: 200
+                    Layout.maximumWidth: 200
+                    Layout.fillWidth: false
                     spacing: 4
                     Text {
                         text: delegateRoot.itemKey
@@ -481,6 +487,7 @@ ColumnLayout {
                 }
 
                 Slider {
+                    id: m3Slider
                     visible: delegateRoot.itemType === "slider"
                     Layout.fillWidth: true
                     Layout.preferredWidth: 320
@@ -491,6 +498,20 @@ ColumnLayout {
                     to: delegateRoot.itemMax
                     stepSize: delegateRoot.itemStep
                     value: parseFloat(delegateRoot.itemVal)
+                    snapMode: delegateRoot.itemStep >= 1 ? Slider.SnapAlways : Slider.NoSnap
+
+                    property real trackHeight: 36
+                    property real handleWidth: 4
+                    property real handleHeight: trackHeight + 2
+                    property real handleMargin: 6
+                    property real leftRadiusLarge: 12
+                    property real leftRadiusSmall: 4
+                    property real dotSize: 6
+                    property real gap: 2
+                    property bool showTicks: delegateRoot.itemStep >= 1
+
+                    // Auto-detect mode: if 'from' is negative, use centered/bidirectional mode
+                    property bool isCentered: delegateRoot.itemMin < 0
 
                     onMoved: {
                         var rounded = Number((value).toFixed(3));
@@ -511,50 +532,200 @@ ColumnLayout {
                         }
                     }
 
+                    // ═══════════════════════════════════════════════
+                    // MODE A: Centered/Bidirectional slider (- to 0 to +)
+                    // ═══════════════════════════════════════════════
                     background: Item {
-                        x: parent.leftPadding
-                        y: parent.topPadding + (parent.availableHeight - 40) / 2
-                        width: parent.availableWidth
-                        height: 40
+                        visible: m3Slider.isCentered
+                        x: m3Slider.leftPadding
+                        y: m3Slider.topPadding + (m3Slider.availableHeight - m3Slider.trackHeight) / 2
+                        width: m3Slider.availableWidth
+                        height: m3Slider.trackHeight
 
-                        // LEFT TRACK (Active Fill)
-                        Item {
+                        property real handlePos: m3Slider.visualPosition * (width - m3Slider.handleWidth)
+                        property real centerX: width / 2
+
+                        property bool isLeftOfCenter: handlePos + m3Slider.handleWidth / 2 < centerX
+
+                        // LEFT TRACK — rounded left, little rounded right, with dot
+                        // Stops at center (with gap) when handle is right of center
+                        Rectangle {
+                            id: leftTrackCentered
                             x: 0
                             y: 0
+                            width: {
+                                var endAt = parent.isLeftOfCenter
+                                    ? parent.handlePos - m3Slider.gap
+                                    : parent.centerX - m3Slider.gap;
+                                return Math.max(m3Slider.leftRadiusLarge * 2, endAt);
+                            }
                             height: parent.height
-                            width: Math.max(0, (parent.parent.visualPosition * (parent.width - 4)) - 4)
-                            clip: true
+                            color: Theme.surface_container_highest
+
+                            topLeftRadius: m3Slider.leftRadiusLarge
+                            bottomLeftRadius: m3Slider.leftRadiusLarge
+                            topRightRadius: m3Slider.leftRadiusSmall
+                            bottomRightRadius: m3Slider.leftRadiusSmall
+
+                            // Dot at left end
                             Rectangle {
-                                width: parent.parent.width
-                                height: parent.height
-                                radius: 12
-                                color: Theme.primary
+                                width: m3Slider.dotSize
+                                height: m3Slider.dotSize
+                                radius: m3Slider.dotSize / 2
+                                color: Theme.on_surface_variant
+                                anchors.verticalCenter: parent.verticalCenter
+                                x: m3Slider.leftRadiusLarge - m3Slider.dotSize / 2
+                                opacity: leftTrackCentered.width > m3Slider.leftRadiusLarge * 2.5 ? 0.6 : 0.0
+                                Behavior on opacity { NumberAnimation { duration: 150 } }
                             }
                         }
 
-                        // RIGHT TRACK (Inactive Base)
-                        Item {
-                            x: (parent.parent.visualPosition * (parent.width - 4)) + 4 + 4
+                        // COLORED INDICATOR — spans from center to handle with margins
+                        // When handle is LEFT of center: right side at center, left side at handle
+                        // When handle is RIGHT of center: left side at center, right side at handle
+                        Rectangle {
+                            id: coloredIndicatorCentered
+                            property real handleRight: parent.handlePos + m3Slider.handleWidth + m3Slider.gap
+                            property real handleLeft: parent.handlePos - m3Slider.gap
+
+                            x: parent.isLeftOfCenter ? handleRight : parent.centerX + m3Slider.gap
                             y: 0
+                            width: parent.isLeftOfCenter
+                                   ? Math.max(0, parent.centerX - m3Slider.gap - handleRight)
+                                   : Math.max(0, handleLeft - parent.centerX - m3Slider.gap)
                             height: parent.height
-                            width: Math.max(0, parent.width - x)
-                            clip: true
+                            color: Theme.primary
+                            radius: m3Slider.leftRadiusSmall
+                            visible: width > 2
+                        }
+
+                        // RIGHT TRACK — little rounded left, rounded right, with dot
+                        // Starts at center (with gap) when handle is left of center
+                        Rectangle {
+                            id: rightTrackCentered
+                            x: {
+                                var startAt = parent.isLeftOfCenter
+                                    ? parent.centerX + m3Slider.gap
+                                    : parent.handlePos + m3Slider.handleWidth + m3Slider.gap;
+                                return startAt;
+                            }
+                            y: 0
+                            width: Math.max(m3Slider.leftRadiusLarge * 2, parent.width - x)
+                            height: parent.height
+                            color: Theme.surface_container_highest
+
+                            topLeftRadius: m3Slider.leftRadiusSmall
+                            bottomLeftRadius: m3Slider.leftRadiusSmall
+                            topRightRadius: m3Slider.leftRadiusLarge
+                            bottomRightRadius: m3Slider.leftRadiusLarge
+
+                            // Dot at right end
                             Rectangle {
-                                x: -parent.x
-                                width: parent.parent.width
+                                width: m3Slider.dotSize
+                                height: m3Slider.dotSize
+                                radius: m3Slider.dotSize / 2
+                                color: Theme.on_surface_variant
+                                anchors.verticalCenter: parent.verticalCenter
+                                x: parent.width - m3Slider.leftRadiusLarge - m3Slider.dotSize / 2
+                                opacity: rightTrackCentered.width > m3Slider.leftRadiusLarge * 2.5 ? 0.6 : 0.0
+                                Behavior on opacity { NumberAnimation { duration: 150 } }
+                            }
+                        }
+
+                        // Tick marks for integer steps (centered mode)
+                        Repeater {
+                            model: m3Slider.showTicks ? Math.max(0, Math.floor((m3Slider.to - m3Slider.from) / m3Slider.stepSize) + 1) : 0
+                            Rectangle {
+                                property real tickPos: m3Slider.availableWidth * (index / Math.max(1, (m3Slider.to - m3Slider.from) / m3Slider.stepSize))
+                                x: tickPos - width / 2
+                                y: parent.height
+                                width: 2
+                                height: 6
+                                radius: 1
+                                color: Theme.on_surface_variant
+                                opacity: 0.4
+                            }
+                        }
+                    }
+
+                    // ═══════════════════════════════════════════════
+                    // MODE B: Unidirectional slider (0 to positive) — uses Loader
+                    // ═══════════════════════════════════════════════
+                    Loader {
+                        active: !m3Slider.isCentered
+                        sourceComponent: Item {
+                            x: m3Slider.leftPadding
+                            y: m3Slider.topPadding + (m3Slider.availableHeight - m3Slider.trackHeight) / 2
+                            width: m3Slider.availableWidth
+                            height: m3Slider.trackHeight
+
+                            property real handlePos: m3Slider.visualPosition * (width - m3Slider.handleWidth)
+
+                            // LEFT TRACK (Colored fill — no dot for 0-to-+ sliders)
+                            Rectangle {
+                                id: leftTrackUni
+                                x: 0
+                                y: 0
+                                width: Math.max(m3Slider.leftRadiusLarge * 2, parent.handlePos - m3Slider.gap)
                                 height: parent.height
-                                radius: 12
+                                color: Theme.primary
+
+                                topLeftRadius: m3Slider.leftRadiusLarge
+                                bottomLeftRadius: m3Slider.leftRadiusLarge
+                                topRightRadius: m3Slider.leftRadiusSmall
+                                bottomRightRadius: m3Slider.leftRadiusSmall
+                            }
+
+                            // RIGHT TRACK (Inactive)
+                            Rectangle {
+                                id: rightTrackUni
+                                x: parent.handlePos + m3Slider.handleWidth + m3Slider.gap
+                                y: 0
+                                width: Math.max(m3Slider.leftRadiusLarge * 2, parent.width - x)
+                                height: parent.height
                                 color: Theme.surface_container_highest
+
+                                topLeftRadius: m3Slider.leftRadiusSmall
+                                bottomLeftRadius: m3Slider.leftRadiusSmall
+                                topRightRadius: m3Slider.leftRadiusLarge
+                                bottomRightRadius: m3Slider.leftRadiusLarge
+
+                                // Dot at right end
+                                Rectangle {
+                                    width: m3Slider.dotSize
+                                    height: m3Slider.dotSize
+                                    radius: m3Slider.dotSize / 2
+                                    color: Theme.on_surface_variant
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    x: parent.width - m3Slider.leftRadiusLarge - m3Slider.dotSize / 2
+                                    opacity: rightTrackUni.width > m3Slider.leftRadiusLarge * 2.5 ? 0.6 : 0.0
+                                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                                }
+                            }
+
+                            // Tick marks for integer steps (unidirectional mode)
+                            Repeater {
+                                model: m3Slider.showTicks ? Math.max(0, Math.floor((m3Slider.to - m3Slider.from) / m3Slider.stepSize) + 1) : 0
+                                Rectangle {
+                                    property real tickPos: m3Slider.availableWidth * (index / Math.max(1, (m3Slider.to - m3Slider.from) / m3Slider.stepSize))
+                                    x: tickPos - width / 2
+                                    y: parent.height
+                                    width: 2
+                                    height: 6
+                                    radius: 1
+                                    color: Theme.on_surface_variant
+                                    opacity: 0.4
+                                }
                             }
                         }
                     }
 
                     handle: Rectangle {
-                        x: parent.leftPadding + parent.visualPosition * (parent.availableWidth - width)
-                        y: parent.topPadding + (parent.availableHeight - height) / 2
-                        width: 4
-                        height: 50
-                        radius: 2
+                        x: m3Slider.leftPadding + m3Slider.visualPosition * (m3Slider.availableWidth - width)
+                        y: m3Slider.topPadding + (m3Slider.availableHeight - height) / 2
+                        width: m3Slider.handleWidth
+                        height: m3Slider.handleHeight
+                        radius: width / 2
                         color: Theme.primary
                     }
                 }
@@ -791,6 +962,11 @@ ColumnLayout {
                         min = 0.1;
                         max = 2.0;
                         step = 0.05;
+                    } else if (key === "wallpaperMaskOffsetX" || key === "wallpaperMaskOffsetY") {
+                        type = "slider";
+                        min = -500;
+                        max = 500;
+                        step = 1;
                     }
 
                     var enumsStr = "";
@@ -802,6 +978,9 @@ ColumnLayout {
                         enumsStr = "transparent|||background|||primary|||secondary|||tertiary|||surface_variant|||error";
                     } else if (key === "wallpaperMaskEnabled") {
                         type = "bool";
+                    } else if (key === "clockShape") {
+                        type = "enum";
+                        enumsStr = "Circle|||Square|||Oval|||Pill|||Diamond|||Pentagon|||Gem|||VerySunny|||Sunny|||4SidedCookie|||6SidedCookie|||7SidedCookie|||9SidedCookie|||12SidedCookie|||4LeafClover|||8LeafClover|||SoftBurst|||SoftBoom|||Flower|||Puffy|||PuffyDiamond|||PixelCircle|||Bun|||Heart|||GhostIsh|||Burst|||Boom|||8LeafClover";
                     }
 
                     newVars.push({

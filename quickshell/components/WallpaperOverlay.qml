@@ -19,6 +19,8 @@ PanelWindow {
     property real currentMaskScale: Vars.wallpaperMaskScale !== undefined ? Vars.wallpaperMaskScale : 0.7
     property string currentMaskColor: Vars.wallpaperMaskColor !== undefined ? Vars.wallpaperMaskColor : "transparent"
     property bool currentMaskEnabled: Vars.wallpaperMaskEnabled !== undefined ? Vars.wallpaperMaskEnabled : true
+    property real currentMaskOffsetX: Vars.wallpaperMaskOffsetX !== undefined ? Vars.wallpaperMaskOffsetX : 0
+    property real currentMaskOffsetY: Vars.wallpaperMaskOffsetY !== undefined ? Vars.wallpaperMaskOffsetY : 0
 
     Timer {
         interval: 100
@@ -40,6 +42,14 @@ PanelWindow {
             var enabled = Vars.wallpaperMaskEnabled !== undefined ? Vars.wallpaperMaskEnabled : true;
             if (root.currentMaskEnabled !== enabled)
                 root.currentMaskEnabled = enabled;
+
+            var offsetX = Vars.wallpaperMaskOffsetX !== undefined ? Vars.wallpaperMaskOffsetX : 0;
+            if (root.currentMaskOffsetX !== offsetX)
+                root.currentMaskOffsetX = offsetX;
+
+            var offsetY = Vars.wallpaperMaskOffsetY !== undefined ? Vars.wallpaperMaskOffsetY : 0;
+            if (root.currentMaskOffsetY !== offsetY)
+                root.currentMaskOffsetY = offsetY;
         }
     }
 
@@ -75,12 +85,15 @@ PanelWindow {
             anchors.fill: parent
             visible: false
             layer.enabled: true
-            layer.samples: 8 // Excellent for smooth edges
+            layer.samples: 16 // Ultra-smooth MSAA for mask edges
             layer.smooth: true
+            layer.textureMirroring: ShaderEffectSource.NoMirroring
 
             Image {
                 id: maskCanvas
                 anchors.centerIn: parent
+                anchors.horizontalCenterOffset: root.currentMaskOffsetX
+                anchors.verticalCenterOffset: root.currentMaskOffsetY
 
                 // The SVG path expects a 100x100 bounding box.
                 property real calculatedSize: Math.min(parent.width, parent.height) * root.currentMaskScale
@@ -136,7 +149,7 @@ PanelWindow {
                 }
 
                 function updateSource() {
-                    maskCanvas.source = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + maskCanvas.currentPath + "' fill='white'/></svg>";
+                    maskCanvas.source = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' shape-rendering='geometricPrecision'><path d='" + maskCanvas.currentPath + "' fill='white'/></svg>";
                 }
 
                 Component.onCompleted: updateSource()
@@ -214,6 +227,11 @@ PanelWindow {
             }
             maskEnabled: true
             maskSource: maskContainer
+            antialiasing: true
+            smooth: true
+            layer.enabled: true
+            layer.smooth: true
+            layer.samples: 8
         }
     } // Close Item parent
 } // Close PanelWindow

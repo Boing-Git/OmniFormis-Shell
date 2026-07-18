@@ -10,10 +10,10 @@
 
     /* Primary Accents (Blue mapping) */
     --blue1: #ffdbcf;
-    --blue2: #72361e;
-    --blue3: #ffb59b;
+    --blue2: #72351f;
+    --blue3: #ffb59c;
     --blue4: #ffdbcf;
-    --blue5: #8f4c33;
+    --blue5: #8f4c34;
 
     /* Error / Danger (Red mapping) */
     --red1: #E85E75;
@@ -24,24 +24,24 @@
 
     /* Secondary Accents (Pink mapping -> Secondary) */
     --pink1: #ffdbcf;
-    --pink2: #5d4035;
-    --pink3: #e7bdaf;
+    --pink2: #5d4036;
+    --pink3: #e7bdb0;
     --pink4: #ffdbcf;
     /* ИСПРАВЛЕНО: inverse_secondary -> on_secondary (это темный цвет в темной теме) */
     --pink5: #442a21;
 
     /* Tertiary Accents (Teal mapping -> Tertiary) */
-    --teal1: #f2e2a7;
-    --teal2: #50471a;
-    --teal3: #d5c68e;
-    --teal4: #f2e2a7;
+    --teal1: #f3e2a7;
+    --teal2: #51461a;
+    --teal3: #d6c68e;
+    --teal4: #f3e2a7;
     /* ИСПРАВЛЕНО: inverse_tertiary -> on_tertiary */
     --teal5: #393005;
 
     /* Purple mapping */
     --purple1: #997FDC;
-    --purple2: #e7bdaf;
-    --purple3: #e7bdaf;
+    --purple2: #e7bdb0;
+    --purple3: #e7bdb0;
     --purple4: #ffdbcf;
     --purple5: #3D2380;
 
@@ -64,8 +64,8 @@
     --grey3: #3d322f;
     --grey4: #322824;
     --grey5: #271d1a;
-    --grey6: #1a110e;
-    --grey7: #1a110e;
+    --grey6: #1a110f;
+    --grey7: #1a110f;
     --grey8: #000000;
 
     /* Text */

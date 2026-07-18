@@ -17,6 +17,20 @@ Item {
     property int minutes: 0
     property int seconds: 0
 
+    // Current clock shape — read from Vars and polled for live updates
+    property string currentClockShape: Vars.clockShape !== undefined ? Vars.clockShape : "Sunny"
+
+    Timer {
+        interval: 100
+        running: true
+        repeat: true
+        onTriggered: {
+            var shape = Vars.clockShape !== undefined ? Vars.clockShape : "Sunny";
+            if (root.currentClockShape !== shape)
+                root.currentClockShape = shape;
+        }
+    }
+
     // Timer to update time
     Timer {
         interval: 1000 // Update every second
@@ -42,6 +56,7 @@ Item {
         sourceSize.height: height
         smooth: true
         antialiasing: true
+        mipmap: true
 
         property color bg: Theme.surface_container_high
         property string pathColor: "rgb(" + Math.round(bg.r * 255) + "," + Math.round(bg.g * 255) + "," + Math.round(bg.b * 255) + ")"
@@ -49,7 +64,43 @@ Item {
         property string outlineColor: "rgb(" + Math.round(bc.r * 255) + "," + Math.round(bc.g * 255) + "," + Math.round(bc.b * 255) + ")"
         property real pathOpacity: Vars.translucent ? 0.85 : 1.0
 
-        source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + m3.getPath('Gem') + "' fill='" + pathColor + "' fill-opacity='" + pathOpacity + "' stroke='" + outlineColor + "' stroke-width='1'/></svg>"
+        property string currentPathName: root.currentClockShape
+        property string currentPath: m3.getPath(currentPathName)
+
+        source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + currentPath + "' fill='" + pathColor + "' fill-opacity='" + pathOpacity + "' stroke='" + outlineColor + "' stroke-width='1'/></svg>"
+
+        onCurrentPathNameChanged: {
+            if (clockFace.status === Image.Ready) {
+                shapeAnim.restart();
+            } else {
+                clockFace.updateSource();
+            }
+        }
+
+        SequentialAnimation {
+            id: shapeAnim
+            NumberAnimation {
+                target: clockFace
+                property: "scale"
+                to: 0.01
+                duration: 250
+                easing.type: Easing.InBack
+            }
+            ScriptAction {
+                script: clockFace.updateSource()
+            }
+            NumberAnimation {
+                target: clockFace
+                property: "scale"
+                to: 1.0
+                duration: 550
+                easing.type: Easing.OutElastic
+            }
+        }
+
+        function updateSource() {
+            clockFace.source = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + clockFace.currentPath + "' fill='" + clockFace.pathColor + "' fill-opacity='" + clockFace.pathOpacity + "' stroke='" + clockFace.outlineColor + "' stroke-width='1'/></svg>";
+        }
 
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -60,7 +111,8 @@ Item {
             shadowHorizontalOffset: 0
         }
 
-        // Inner dial to constrain contents within the Sunny shape bounds
+        // Inner dial to constrain contents within the shape bounds
+        // Dial size adapts to the shape — more compact shapes get a tighter dial
         Item {
             id: dial
             width: clockFace.width * 0.60
@@ -93,7 +145,7 @@ Item {
                         radius: width / 2 // Cleaner way to ensure a perfect pill shape
 
                         anchors.bottom: parent.verticalCenter
-                        anchors.bottomMargin: -(width / 2) // <-- THE FIX: Pushes the pivot into the center of the curve
+                        anchors.bottomMargin: -(width / 2) // Pushes the pivot into the center of the curve
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
@@ -118,7 +170,7 @@ Item {
                         radius: width / 2 // Cleaner way to ensure a perfect pill shape
 
                         anchors.bottom: parent.verticalCenter
-                        anchors.bottomMargin: -(width / 2) // <-- THE FIX
+                        anchors.bottomMargin: -(width / 2) // THE FIX
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }

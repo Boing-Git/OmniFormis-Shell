@@ -36,7 +36,7 @@ Item {
         layer.enabled: !isPopup
         layer.effect: MultiEffect { shadowEnabled: true; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
         width: parent.width
-        height: cardContent.implicitHeight + (Vars.spacingMedium * 2)
+        height: cardContent.implicitHeight + 24
         
         // Drag logic transforms the container X
         x: 0
@@ -138,11 +138,11 @@ Item {
         ColumnLayout {
             id: cardContent
             anchors.fill: parent
-            anchors.leftMargin: Vars.spacingMedium
-            anchors.rightMargin: Vars.spacingMedium
-            anchors.topMargin: Vars.spacingMedium
-            anchors.bottomMargin: Vars.spacingMedium
-            spacing: Vars.spacingSmall
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            anchors.topMargin: 12
+            anchors.bottomMargin: 12
+            spacing: 6
 
             // Header row
             RowLayout {
@@ -329,7 +329,7 @@ Item {
                 height: 3
                 radius: Math.floor(Vars.radiusSmall / 5)
                 color: Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.2)
-                Layout.topMargin: (Vars.spacingSmall / 2)
+                Layout.topMargin: 2
                 visible: rootCard.modelData.urgency !== NotificationUrgency.Critical && isPopup
 
                 Rectangle {

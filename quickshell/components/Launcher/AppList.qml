@@ -29,6 +29,8 @@ ListView {
     
     orientation: ListView.Vertical
     boundsBehavior: Flickable.StopAtBounds
+    flickDeceleration: 100
+    maximumFlickVelocity: 4000
 
     focus: true
     keyNavigationEnabled: true

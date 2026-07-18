@@ -1,7 +1,7 @@
 return {
-    image = "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/Candle-Photo.png",
+    image = "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/CuteCat.png",
 
-    background = "0xff1a110e",
+    background = "0xff1a110f",
 
     error = "0xffffb4ab",
 
@@ -9,7 +9,7 @@ return {
 
     inverse_on_surface = "0xff392e2b",
 
-    inverse_primary = "0xff8f4c33",
+    inverse_primary = "0xff8f4c34",
 
     inverse_surface = "0xfff1dfd9",
 
@@ -19,21 +19,21 @@ return {
 
     on_error_container = "0xffffdad6",
 
-    on_primary = "0xff55200a",
+    on_primary = "0xff55200b",
 
     on_primary_container = "0xffffdbcf",
 
-    on_primary_fixed = "0xff380d00",
+    on_primary_fixed = "0xff380c00",
 
-    on_primary_fixed_variant = "0xff72361e",
+    on_primary_fixed_variant = "0xff72351f",
 
     on_secondary = "0xff442a21",
 
     on_secondary_container = "0xffffdbcf",
 
-    on_secondary_fixed = "0xff2c160d",
+    on_secondary_fixed = "0xff2c160e",
 
-    on_secondary_fixed_variant = "0xff5d4035",
+    on_secondary_fixed_variant = "0xff5d4036",
 
     on_surface = "0xfff1dfd9",
 
@@ -41,39 +41,39 @@ return {
 
     on_tertiary = "0xff393005",
 
-    on_tertiary_container = "0xfff2e2a7",
+    on_tertiary_container = "0xfff3e2a7",
 
     on_tertiary_fixed = "0xff221b00",
 
-    on_tertiary_fixed_variant = "0xff50471a",
+    on_tertiary_fixed_variant = "0xff51461a",
 
     outline = "0xffa08d86",
 
     outline_variant = "0xff53433e",
 
-    primary = "0xffffb59b",
+    primary = "0xffffb59c",
 
-    primary_container = "0xff72361e",
+    primary_container = "0xff72351f",
 
     primary_fixed = "0xffffdbcf",
 
-    primary_fixed_dim = "0xffffb59b",
+    primary_fixed_dim = "0xffffb59c",
 
     scrim = "0xff000000",
 
-    secondary = "0xffe7bdaf",
+    secondary = "0xffe7bdb0",
 
-    secondary_container = "0xff5d4035",
+    secondary_container = "0xff5d4036",
 
     secondary_fixed = "0xffffdbcf",
 
-    secondary_fixed_dim = "0xffe7bdaf",
+    secondary_fixed_dim = "0xffe7bdb0",
 
     shadow = "0xff000000",
 
-    source_color = "0xffa75434",
+    source_color = "0xff914a30",
 
-    surface = "0xff1a110e",
+    surface = "0xff1a110f",
 
     surface_bright = "0xff423733",
 
@@ -85,20 +85,20 @@ return {
 
     surface_container_low = "0xff231a16",
 
-    surface_container_lowest = "0xff140c09",
+    surface_container_lowest = "0xff140c0a",
 
-    surface_dim = "0xff1a110e",
+    surface_dim = "0xff1a110f",
 
-    surface_tint = "0xffffb59b",
+    surface_tint = "0xffffb59c",
 
     surface_variant = "0xff53433e",
 
-    tertiary = "0xffd5c68e",
+    tertiary = "0xffd6c68e",
 
-    tertiary_container = "0xff50471a",
+    tertiary_container = "0xff51461a",
 
-    tertiary_fixed = "0xfff2e2a7",
+    tertiary_fixed = "0xfff3e2a7",
 
-    tertiary_fixed_dim = "0xffd5c68e",
+    tertiary_fixed_dim = "0xffd6c68e",
 
 }

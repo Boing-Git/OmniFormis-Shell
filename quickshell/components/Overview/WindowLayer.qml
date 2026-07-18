@@ -16,55 +16,51 @@ Item {
     property var overviewContainer
     property var overviewPanel
     property bool gameMode: false
-    
-    signal closeRequested()
 
-    // Debug: log toplevel data on visibility change
-    onVisibleChanged: {
-        if (visible) {
-            const tpls = ToplevelManager.toplevels.values;
-            console.log("=== OVERVIEW DEBUG ===");
-            console.log("ToplevelManager.toplevels.values count:", tpls ? tpls.length : "null/undefined");
-            console.log("HyprlandData.windowList count:", HyprlandData.windowList.length);
-            console.log("HyprlandData.windowByAddress keys:", Object.keys(HyprlandData.windowByAddress).join(", "));
-            if (tpls && tpls.length > 0) {
-                for (let i = 0; i < Math.min(tpls.length, 5); i++) {
-                    const t = tpls[i];
-                    const hyprAddr = t.HyprlandToplevel ? t.HyprlandToplevel.address : "NO_HYPRLAND_TOPLEVEL";
-                    console.log("  Toplevel", i, "appId:", t.appId, "address:", hyprAddr);
-                }
-            }
-            console.log("=== END DEBUG ===");
-        }
+    signal closeRequested
+
+    // ==========================================
+    // DUAL MONITOR WORKSPACE CALCULATION
+    // ==========================================
+    readonly property int baseWorkspaceId: {
+        if (!overviewPanel || !overviewPanel.hyprMonitor || !overviewPanel.hyprMonitor.activeWorkspace)
+            return 1;
+        return Math.floor((overviewPanel.hyprMonitor.activeWorkspace.id - 1) / overviewPanel.totalWorkspaces) * overviewPanel.totalWorkspaces + 1;
     }
 
     Repeater {
         model: ScriptModel {
             values: {
-                // Reactive dependencies
                 const dummy = HyprlandData.windowList.length;
                 const tpls = ToplevelManager.toplevels.values;
                 if (!tpls || tpls.length === 0)
                     return [];
 
                 const result = tpls.filter(toplevel => {
-                    if (!toplevel)
+                    if (!toplevel || !toplevel.HyprlandToplevel)
                         return false;
-                    // Try both with and without HyprlandToplevel
-                    let address = "";
-                    if (toplevel.HyprlandToplevel) {
-                        address = `0x${toplevel.HyprlandToplevel.address}`;
-                    } else {
-                        return false;
-                    }
+
+                    let rawAddr = toplevel.HyprlandToplevel.address.toString();
+                    let address = rawAddr.startsWith("0x") ? rawAddr : `0x${rawAddr}`;
+
                     const win = HyprlandData.windowByAddress[address];
                     if (!win || !win.workspace)
                         return false;
-                    const wsId = win.workspace.id;
-                    return wsId >= 1 && wsId <= overviewPanel.totalWorkspaces;
+
+                    let wsId = 1;
+                    if (typeof win.workspace === 'object') {
+                        wsId = win.workspace.id ?? 1;
+                    } else if (typeof win.workspace === 'number') {
+                        wsId = win.workspace;
+                    }
+
+                    return wsId >= baseWorkspaceId && wsId < (baseWorkspaceId + overviewPanel.totalWorkspaces);
                 }).sort((a, b) => {
-                    const addrA = `0x${a.HyprlandToplevel.address}`;
-                    const addrB = `0x${b.HyprlandToplevel.address}`;
+                    let rawA = a.HyprlandToplevel.address.toString();
+                    let rawB = b.HyprlandToplevel.address.toString();
+                    let addrA = rawA.startsWith("0x") ? rawA : `0x${rawA}`;
+                    let addrB = rawB.startsWith("0x") ? rawB : `0x${rawB}`;
+
                     const winA = HyprlandData.windowByAddress[addrA];
                     const winB = HyprlandData.windowByAddress[addrB];
                     if (winA?.floating !== winB?.floating)
@@ -80,57 +76,60 @@ Item {
             required property var modelData
             required property int index
 
-            property string address: `0x${modelData.HyprlandToplevel.address}`
+            property string rawAddress: modelData.HyprlandToplevel.address.toString()
+            property string address: rawAddress.startsWith("0x") ? rawAddress : `0x${rawAddress}`
             property var winData: HyprlandData.windowByAddress[address]
 
-            // Which workspace cell does this window belong to?
-            property int wsId: winData?.workspace?.id ?? 1
-            property int wsRow: overviewContainer ? Math.floor((wsId - 1) / overviewContainer.gridColumns) : 0
-            property int wsCol: overviewContainer ? (wsId - 1) % overviewContainer.gridColumns : 0
+            property int wsId: {
+                if (!winData || !winData.workspace)
+                    return 1;
+                if (typeof winData.workspace === 'object')
+                    return winData.workspace.id ?? 1;
+                return winData.workspace;
+            }
 
-            // Grid cell origin (top-left corner of that workspace tile)
-            property real cellX: wsCol * (overviewPanel.wsWidth + overviewPanel.wsSpacing)
-            property real cellY: wsRow * (overviewPanel.wsHeight + overviewPanel.wsSpacing)
+            property int safeCols: (overviewContainer && overviewContainer.gridColumns > 0) ? overviewContainer.gridColumns : 5
+            property int localWsIndex: Math.max(0, (wsId - 1) % (overviewPanel ? overviewPanel.totalWorkspaces : 10))
+            property int wsRow: Math.floor(localWsIndex / safeCols)
+            property int wsCol: localWsIndex % safeCols
 
-            // Monitor geometry
-            property real monX: overviewPanel.hyprMonitor?.x ?? 0
-            property real monY: overviewPanel.hyprMonitor?.y ?? 0
+            property real safeWsWidth: overviewPanel ? overviewPanel.wsWidth : 100
+            property real safeWsSpacing: overviewPanel ? overviewPanel.wsSpacing : 6
+            property real cellX: wsCol * (safeWsWidth + safeWsSpacing)
+            property real cellY: wsRow * (overviewPanel ? overviewPanel.wsHeight + safeWsSpacing : 106)
 
-            // Window geometry relative to the monitor
-            property real winX: (winData?.at?.[0] ?? 0) - monX
-            property real winY: (winData?.at?.[1] ?? 0) - monY
-            property real winW: winData?.size?.[0] ?? 100
-            property real winH: winData?.size?.[1] ?? 100
+            property real monX: overviewPanel?.hyprMonitor?.x ?? 0
+            property real monY: overviewPanel?.hyprMonitor?.y ?? 0
 
-            // Scale from real monitor pixels to tile pixels
-            property real scaleX: overviewPanel.wsWidth / (overviewPanel.monitorWidth / overviewPanel.monitorScale)
-            property real scaleY: overviewPanel.wsHeight / (overviewPanel.monitorHeight / overviewPanel.monitorScale)
+            property real winX: (winData?.at && winData.at.length >= 2) ? (winData.at[0] - monX) : 0
+            property real winY: (winData?.at && winData.at.length >= 2) ? (winData.at[1] - monY) : 0
+            property real winW: (winData?.size && winData.size.length >= 2) ? winData.size[0] : 100
+            property real winH: (winData?.size && winData.size.length >= 2) ? winData.size[1] : 100
 
-            // Final position: cell origin + scaled window position within monitor
+            property real monitorWidthActual: (overviewPanel && overviewPanel.monitorWidth > 0) ? (overviewPanel.monitorWidth / overviewPanel.monitorScale) : 1920
+            property real monitorHeightActual: (overviewPanel && overviewPanel.monitorHeight > 0) ? (overviewPanel.monitorHeight / overviewPanel.monitorScale) : 1080
+
+            property real scaleX: safeWsWidth / monitorWidthActual
+            property real scaleY: (overviewPanel ? overviewPanel.wsHeight : 100) / monitorHeightActual
+
             property real initX: Math.round(cellX + Math.max(0, winX * scaleX))
             property real initY: Math.round(cellY + Math.max(0, winY * scaleY))
 
             x: initX
             y: initY
-            width: Math.round(Math.min(winW * scaleX, overviewPanel.wsWidth))
-            height: Math.round(Math.min(winH * scaleY, overviewPanel.wsHeight))
+            width: Math.max(10, Math.round(Math.min(winW * scaleX, safeWsWidth)))
+            height: Math.max(10, Math.round(Math.min(winH * scaleY, overviewPanel ? overviewPanel.wsHeight : 100)))
             z: dragArea.drag.active ? 99999 : index
-
             clip: true
 
             property string windowAddress: address
 
-            // Drag is manually managed - do NOT bind Drag.active
             Drag.keys: ["window"]
             Drag.source: winItem
             Drag.hotSpot.x: width / 2
             Drag.hotSpot.y: height / 2
 
-            Component.onCompleted: {
-                console.log("Window delegate created:", modelData.appId, "addr:", address, "wsId:", wsId, "pos:", Math.round(x), Math.round(y), "size:", Math.round(width), "x", Math.round(height));
-            }
-
-            // Opaque background behind preview
+            // Background behind preview
             Rectangle {
                 anchors.fill: parent
                 radius: Vars.radiusMedium
@@ -139,7 +138,7 @@ Item {
                 border.color: winItem.winData?.floating ? Theme.tertiary_container : Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.2)
             }
 
-            // Live screen capture
+            // Live screen capture - FORCED ON for all workspaces
             ScreencopyView {
                 id: preview
                 anchors.fill: parent
@@ -155,7 +154,6 @@ Item {
                 }
             }
 
-            // Mask for rounded corners
             Item {
                 id: previewMask
                 anchors.fill: parent
@@ -168,25 +166,15 @@ Item {
                 }
             }
 
-            // Hover/press overlay + icon
+            // Simple Hover interaction overlay (ICONS COMPLETELY REMOVED)
             Rectangle {
                 anchors.fill: parent
                 radius: Vars.radiusMedium
-                color: dragArea.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.05)
+                color: dragArea.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : "transparent"
                 border.width: 1
                 border.color: Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.1)
-
-                // App icon centered over preview
-                IconImage {
-                    anchors.centerIn: parent
-                    width: Math.min(parent.width, parent.height) * 0.35
-                    height: width
-                    source: Quickshell.iconPath(overviewContainer ? overviewContainer.resolveIcon(winItem.modelData.appId) : "", "application-x-executable")
-                    asynchronous: false
-                }
             }
 
-            // Interaction: click to focus, middle-click to close, drag to move
             MouseArea {
                 id: dragArea
                 property bool wasDragged: false
@@ -225,13 +213,11 @@ Item {
 
                     if (wasDragged) {
                         winItem.Drag.active = false;
-
                         if (targetWs !== -1 && targetWs !== winItem.wsId) {
                             Hyprland.dispatch(`hl.dsp.window.move({workspace = '${targetWs}', follow = false, window = 'address:${winItem.address}'})`);
                         }
                     }
 
-                    // Restore bindings so position reacts to workspace changes
                     winItem.x = Qt.binding(function () {
                         return winItem.initX;
                     });
@@ -247,8 +233,9 @@ Item {
     Rectangle {
         id: focusedIndicator
         readonly property int activeWsId: Hyprland.focusedWorkspace?.id ?? 1
-        readonly property int activeRow: overviewContainer ? Math.floor((activeWsId - 1) / overviewContainer.gridColumns) : 0
-        readonly property int activeCol: overviewContainer ? (activeWsId - 1) % overviewContainer.gridColumns : 0
+        readonly property int localActiveIndex: Math.max(0, (activeWsId - 1) % (overviewPanel ? overviewPanel.totalWorkspaces : 10))
+        readonly property int activeRow: overviewContainer ? Math.floor(localActiveIndex / overviewContainer.gridColumns) : 0
+        readonly property int activeCol: overviewContainer ? localActiveIndex % overviewContainer.gridColumns : 0
 
         x: Math.round(root.x + activeCol * (overviewPanel.wsWidth + overviewPanel.wsSpacing))
         y: Math.round(root.y + activeRow * (overviewPanel.wsHeight + overviewPanel.wsSpacing))
@@ -260,7 +247,7 @@ Item {
         border.width: 2
         border.color: Theme.on_primary_container
 
-        visible: activeWsId >= 1 && activeWsId <= overviewPanel.totalWorkspaces
+        visible: activeWsId >= baseWorkspaceId && activeWsId < (baseWorkspaceId + (overviewPanel ? overviewPanel.totalWorkspaces : 10))
 
         Behavior on x {
             enabled: !root.gameMode

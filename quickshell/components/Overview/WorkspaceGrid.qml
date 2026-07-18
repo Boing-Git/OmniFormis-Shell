@@ -17,7 +17,16 @@ GridLayout {
 
     property var overviewPanel
 
-    signal closeRequested()
+    signal closeRequested
+
+    // ==========================================
+    // DUAL MONITOR WORKSPACE CALCULATION
+    // ==========================================
+    readonly property int baseWorkspaceId: {
+        if (!overviewPanel || !overviewPanel.hyprMonitor || !overviewPanel.hyprMonitor.activeWorkspace)
+            return 1;
+        return Math.floor((overviewPanel.hyprMonitor.activeWorkspace.id - 1) / root.totalWorkspaces) * root.totalWorkspaces + 1;
+    }
 
     rowSpacing: overviewPanel.wsSpacing
     columnSpacing: overviewPanel.wsSpacing
@@ -27,7 +36,8 @@ GridLayout {
 
         Item {
             id: wsContainer
-            readonly property int wsId: index + 1
+            // Adjusted wsId to apply the base offset (e.g. index 0 becomes Workspace 11 on Monitor 2)
+            readonly property int wsId: root.baseWorkspaceId + index
             readonly property bool isFocused: Hyprland.focusedWorkspace?.id === wsId
             property bool hoveredWhileDragging: false
 

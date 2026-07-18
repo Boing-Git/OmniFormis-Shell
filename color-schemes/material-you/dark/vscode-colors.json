@@ -1,28 +1,28 @@
 {
   "checksum": ":)",
-  "wallpaper": "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/Candle-Photo.png",
+  "wallpaper": "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/CuteCat.png",
   "alpha": "100",
   "special": {
-    "background": "#1a110e",
+    "background": "#1a110f",
     "foreground": "#f1dfd9",
-    "cursor": "#ffb59b"
+    "cursor": "#ffb59c"
   },
   "colors": {
-    "color0": "#1a110e",
+    "color0": "#1a110f",
     "color1": "#ffd8cb",
-    "color2": "#f1b8a5",
-    "color3": "#e1cd82",
-    "color4": "#ffb59b",
-    "color5": "#d5c68e",
-    "color6": "#6c3926",
+    "color2": "#f1b8a6",
+    "color3": "#e2cc82",
+    "color4": "#ffb59c",
+    "color5": "#d6c68e",
+    "color6": "#6c3927",
     "color7": "#d8c2bb",
     "color8": "#53433e",
-    "color9": "#ffb59b",
-    "color10": "#eb9578",
-    "color11": "#d7bc59",
-    "color12": "#ff8f68",
-    "color13": "#c7b369",
-    "color14": "#793317",
+    "color9": "#ffb59c",
+    "color10": "#eb9479",
+    "color11": "#d8bc59",
+    "color12": "#ff8f69",
+    "color13": "#c8b369",
+    "color14": "#793218",
     "color15": "#f1dfd9"
   }
 }
