@@ -76,8 +76,16 @@ Item {
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         
+        property real targetHeight: {
+            if (!root.expanded) return 40;
+            if (root.currentSubMenu === "wifi") return Math.min(800, wifiMenuObj.implicitHeight + (Vars.spacingLarge * 2));
+            if (root.currentSubMenu === "bluetooth") return Math.min(800, bluetoothMenuObj.implicitHeight + (Vars.spacingLarge * 2));
+            if (root.currentSubMenu === "display") return Math.min(800, displayMenuObj.implicitHeight + (Vars.spacingLarge * 2));
+            return 660; // Main dashboard
+        }
+        
         width: root.expanded ? 600 : 100
-        height: root.expanded ? 660 : 40
+        height: targetHeight
         
         color: Vars.translucent ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.85) : Theme.surface
         radius: root.gameMode ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
@@ -239,18 +247,30 @@ Item {
             // SUB-MENUS
             // ------------------------------------------
             CC.WifiMenu {
+                id: wifiMenuObj
                 isActive: root.currentSubMenu === "wifi"
                 onBackRequested: { root.currentSubMenu = "" }
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
             }
             
             CC.BluetoothMenu {
+                id: bluetoothMenuObj
                 isActive: root.currentSubMenu === "bluetooth"
                 onBackRequested: { root.currentSubMenu = "" }
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
             }
             
             CC.DisplayMenu {
+                id: displayMenuObj
                 isActive: root.currentSubMenu === "display"
                 onBackRequested: { root.currentSubMenu = "" }
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
             }
         }
     }

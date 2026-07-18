@@ -6,7 +6,7 @@ import "../../Variables/variables.js" as Vars
 ColumnLayout {
     id: rootSidebar
     
-    property string currentSection: "General"
+    property string currentSection: "wifi"
     property string wifiIcon: "\ue1d8"
     property string bluetoothIcon: "\ue1a7"
 
@@ -15,12 +15,19 @@ ColumnLayout {
 
     Repeater {
         model: [
-            { id: "General", name: "General", subtitle: "System config, spacing, layout", icon: "\ue8b8", section: "System", isFirst: true, isLast: false },
-            { id: "Appearance", name: "Appearance", subtitle: "Theme, rounding, colors", icon: "\ue3b7", section: "System", isFirst: false, isLast: false },
-            { id: "Input", name: "Input", subtitle: "Keyboard, mouse, gestures", icon: "\ue312", section: "System", isFirst: false, isLast: false },
-            { id: "bezier", name: "Motion", subtitle: "Custom curve editor", icon: "\ue922", section: "System", isFirst: false, isLast: true },
+            // Connections
             { id: "wifi", name: "Wi-Fi", subtitle: "Wi-Fi, ethernet", icon: rootSidebar.wifiIcon, section: "Connections", isFirst: true, isLast: false },
-            { id: "bluetooth", name: "Bluetooth", subtitle: "Bluetooth, pairing", icon: rootSidebar.bluetoothIcon, section: "Connections", isFirst: false, isLast: true }
+            { id: "bluetooth", name: "Bluetooth", subtitle: "Bluetooth, pairing", icon: rootSidebar.bluetoothIcon, section: "Connections", isFirst: false, isLast: true },
+            
+            // General and Appearance
+            { id: "General", name: "General", subtitle: "System config, spacing, layout", icon: "\ue8b8", section: "General and Appearance", isFirst: true, isLast: false },
+            { id: "Appearance", name: "Appearance", subtitle: "Theme, rounding, colors", icon: "\ue3b7", section: "General and Appearance", isFirst: false, isLast: false },
+            { id: "Input", name: "Input", subtitle: "Keyboard, mouse, gestures", icon: "\ue312", section: "General and Appearance", isFirst: false, isLast: false },
+            { id: "bezier", name: "Motion", subtitle: "Custom curve editor", icon: "\ue922", section: "General and Appearance", isFirst: false, isLast: true },
+            
+            // System
+            { id: "taskmanager", name: "Task Manager", subtitle: "System resources, processes", icon: "\ue85c", section: "System", isFirst: true, isLast: false },
+            { id: "about", name: "About", subtitle: "Omniformis Shell info", icon: "\ue88e", section: "System", isFirst: false, isLast: true }
         ]
         delegate: ColumnLayout {
             Layout.fillWidth: true

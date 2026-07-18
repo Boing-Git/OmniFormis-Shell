@@ -40,6 +40,15 @@ ColumnLayout {
     property var adapter: Bluetooth.defaultAdapter
     property bool adapterState: adapter ? adapter.enabled : false
     property var connectDevice: adapter ? adapter.devices.values.find(d => d.connected) : null
+    
+    property int connectedBluetoothCount: {
+        if (!adapter) return 0;
+        let count = 0;
+        for (let i = 0; i < adapter.devices.values.length; i++) {
+            if (adapter.devices.values[i].connected) count++;
+        }
+        return count;
+    }
 
     readonly property string bluetoothIcon: {
         if (!adapterState) return "\ue1a9"; 
@@ -414,7 +423,11 @@ ColumnLayout {
                         case "wifi": 
                             return moduleGridRoot.activeNet ? moduleGridRoot.activeNet.name : "Not Connected";
                         case "bluetooth": 
-                            return moduleGridRoot.connectDevice ? moduleGridRoot.connectDevice.name : (moduleGridRoot.adapterState ? "On" : "Available");
+                            if (!moduleGridRoot.adapterState) return "Off";
+                            let count = moduleGridRoot.connectedBluetoothCount;
+                            if (count === 0) return "Available";
+                            if (count === 1) return moduleGridRoot.connectDevice ? moduleGridRoot.connectDevice.name : "Connected";
+                            return count + " devices";
                         case "audio": 
                             return moduleGridRoot.audioNode && moduleGridRoot.audioNode.audio.muted ? "Muted" : "Active";
                         case "display": 
@@ -460,7 +473,7 @@ ColumnLayout {
                 Item {
                     id: contentWrapper
                     anchors.fill: parent
-                    anchors.margins: 12
+                    anchors.margins: 0
                     clip: true
                     
                     // ColSpan 1 UI (Centered Icon)
@@ -476,23 +489,33 @@ ColumnLayout {
                             Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
                             text: tileDelegate.mIcon
                         }
+                        
+                        MouseArea { 
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: { if (!activeDelegateWrapper.gridRoot.isEditorMode) tileDelegate.doToggle() } 
+                        }
                     }
 
-                    // The Expanded UI (Left-Aligned List Item)
-                    Item {
+                    // The Expanded UI (Left Toggle + Right Menu)
+                    RowLayout {
                         id: expandedUI
                         anchors.fill: parent
                         visible: activeDelegateWrapper.colSpan === 2
+                        spacing: 4
                         
-                        RowLayout {
-                            anchors.fill: parent
-                            spacing: 16
+                        // Left Toggle Square
+                        Item {
+                            Layout.preferredWidth: parent.height
+                            Layout.preferredHeight: parent.height
                             
-                            // Static Icon Container
-                            Item {
-                                Layout.preferredWidth: 32
-                                Layout.preferredHeight: 32
-                                Layout.alignment: Qt.AlignVCenter
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                radius: Math.max(4, tileDelegate.radius - 8)
+                                color: tileDelegate.isActive ? Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.2) : Theme.surface_variant
+                                Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                                Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                                 
                                 Text {
                                     anchors.centerIn: parent
@@ -502,19 +525,36 @@ ColumnLayout {
                                     Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
                                     text: tileDelegate.mIcon
                                 }
+                                
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (!activeDelegateWrapper.gridRoot.isEditorMode) tileDelegate.doToggle()
+                                    }
+                                }
                             }
+                        }
+                        
+                        // Right Text Area (Opens Menu)
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
                             
-                            // Morphing Text Column
                             ColumnLayout {
-                                Layout.alignment: Qt.AlignVCenter
-                                Layout.fillWidth: true
+                                anchors.fill: parent
+                                anchors.leftMargin: 4
+                                anchors.rightMargin: 16
+                                anchors.topMargin: 12
+                                anchors.bottomMargin: 12
+                                spacing: 0
                                 
                                 Text {
                                     Layout.alignment: Qt.AlignLeft
                                     horizontalAlignment: Text.AlignLeft
                                     text: tileDelegate.mTitle
                                     font.family: Vars.fontFamily
-                                    font.pixelSize: 16
+                                    font.pixelSize: 15
                                     font.weight: 600
                                     color: tileDelegate.isActive ? Theme.on_primary : Theme.on_surface_variant
                                     Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
@@ -525,47 +565,29 @@ ColumnLayout {
                                 Text {
                                     Layout.alignment: Qt.AlignLeft
                                     horizontalAlignment: Text.AlignLeft
-                                    color: tileDelegate.isActive ? Theme.on_primary : Theme.on_surface_variant
+                                    color: tileDelegate.isActive ? Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.75) : Theme.on_surface_variant
                                     Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
                                     font.family: Vars.fontFamily
-                                    font.pixelSize: 14
+                                    font.pixelSize: 13
                                     elide: Text.ElideRight
                                     Layout.fillWidth: true
                                     
                                     text: tileDelegate.getExpandedSubtitle()
                                 }
                             }
-                        }
-                    }
-                    
-                    MouseArea { 
-                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor; 
-                        onClicked: { if (!activeDelegateWrapper.gridRoot.isEditorMode) tileDelegate.doToggle() } 
-                    }
-
-                    // Sub-menu Chevron
-                    Rectangle {
-                        visible: tileDelegate.hasSubMenu && activeDelegateWrapper.colSpan === 2
-                        width: 32
-                        height: 32
-                        radius: 16
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.right: parent.right
-                        color: "transparent"
-                        
-                        Text {
-                            anchors.centerIn: parent
-                            font.family: "Material Symbols Outlined"; font.pixelSize: 24
-                            color: tileDelegate.isActive ? Theme.on_primary : Theme.on_surface_variant
-                            Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
-                            text: "chevron_right"
-                        }
-                        
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (!activeDelegateWrapper.gridRoot.isEditorMode) tileDelegate.doAction()
+                            
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (!activeDelegateWrapper.gridRoot.isEditorMode) {
+                                        if (tileDelegate.hasSubMenu) {
+                                            tileDelegate.doAction();
+                                        } else {
+                                            tileDelegate.doToggle();
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

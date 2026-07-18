@@ -131,10 +131,12 @@ ColumnLayout {
         clip: true
         spacing: 4
         model: settingsModel
-        flickDeceleration: 100
-        maximumFlickVelocity: 4000
         focus: true
         KeyNavigation.up: searchInput
+        
+        boundsBehavior: Flickable.StopAtBounds
+        flickDeceleration: 1500
+        maximumFlickVelocity: 3000
 
         Keys.onReturnPressed: {
             if (currentItem) {
@@ -283,9 +285,9 @@ ColumnLayout {
                 spacing: 24
 
                 ColumnLayout {
-                    Layout.preferredWidth: 200
-                    Layout.maximumWidth: 200
-                    Layout.fillWidth: false
+                    Layout.preferredWidth: 350
+                    Layout.minimumWidth: 200
+                    Layout.fillWidth: true
                     spacing: 4
                     Text {
                         text: delegateRoot.itemKey
@@ -302,6 +304,11 @@ ColumnLayout {
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                    visible: delegateRoot.itemType !== "enum" && !(delegateRoot.itemType === "number" && parseFloat(delegateRoot.itemVal) >= 50)
                 }
 
                 Rectangle {
@@ -498,17 +505,18 @@ ColumnLayout {
                     to: delegateRoot.itemMax
                     stepSize: delegateRoot.itemStep
                     value: parseFloat(delegateRoot.itemVal)
-                    snapMode: delegateRoot.itemStep >= 1 ? Slider.SnapAlways : Slider.NoSnap
+                    snapMode: showTicks ? Slider.SnapAlways : Slider.NoSnap
 
                     property real trackHeight: 36
                     property real handleWidth: 4
-                    property real handleHeight: trackHeight + 2
+                    property real handleHeight: trackHeight + 8
                     property real handleMargin: 6
                     property real leftRadiusLarge: 12
                     property real leftRadiusSmall: 4
                     property real dotSize: 6
                     property real gap: 2
-                    property bool showTicks: delegateRoot.itemStep >= 1
+                    // Only show ticks if the total number of ticks is small (e.g. <= 25) to prevent dense lines
+                    property bool showTicks: ((delegateRoot.itemMax - delegateRoot.itemMin) / delegateRoot.itemStep) <= 25
 
                     // Auto-detect mode: if 'from' is negative, use centered/bidirectional mode
                     property bool isCentered: delegateRoot.itemMin < 0
@@ -575,7 +583,7 @@ ColumnLayout {
                                 color: Theme.on_surface_variant
                                 anchors.verticalCenter: parent.verticalCenter
                                 x: m3Slider.leftRadiusLarge - m3Slider.dotSize / 2
-                                opacity: leftTrackCentered.width > m3Slider.leftRadiusLarge * 2.5 ? 0.6 : 0.0
+                                opacity: !m3Slider.showTicks && leftTrackCentered.width > m3Slider.leftRadiusLarge * 2.5 ? 0.6 : 0.0
                                 Behavior on opacity { NumberAnimation { duration: 150 } }
                             }
                         }
@@ -610,14 +618,14 @@ ColumnLayout {
                                 return startAt;
                             }
                             y: 0
-                            width: Math.max(m3Slider.leftRadiusLarge * 2, parent.width - x)
+                            width: Math.max(0, parent.width - x)
                             height: parent.height
                             color: Theme.surface_container_highest
 
-                            topLeftRadius: m3Slider.leftRadiusSmall
-                            bottomLeftRadius: m3Slider.leftRadiusSmall
-                            topRightRadius: m3Slider.leftRadiusLarge
-                            bottomRightRadius: m3Slider.leftRadiusLarge
+                            topLeftRadius: Math.min(m3Slider.leftRadiusSmall, width / 2)
+                            bottomLeftRadius: Math.min(m3Slider.leftRadiusSmall, width / 2)
+                            topRightRadius: Math.min(m3Slider.leftRadiusLarge, width / 2)
+                            bottomRightRadius: Math.min(m3Slider.leftRadiusLarge, width / 2)
 
                             // Dot at right end
                             Rectangle {
@@ -627,7 +635,7 @@ ColumnLayout {
                                 color: Theme.on_surface_variant
                                 anchors.verticalCenter: parent.verticalCenter
                                 x: parent.width - m3Slider.leftRadiusLarge - m3Slider.dotSize / 2
-                                opacity: rightTrackCentered.width > m3Slider.leftRadiusLarge * 2.5 ? 0.6 : 0.0
+                                opacity: !m3Slider.showTicks && rightTrackCentered.width > m3Slider.leftRadiusLarge * 2.5 ? 0.6 : 0.0
                                 Behavior on opacity { NumberAnimation { duration: 150 } }
                             }
                         }
@@ -636,14 +644,18 @@ ColumnLayout {
                         Repeater {
                             model: m3Slider.showTicks ? Math.max(0, Math.floor((m3Slider.to - m3Slider.from) / m3Slider.stepSize) + 1) : 0
                             Rectangle {
-                                property real tickPos: m3Slider.availableWidth * (index / Math.max(1, (m3Slider.to - m3Slider.from) / m3Slider.stepSize))
+                                property real tickPos: (m3Slider.handleWidth / 2) + (m3Slider.availableWidth - m3Slider.handleWidth) * (index / Math.max(1, (m3Slider.to - m3Slider.from) / m3Slider.stepSize))
                                 x: tickPos - width / 2
-                                y: parent.height
-                                width: 2
-                                height: 6
-                                radius: 1
-                                color: Theme.on_surface_variant
-                                opacity: 0.4
+                                y: (parent.height - height) / 2
+                                width: 4
+                                height: 4
+                                radius: 2
+                                
+                                property bool inColoredArea: parent.isLeftOfCenter 
+                                    ? (tickPos >= parent.handlePos + m3Slider.handleWidth / 2 && tickPos <= parent.centerX)
+                                    : (tickPos >= parent.centerX && tickPos <= parent.handlePos + m3Slider.handleWidth / 2)
+                                    
+                                color: inColoredArea ? Theme.surface_container_highest : Theme.primary
                             }
                         }
                     }
@@ -666,14 +678,14 @@ ColumnLayout {
                                 id: leftTrackUni
                                 x: 0
                                 y: 0
-                                width: Math.max(m3Slider.leftRadiusLarge * 2, parent.handlePos - m3Slider.gap)
+                                width: Math.max(0, parent.handlePos - m3Slider.gap)
                                 height: parent.height
                                 color: Theme.primary
 
-                                topLeftRadius: m3Slider.leftRadiusLarge
-                                bottomLeftRadius: m3Slider.leftRadiusLarge
-                                topRightRadius: m3Slider.leftRadiusSmall
-                                bottomRightRadius: m3Slider.leftRadiusSmall
+                                topLeftRadius: Math.min(m3Slider.leftRadiusLarge, width / 2)
+                                bottomLeftRadius: Math.min(m3Slider.leftRadiusLarge, width / 2)
+                                topRightRadius: Math.min(m3Slider.leftRadiusSmall, width / 2)
+                                bottomRightRadius: Math.min(m3Slider.leftRadiusSmall, width / 2)
                             }
 
                             // RIGHT TRACK (Inactive)
@@ -681,14 +693,14 @@ ColumnLayout {
                                 id: rightTrackUni
                                 x: parent.handlePos + m3Slider.handleWidth + m3Slider.gap
                                 y: 0
-                                width: Math.max(m3Slider.leftRadiusLarge * 2, parent.width - x)
+                                width: Math.max(0, parent.width - x)
                                 height: parent.height
                                 color: Theme.surface_container_highest
 
-                                topLeftRadius: m3Slider.leftRadiusSmall
-                                bottomLeftRadius: m3Slider.leftRadiusSmall
-                                topRightRadius: m3Slider.leftRadiusLarge
-                                bottomRightRadius: m3Slider.leftRadiusLarge
+                                topLeftRadius: Math.min(m3Slider.leftRadiusSmall, width / 2)
+                                bottomLeftRadius: Math.min(m3Slider.leftRadiusSmall, width / 2)
+                                topRightRadius: Math.min(m3Slider.leftRadiusLarge, width / 2)
+                                bottomRightRadius: Math.min(m3Slider.leftRadiusLarge, width / 2)
 
                                 // Dot at right end
                                 Rectangle {
@@ -698,7 +710,7 @@ ColumnLayout {
                                     color: Theme.on_surface_variant
                                     anchors.verticalCenter: parent.verticalCenter
                                     x: parent.width - m3Slider.leftRadiusLarge - m3Slider.dotSize / 2
-                                    opacity: rightTrackUni.width > m3Slider.leftRadiusLarge * 2.5 ? 0.6 : 0.0
+                                    opacity: !m3Slider.showTicks && rightTrackUni.width > m3Slider.leftRadiusLarge * 2.5 ? 0.6 : 0.0
                                     Behavior on opacity { NumberAnimation { duration: 150 } }
                                 }
                             }
@@ -707,14 +719,16 @@ ColumnLayout {
                             Repeater {
                                 model: m3Slider.showTicks ? Math.max(0, Math.floor((m3Slider.to - m3Slider.from) / m3Slider.stepSize) + 1) : 0
                                 Rectangle {
-                                    property real tickPos: m3Slider.availableWidth * (index / Math.max(1, (m3Slider.to - m3Slider.from) / m3Slider.stepSize))
+                                    property real tickPos: (m3Slider.handleWidth / 2) + (m3Slider.availableWidth - m3Slider.handleWidth) * (index / Math.max(1, (m3Slider.to - m3Slider.from) / m3Slider.stepSize))
                                     x: tickPos - width / 2
-                                    y: parent.height
-                                    width: 2
-                                    height: 6
-                                    radius: 1
-                                    color: Theme.on_surface_variant
-                                    opacity: 0.4
+                                    y: (parent.height - height) / 2
+                                    width: 4
+                                    height: 4
+                                    radius: 2
+                                    
+                                    property bool inColoredArea: tickPos <= parent.handlePos + m3Slider.handleWidth / 2
+                                    
+                                    color: inColoredArea ? Theme.surface_container_highest : Theme.primary
                                 }
                             }
                         }
@@ -733,14 +747,32 @@ ColumnLayout {
                 Flow {
                     visible: delegateRoot.itemType === "enum"
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: 2
                     Repeater {
+                        id: enumRepeater
                         model: parent.visible ? delegateRoot.itemEnums.split("|||") : []
                         delegate: Rectangle {
                             property bool isSelected: delegateRoot.itemVal === modelData
+                            
+                            // Determine row wrapping by checking the 'y' coordinate of siblings
+                            property var prevItem: index > 0 ? enumRepeater.itemAt(index - 1) : null
+                            property var nextItem: index < (enumRepeater.count - 1) ? enumRepeater.itemAt(index + 1) : null
+                            property bool hasLeft: prevItem && prevItem.y === y
+                            property bool hasRight: nextItem && nextItem.y === y
+                            
                             height: 32
                             width: chipText.implicitWidth + 24
-                            radius: height / 2
+                            
+                            topLeftRadius: isSelected ? height / 2 : (hasLeft ? 4 : height / 2)
+                            bottomLeftRadius: isSelected ? height / 2 : (hasLeft ? 4 : height / 2)
+                            topRightRadius: isSelected ? height / 2 : (hasRight ? 4 : height / 2)
+                            bottomRightRadius: isSelected ? height / 2 : (hasRight ? 4 : height / 2)
+                            
+                            Behavior on topLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+                            Behavior on bottomLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+                            Behavior on topRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+                            Behavior on bottomRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+                            
                             color: isSelected ? Theme.primary : Theme.surface_container_highest
 
                             Behavior on color {
@@ -856,6 +888,15 @@ ColumnLayout {
                         helpPart = rawHelp.substring(pipeIdx + 3).trim();
                     }
 
+                    // Map hyprland categories to UI categories
+                    if (category === "Decoration" || category === "Shadows" || category === "Blur" || category === "Animation Style") {
+                        category = "Appearance";
+                    } else if (category === "Input" || category === "Gestures" || category === "Modifiers" || category === "Quickshell Keybinds") {
+                        category = "Input";
+                    } else {
+                        category = "General";
+                    }
+
                     var colonIdx = leftPart.indexOf(":");
                     var key = leftPart.substring(0, colonIdx).trim();
                     var typePart = leftPart.substring(colonIdx + 1).trim();
@@ -876,6 +917,26 @@ ColumnLayout {
                         type = "number";
                     }
 
+                    var min = 0;
+                    var max = 0;
+                    var step = 0;
+
+                    if (type === "number") {
+                        if (key === "gaps_in") { type = "slider"; max = 50; step = 1; }
+                        else if (key === "gaps_out") { type = "slider"; max = 100; step = 1; }
+                        else if (key === "border_size") { type = "slider"; max = 20; step = 1; }
+                        else if (key === "rounding") { type = "slider"; max = 50; step = 1; }
+                        else if (key === "rounding_power") { type = "slider"; min = 1.0; max = 50.0; step = 1.0; }
+                        else if (key === "active_opacity" || key === "inactive_opacity" || key === "windowOpacity") { type = "slider"; min = 0.0; max = 1.0; step = 0.05; }
+                        else if (key === "shadow_range") { type = "slider"; max = 100; step = 1; }
+                        else if (key === "shadow_render_power") { type = "slider"; min = 1; max = 4; step = 1; }
+                        else if (key === "blur_size") { type = "slider"; max = 20; step = 1; }
+                        else if (key === "blur_passes") { type = "slider"; max = 10; step = 1; }
+                        else if (key === "blur_vibrancy") { type = "slider"; min = 0.0; max = 1.0; step = 0.05; }
+                        else if (key === "gesture_fingers") { type = "slider"; min = 3; max = 5; step = 1; }
+                        else if (key === "env_xcursor_size" || key === "env_hyprcursor_size") { type = "slider"; min = 16; max = 64; step = 2; }
+                    }
+
                     newVars.push({
                         key: key,
                         type: type,
@@ -884,9 +945,9 @@ ColumnLayout {
                         val: valPart,
                         category: category,
                         source: "Hyprland",
-                        min: 0,
-                        max: 0,
-                        step: 0
+                        min: min,
+                        max: max,
+                        step: step
                     });
                 }
 
@@ -952,6 +1013,11 @@ ColumnLayout {
                         min = 0.0;
                         max = 1.0;
                         step = 0.05;
+                    } else if (key.toLowerCase().includes("opacity")) {
+                        type = "slider";
+                        min = 0.0;
+                        max = 1.0;
+                        step = 0.1;
                     } else if (key.startsWith("radius") || key.startsWith("spacing") || key.startsWith("padding")) {
                         type = "slider";
                         min = 0;
@@ -980,7 +1046,7 @@ ColumnLayout {
                         type = "bool";
                     } else if (key === "clockShape") {
                         type = "enum";
-                        enumsStr = "Circle|||Square|||Oval|||Pill|||Diamond|||Pentagon|||Gem|||VerySunny|||Sunny|||4SidedCookie|||6SidedCookie|||7SidedCookie|||9SidedCookie|||12SidedCookie|||4LeafClover|||8LeafClover|||SoftBurst|||SoftBoom|||Flower|||Puffy|||PuffyDiamond|||PixelCircle|||Bun|||Heart|||GhostIsh|||Burst|||Boom|||8LeafClover";
+                        enumsStr = "Circle|||Square|||VerySunny|||Sunny|||4SidedCookie|||6SidedCookie|||7SidedCookie|||9SidedCookie|||12SidedCookie|||SoftBurst|||SoftBoom|||Flower|||Puffy|||Bun";
                     }
 
                     newVars.push({

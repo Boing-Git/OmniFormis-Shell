@@ -91,7 +91,10 @@ Item {
     Flickable {
         Layout.fillWidth: true; Layout.fillHeight: true
         contentHeight: wifiContent.childrenRect.height; clip: true
-        flickDeceleration: 100; maximumFlickVelocity: 4000
+        boundsBehavior: Flickable.StopAtBounds
+        flickDeceleration: 1500
+        maximumFlickVelocity: 3000
+
 
         ColumnLayout {
             id: wifiContent
@@ -108,8 +111,8 @@ Item {
                     radius: 16; color: wifiHeaderMouse.containsMouse ? Qt.tint(Theme.surface_container, Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08)) : Theme.surface_container
                     Behavior on color { ColorAnimation { duration: Vars.animationDuration } }
                     
-                    Rectangle { width: 16; height: 16; color: parent.color; anchors.bottom: parent.bottom; anchors.left: parent.left; visible: Networking.wifiEnabled; opacity: wifiHeaderMouse.containsMouse ? 0.0 : 1.0; Behavior on opacity { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } } }
-                    Rectangle { width: 16; height: 16; color: parent.color; anchors.bottom: parent.bottom; anchors.right: parent.right; visible: Networking.wifiEnabled; opacity: wifiHeaderMouse.containsMouse ? 0.0 : 1.0; Behavior on opacity { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } } }
+                    Rectangle { width: 16; height: 16; color: parent.color; anchors.bottom: parent.bottom; anchors.left: parent.left; visible: Networking.wifiEnabled }
+                    Rectangle { width: 16; height: 16; color: parent.color; anchors.bottom: parent.bottom; anchors.right: parent.right; visible: Networking.wifiEnabled }
                     
                     activeFocusOnTab: true
                     Keys.onSpacePressed: Networking.wifiEnabled = !Networking.wifiEnabled
@@ -555,6 +558,7 @@ Item {
                     Rectangle {
                         Layout.preferredWidth: 260
                         Layout.preferredHeight: 48
+                        Layout.alignment: Qt.AlignHCenter
                         radius: 8
                         color: Theme.surface_container_highest
                         border.color: rootWifiPage.authError ? Theme.error : (authPwdInput.activeFocus ? Theme.primary : "transparent")

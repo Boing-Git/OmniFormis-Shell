@@ -235,6 +235,28 @@ def qs_cmd_get(key):
         print(f"Error: Variable '{key}' not found.")
         sys.exit(1)
 
+def qs_update_var(content, key, value):
+    new_value_str = value
+    
+    # Check if we need to wrap in quotes based on the old value
+    pattern_get = rf'^(var\s+{key}\s*=\s*)(.*?)(;?)$'
+    match = re.search(pattern_get, content, re.MULTILINE)
+    if match:
+        old_value = match.group(2)
+        if old_value.startswith('"') and old_value.endswith('"'):
+            if not (new_value_str.startswith('"') and new_value_str.endswith('"')):
+                new_value_str = f'"{new_value_str}"'
+        elif old_value.startswith("'") and old_value.endswith("'"):
+            if not (new_value_str.startswith("'") and new_value_str.endswith("'")):
+                new_value_str = f"'{new_value_str}'"
+                
+    pattern = rf'^(var\s+{key}\s*=\s*)(.*?)(;?)$'
+    def repl(m):
+        return f"{m.group(1)}{new_value_str}{m.group(3)}"
+        
+    new_content, _ = re.subn(pattern, repl, content, count=1, flags=re.MULTILINE)
+    return new_content
+
 def qs_cmd_set(key, value):
     content = qs_load_variables()
     variables = qs_parse_all(content)
@@ -243,32 +265,9 @@ def qs_cmd_set(key, value):
         print(f"Error: Variable '{key}' not found.")
         sys.exit(1)
         
-    old_value = variables[key]
-    new_value_str = value
-    if old_value.startswith('"') and old_value.endswith('"'):
-        if not (new_value_str.startswith('"') and new_value_str.endswith('"')):
-            new_value_str = f'"{new_value_str}"'
-    elif old_value.startswith("'") and old_value.endswith("'"):
-        if not (new_value_str.startswith("'") and new_value_str.endswith("'")):
-            new_value_str = f"'{new_value_str}'"
-    elif old_value in ("true", "false", "true;", "false;"):
-        new_value_str = new_value_str.lower()
-        if new_value_str not in ("true", "false"):
-            print("Error: Expected 'true' or 'false' for boolean variable.")
-            sys.exit(1)
-            
-    pattern = rf'^(var\s+{key}\s*=\s*)(.*?)(;?)$'
-    def repl(m):
-        return f"{m.group(1)}{new_value_str}{m.group(3)}"
-        
-    new_content, count = re.subn(pattern, repl, content, count=1, flags=re.MULTILINE)
-    
-    if count == 0:
-        print(f"Error: Failed to replace variable '{key}'.")
-        sys.exit(1)
-        
+    new_content = qs_update_var(content, key, value)
     qs_save_variables(new_content)
-    print(f"Set '{key}' to {new_value_str}")
+    print(f"Set '{key}' to {value}")
 
 def qs_cmd_kill():
     print("Killing Quickshell...")
@@ -364,7 +363,7 @@ hl.config({{
     qs_content = qs_load_variables()
     for k, v in preset.items():
         qs_content = qs_update_var(qs_content, k, v)
-    qs_write_file(qs_content)
+    qs_save_variables(qs_content)
     
     print(f"Saved bezier preset and generated Animation Style '{name}'")
 
@@ -430,7 +429,7 @@ def hypr_parse_variables(content):
     lines = content.split('\n')
     current_comments = []
     current_category = "General"
-    pattern = re.compile(r'^[ \t]*([a-zA-Z0-9_]+)[ \t]*=[ \t]*(?:"([^"]*)"|(true|false)|(-?\d+(?:\.\d+)?))(?:,?[ \t]*(--.*)?)?$')
+    pattern = re.compile(r'^([a-zA-Z0-9_]+)[ \t]*=[ \t]*(?:"([^"]*)"|(true|false)|(-?\d+(?:\.\d+)?))(?:,?[ \t]*(--.*)?)?$')
     
     for line in lines:
         stripped = line.strip()
@@ -440,7 +439,7 @@ def hypr_parse_variables(content):
         elif stripped == '' or stripped.startswith('---'):
             current_comments = []
         else:
-            match = pattern.match(line)
+            match = pattern.match(stripped)
             if match:
                 key = match.group(1)
                 str_val = match.group(2)

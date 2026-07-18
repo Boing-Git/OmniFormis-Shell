@@ -40,7 +40,10 @@ ColumnLayout {
     Flickable {
         Layout.fillWidth: true; Layout.fillHeight: true
         contentHeight: btContent.childrenRect.height; clip: true
-        flickDeceleration: 100; maximumFlickVelocity: 4000
+        boundsBehavior: Flickable.StopAtBounds
+        flickDeceleration: 1500
+        maximumFlickVelocity: 3000
+
 
         ColumnLayout {
             id: btContent

@@ -28,7 +28,7 @@ Item {
     property bool isFloatingInstance: false
     signal detachToggled(bool isFloating)
     
-    property string currentSection: "General"
+    property string currentSection: "wifi"
     
     // Wi-Fi
     property var wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi)
@@ -148,19 +148,27 @@ Item {
                     Item { Layout.preferredHeight: Vars.spacingSmall }
 
                     // Navigation Items
-                    SettingsSidebar {
-                        id: sidebar
-                        currentSection: root.currentSection
-                        wifiIcon: root.wifiIcon
-                        bluetoothIcon: root.bluetoothIcon
-                        onCurrentSectionChanged: {
-                            if (root.currentSection !== currentSection) {
-                                root.currentSection = currentSection
+                    Flickable {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        contentHeight: sidebar.implicitHeight
+                        clip: true
+                        interactive: true
+                        boundsBehavior: Flickable.StopAtBounds
+
+                        SettingsSidebar {
+                            id: sidebar
+                            width: parent.width
+                            currentSection: root.currentSection
+                            wifiIcon: root.wifiIcon
+                            bluetoothIcon: root.bluetoothIcon
+                            onCurrentSectionChanged: {
+                                if (root.currentSection !== currentSection) {
+                                    root.currentSection = currentSection
+                                }
                             }
                         }
                     }
-
-                    Item { Layout.fillHeight: true }
                 }
 
                 // Vertical Divider
@@ -178,6 +186,8 @@ Item {
                         if (root.currentSection === "bezier") return 1;
                         if (root.currentSection === "wifi") return 2;
                         if (root.currentSection === "bluetooth") return 3;
+                        if (root.currentSection === "about") return 4;
+                        if (root.currentSection === "taskmanager") return 5;
                         return 0; // "General", "Appearance", "Input" map to UnifiedSettingsPage
                     }
 
@@ -194,6 +204,9 @@ Item {
                         id: bezierPage
                         Layout.fillWidth: true
                         Layout.fillHeight: true
+                        onSettingsChanged: {
+                            unifiedPage.loadSettings();
+                        }
                     }
 
                     // 2: Wi-Fi Settings
@@ -209,6 +222,20 @@ Item {
                     BluetoothPage {
                         id: bluetoothPage
                         adapter: root.adapter
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                    }
+                    
+                    // 4: About Page
+                    AboutPage {
+                        id: aboutPage
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                    }
+                    
+                    // 5: Task Manager Page
+                    TaskManagerPage {
+                        id: taskManagerPage
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                     }

@@ -14,7 +14,7 @@ ColumnLayout {
 
     property var wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi)
 
-    anchors.fill: parent
+    // Remove anchors.fill to allow dynamic implicit height
     anchors.margins: Vars.spacingLarge
     spacing: Vars.spacingMedium
     
@@ -57,7 +57,8 @@ ColumnLayout {
 
     Flickable {
         id: wifiFlickable
-        Layout.fillWidth: true; Layout.fillHeight: true
+        Layout.fillWidth: true
+        Layout.preferredHeight: Math.min(contentHeight, 450)
         contentHeight: wifiListContainer.childrenRect.height; clip: true
 
         ColumnLayout {
@@ -71,7 +72,7 @@ ColumnLayout {
                     Layout.fillWidth: true; Layout.preferredHeight: visible ? 64 : 0
                     radius: 16
                     Behavior on radius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    color: modelData.connected ? Theme.secondary_container : (wifiMouse.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (wifiMouse.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : Theme.surface_container_low))
+                    color: modelData.connected ? Theme.primary : (wifiMouse.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (wifiMouse.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : Theme.surface_container_low))
                     Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                     
                     RowLayout {
@@ -81,11 +82,11 @@ ColumnLayout {
                             Layout.preferredWidth: 40; Layout.preferredHeight: 40
                             radius: modelData.connected ? 12 : 20
                             Behavior on radius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                            color: modelData.connected ? Qt.rgba(Theme.on_secondary_container.r, Theme.on_secondary_container.g, Theme.on_secondary_container.b, 0.15) : Qt.rgba(Theme.on_surface_variant.r, Theme.on_surface_variant.g, Theme.on_surface_variant.b, 0.1)
+                            color: modelData.connected ? Theme.on_primary : Qt.rgba(Theme.on_surface_variant.r, Theme.on_surface_variant.g, Theme.on_surface_variant.b, 0.1)
                             Text {
                                 anchors.centerIn: parent
                                 font.family: "Material Symbols Outlined"; font.pixelSize: 22
-                                color: modelData.connected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                color: modelData.connected ? Theme.surface : Theme.on_surface_variant
                                 text: {
                                     if (modelData.signalStrength === undefined) return "\ue63e";
                                     let tier = Math.min(Math.floor(modelData.signalStrength / 25), 3);
@@ -99,12 +100,12 @@ ColumnLayout {
                             Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter; spacing: 0
                             Text { 
                                 text: modelData.name; font.family: Vars.fontFamily; font.pixelSize: 14; font.weight: Font.Bold
-                                color: modelData.connected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                color: modelData.connected ? Theme.surface : Theme.on_surface_variant
                                 Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             }
                             Text { 
                                 text: modelData.connected ? "Connected" : "Available"; font.family: Vars.fontFamily; font.pixelSize: 12; opacity: 0.8
-                                color: modelData.connected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                color: modelData.connected ? Theme.surface : Theme.on_surface_variant
                                 Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             }
                         }

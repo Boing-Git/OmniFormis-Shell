@@ -4,7 +4,7 @@ var translucent = false;
 
 var overviewGridRows = 2;
 var overviewGridColumns = 5;
-var overviewScale = 1;
+var overviewScale = 1.05;
 
 var radiusAmount = 0.5
 var radiusSmall = 8
@@ -12,7 +12,7 @@ var radiusMedium = 18
 var radiusLarge = 24
 var radiusExtraLarge = 38
 
-var spacingSmall = 8
+var spacingSmall = 11
 var spacingMedium = 16
 var spacingLarge = 24
 
@@ -21,12 +21,12 @@ var paddingMedium = 16
 var paddingLarge = 24
 
 var wallpaperMaskEnabled = true;
-var wallpaperMaskScale = 1.05;
+var wallpaperMaskScale = 0.85;
 var wallpaperMaskShape = "Clamshell";
-var wallpaperMaskColor = "transparent";
-var wallpaperMaskOffsetX = 199;
-var wallpaperMaskOffsetY = 55;
-var clockShape = "4SidedCookie";
+var wallpaperMaskColor = "surface_variant";
+var wallpaperMaskOffsetX = -149;
+var wallpaperMaskOffsetY = 12;
+var clockShape = "12SidedCookie";
 
 var fontFamily = "Google Sans Flex"
 var m3Standard = [0.2, 0.0, 0.0, 1.0];
@@ -37,7 +37,7 @@ var m3EmphasizedAccelerate = [0.3, 0.0, 0.8, 0.15];
 var m3ExpressiveSpatialFast = [0.42, 1.67, 0.21, 0.9];
 var m3ExpressiveSpatialSlow = [0.39, 1.29, 0.35, 0.98];
 
-var customStandard = [0.20, 0.00, 0.00, 1.00];
+var customStandard = [0.98, 0.09, 0.42, 0.50];
 var customStandardDecelerate = [0.0, 0.0, 0.0, 1.0];
 var customStandardAccelerate = [0.3, 0.0, 1.0, 1.0];
 var customEmphasizedDecelerate = [0.05, 0.7, 0.1, 1.0];

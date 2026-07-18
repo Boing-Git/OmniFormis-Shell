@@ -212,6 +212,8 @@ ColumnLayout {
                     model: schemeCombo.popup.visible ? schemeCombo.delegateModel : null
                     currentIndex: schemeCombo.highlightedIndex
                     boundsBehavior: Flickable.StopAtBounds
+                    flickDeceleration: 1500
+                    maximumFlickVelocity: 3000
                 }
                 background: Rectangle {
                     color: Theme.surface_container_high
@@ -331,11 +333,13 @@ ColumnLayout {
                     implicitHeight: Math.min(contentHeight, 150)
                     model: autocompleteModelRef
                     boundsBehavior: Flickable.StopAtBounds
+                    flickDeceleration: 1500
+                    maximumFlickVelocity: 3000
                     
                     focus: true
-                    keyNavigationEnabled: true
+                    // keyNavigationEnabled: true - removed to stop auto-scroll on hover
                     highlightFollowsCurrentItem: false
-                    onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+                    // Removed onCurrentIndexChanged to prevent mouse hover fighting
                     
                     highlight: Item {
                         x: autocompleteListView.currentItem ? autocompleteListView.currentItem.x : 0
@@ -364,11 +368,13 @@ ColumnLayout {
                             event.accepted = true;
                         } else {
                             decrementCurrentIndex();
+                            positionViewAtIndex(currentIndex, ListView.Contain);
                             event.accepted = true;
                         }
                     }
                     Keys.onDownPressed: (event) => {
                         incrementCurrentIndex();
+                        positionViewAtIndex(currentIndex, ListView.Contain);
                         event.accepted = true;
                     }
                     Keys.onReturnPressed: (event) => {

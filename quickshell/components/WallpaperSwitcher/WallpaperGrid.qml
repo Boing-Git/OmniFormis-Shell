@@ -13,13 +13,14 @@ GridView {
     cellWidth: Math.floor(parent.width / 3)
     cellHeight: cellWidth * 0.5625 + 48
     boundsBehavior: Flickable.StopAtBounds
-    flickDeceleration: 100
-    maximumFlickVelocity: 4000
+    flickDeceleration: 1500
+    maximumFlickVelocity: 3000
+
 
     focus: true
-    keyNavigationEnabled: true
+    // keyNavigationEnabled: true - removed to stop auto-scroll on hover
     highlightFollowsCurrentItem: false
-    onCurrentIndexChanged: positionViewAtIndex(currentIndex, GridView.Contain)
+    // Removed onCurrentIndexChanged to prevent mouse hover fighting
 
     property var rootRef: null
     property var pathInputRef: null
@@ -33,19 +34,23 @@ GridView {
             requestFocusSearch();
         } else {
             moveCurrentIndexUp();
+            positionViewAtIndex(currentIndex, GridView.Contain);
         }
         event.accepted = true;
     }
     Keys.onDownPressed: event => {
         moveCurrentIndexDown();
+        positionViewAtIndex(currentIndex, GridView.Contain);
         event.accepted = true;
     }
     Keys.onLeftPressed: event => {
         moveCurrentIndexLeft();
+        positionViewAtIndex(currentIndex, GridView.Contain);
         event.accepted = true;
     }
     Keys.onRightPressed: event => {
         moveCurrentIndexRight();
+        positionViewAtIndex(currentIndex, GridView.Contain);
         event.accepted = true;
     }
     Keys.onReturnPressed: event => {
@@ -195,7 +200,9 @@ GridView {
                 preventStealing: false
                 cursorShape: Qt.PointingHandCursor
                 onEntered: {
-                    gridView.currentIndex = index;
+                    if (!gridView.moving && !gridView.dragging) {
+                        gridView.currentIndex = index;
+                    }
                 }
                 onClicked: {
                     gridView.currentIndex = index;

@@ -14,7 +14,7 @@ Item {
     height: osdBackground.height
 
     property int trackHeight: 38
-    property int gap: 4
+    property int gap: 2
     property int handleWidth: 4
 
     property bool isVisible: false
@@ -189,14 +189,14 @@ Item {
                 id: osdLeftTrack
                 x: 0
                 y: 0
-                width: Math.max(parent.leftRadiusLarge * 2, parent.handlePos - mainContainer.gap)
+                width: Math.max(0, parent.handlePos - mainContainer.gap)
                 height: parent.height
                 color: Theme.primary
 
-                topLeftRadius: parent.leftRadiusLarge
-                bottomLeftRadius: parent.leftRadiusLarge
-                topRightRadius: parent.leftRadiusSmall
-                bottomRightRadius: parent.leftRadiusSmall
+                topLeftRadius: Math.min(parent.leftRadiusLarge, width / 2)
+                bottomLeftRadius: Math.min(parent.leftRadiusLarge, width / 2)
+                topRightRadius: Math.min(parent.leftRadiusSmall, width / 2)
+                bottomRightRadius: Math.min(parent.leftRadiusSmall, width / 2)
             }
 
             // 2. RIGHT TRACK (Inactive — icon + dot at right end)
@@ -204,14 +204,14 @@ Item {
                 id: osdRightTrack
                 x: parent.handlePos + mainContainer.handleWidth + mainContainer.gap
                 y: 0
-                width: Math.max(parent.leftRadiusLarge * 2, parent.width - x)
+                width: Math.max(0, parent.width - x)
                 height: parent.height
                 color: Theme.surface_variant
 
-                topLeftRadius: parent.leftRadiusSmall
-                bottomLeftRadius: parent.leftRadiusSmall
-                topRightRadius: parent.leftRadiusLarge
-                bottomRightRadius: parent.leftRadiusLarge
+                topLeftRadius: Math.min(parent.leftRadiusSmall, width / 2)
+                bottomLeftRadius: Math.min(parent.leftRadiusSmall, width / 2)
+                topRightRadius: Math.min(parent.leftRadiusLarge, width / 2)
+                bottomRightRadius: Math.min(parent.leftRadiusLarge, width / 2)
 
                 // Icon at right end
                 Text {
@@ -237,7 +237,7 @@ Item {
             y: bg.topPadding + (bg.availableHeight - height) / 2
 
             width: mainContainer.handleWidth
-            height: mainContainer.trackHeight + 2
+            height: mainContainer.trackHeight + 8
             radius: width / 2
             color: Theme.primary
         }

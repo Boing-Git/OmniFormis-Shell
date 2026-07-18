@@ -15,11 +15,14 @@ ColumnLayout {
     // State Variables
     property string targetCurve: "customStandard"
     property string referenceCurve: "None"
+    property var testAnimObj: null
     property var localEdits: ({}) // Stores unapplied edits mapping curveName -> [x1, y1, x2, y2]
     property real p1x: 0.2
     property real p1y: 0.0
     property real p2x: 0.0
     property real p2y: 1.0
+    
+    signal settingsChanged()
     
     // Auto-update values when target curve changes
     onTargetCurveChanged: {
@@ -71,6 +74,8 @@ ColumnLayout {
         }
         var p3 = Qt.createQmlObject('import Quickshell.Io; Process { command: ["omniformis", "hypr", "--AnimateStyle", "Custom"]; onExited: destroy() }', rootPage);
         p3.running = true;
+        
+        rootPage.settingsChanged();
     }
 
     ColumnLayout {
@@ -311,9 +316,27 @@ ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 12
                     Text { text: "X1:"; color: Theme.on_surface; font.family: Vars.fontFamily; font.bold: true }
-                    Text { text: rootPage.p1x.toFixed(2); color: Theme.on_surface_variant; Layout.fillWidth: true }
+                    TextInput { 
+                        id: p1xInput
+                        text: rootPage.p1x.toFixed(2)
+                        color: Theme.on_surface_variant
+                        Layout.fillWidth: true
+                        font.family: Vars.fontFamily
+                        validator: DoubleValidator { bottom: 0.0; top: 1.0; decimals: 2 }
+                        onEditingFinished: rootPage.p1x = parseFloat(text)
+                        Connections { target: rootPage; function onP1xChanged() { if (!p1xInput.activeFocus) p1xInput.text = rootPage.p1x.toFixed(2); } }
+                    }
                     Text { text: "Y1:"; color: Theme.on_surface; font.family: Vars.fontFamily; font.bold: true }
-                    Text { text: rootPage.p1y.toFixed(2); color: Theme.on_surface_variant; Layout.fillWidth: true }
+                    TextInput { 
+                        id: p1yInput
+                        text: rootPage.p1y.toFixed(2)
+                        color: Theme.on_surface_variant
+                        Layout.fillWidth: true
+                        font.family: Vars.fontFamily
+                        validator: DoubleValidator { decimals: 2 }
+                        onEditingFinished: rootPage.p1y = parseFloat(text)
+                        Connections { target: rootPage; function onP1yChanged() { if (!p1yInput.activeFocus) p1yInput.text = rootPage.p1y.toFixed(2); } }
+                    }
                 }
             }
             
@@ -326,9 +349,27 @@ ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 12
                     Text { text: "X2:"; color: Theme.on_surface; font.family: Vars.fontFamily; font.bold: true }
-                    Text { text: rootPage.p2x.toFixed(2); color: Theme.on_surface_variant; Layout.fillWidth: true }
+                    TextInput { 
+                        id: p2xInput
+                        text: rootPage.p2x.toFixed(2)
+                        color: Theme.on_surface_variant
+                        Layout.fillWidth: true
+                        font.family: Vars.fontFamily
+                        validator: DoubleValidator { bottom: 0.0; top: 1.0; decimals: 2 }
+                        onEditingFinished: rootPage.p2x = parseFloat(text)
+                        Connections { target: rootPage; function onP2xChanged() { if (!p2xInput.activeFocus) p2xInput.text = rootPage.p2x.toFixed(2); } }
+                    }
                     Text { text: "Y2:"; color: Theme.on_surface; font.family: Vars.fontFamily; font.bold: true }
-                    Text { text: rootPage.p2y.toFixed(2); color: Theme.on_surface_variant; Layout.fillWidth: true }
+                    TextInput { 
+                        id: p2yInput
+                        text: rootPage.p2y.toFixed(2)
+                        color: Theme.on_surface_variant
+                        Layout.fillWidth: true
+                        font.family: Vars.fontFamily
+                        validator: DoubleValidator { decimals: 2 }
+                        onEditingFinished: rootPage.p2y = parseFloat(text)
+                        Connections { target: rootPage; function onP2yChanged() { if (!p2yInput.activeFocus) p2yInput.text = rootPage.p2y.toFixed(2); } }
+                    }
                 }
             }
 
@@ -363,50 +404,40 @@ ColumnLayout {
 
                 Button {
                     anchors.bottom: parent.bottom; anchors.right: parent.right; anchors.margins: 8
-                    text: "Test"
+                    width: 80; height: 32
+                    background: Rectangle { color: Theme.surface_variant; radius: Vars.radiusSmall }
+                    contentItem: Text { text: "Test"; font.family: Vars.fontFamily; font.bold: true; color: Theme.on_surface; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                     onClicked: {
-                        testAnim.stop();
+                        if (rootPage.testAnimObj) {
+                            rootPage.testAnimObj.stop();
+                            rootPage.testAnimObj.destroy();
+                        }
+                        
                         animBox.x = 20;
                         animBoxRef.x = 20;
                         
-                        var newCurve = [rootPage.p1x, rootPage.p1y, rootPage.p2x, rootPage.p2y];
-                        var refCurve = (rootPage.referenceCurve !== "None" && Vars[rootPage.referenceCurve]) ? Vars[rootPage.referenceCurve] : [0,0,1,1];
+                        var c = [rootPage.p1x, rootPage.p1y, rootPage.p2x, rootPage.p2y];
+                        var newCurveStr = "[" + c[0] + ", " + c[1] + ", " + c[2] + ", " + c[3] + "]";
+                        var r = (rootPage.referenceCurve !== "None" && Vars[rootPage.referenceCurve]) ? Vars[rootPage.referenceCurve] : [0,0,1,1];
+                        var refCurveStr = "[" + r[0] + ", " + r[1] + ", " + r[2] + ", " + r[3] + "]";
                         
-                        anim1.easing.bezierCurve = newCurve;
-                        anim2.easing.bezierCurve = refCurve;
-                        anim3.easing.bezierCurve = newCurve;
-                        anim4.easing.bezierCurve = refCurve;
+                        var animQml = `
+                            import QtQuick
+                            SequentialAnimation {
+                                ParallelAnimation {
+                                    NumberAnimation { target: animBox; property: "x"; to: animBox.parent.width - animBox.width - 20; duration: 600; easing.type: Easing.BezierSpline; easing.bezierCurve: ${newCurveStr} }
+                                    NumberAnimation { target: animBoxRef; property: "x"; to: animBoxRef.parent.width - animBoxRef.width - 20; duration: 600; easing.type: Easing.BezierSpline; easing.bezierCurve: ${refCurveStr} }
+                                }
+                                PauseAnimation { duration: 200 }
+                                ParallelAnimation {
+                                    NumberAnimation { target: animBox; property: "x"; to: 20; duration: 600; easing.type: Easing.BezierSpline; easing.bezierCurve: ${newCurveStr} }
+                                    NumberAnimation { target: animBoxRef; property: "x"; to: 20; duration: 600; easing.type: Easing.BezierSpline; easing.bezierCurve: ${refCurveStr} }
+                                }
+                            }
+                        `;
                         
-                        testAnim.start();
-                    }
-                }
-                
-                SequentialAnimation {
-                    id: testAnim
-                    ParallelAnimation {
-                        NumberAnimation { 
-                            id: anim1
-                            target: animBox; property: "x"; to: animBox.parent.width - animBox.width - 20; duration: 600
-                            easing.type: Easing.BezierSpline
-                        }
-                        NumberAnimation { 
-                            id: anim2
-                            target: animBoxRef; property: "x"; to: animBoxRef.parent.width - animBoxRef.width - 20; duration: 600
-                            easing.type: Easing.BezierSpline
-                        }
-                    }
-                    PauseAnimation { duration: 200 }
-                    ParallelAnimation {
-                        NumberAnimation { 
-                            id: anim3
-                            target: animBox; property: "x"; to: 20; duration: 600 
-                            easing.type: Easing.BezierSpline
-                        }
-                        NumberAnimation { 
-                            id: anim4
-                            target: animBoxRef; property: "x"; to: 20; duration: 600 
-                            easing.type: Easing.BezierSpline
-                        }
+                        rootPage.testAnimObj = Qt.createQmlObject(animQml, rootPage);
+                        rootPage.testAnimObj.start();
                     }
                 }
             }

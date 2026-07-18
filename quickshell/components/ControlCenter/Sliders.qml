@@ -83,14 +83,14 @@ ColumnLayout {
                 id: volLeftTrack
                 x: 0
                 y: 0
-                width: Math.max(sliders.leftRadiusLarge * 2, parent.handlePos - sliders.gap)
+                width: Math.max(0, parent.handlePos - sliders.gap)
                 height: parent.height
                 color: Theme.primary
 
-                topLeftRadius: sliders.leftRadiusLarge
-                bottomLeftRadius: sliders.leftRadiusLarge
-                topRightRadius: sliders.leftRadiusSmall
-                bottomRightRadius: sliders.leftRadiusSmall
+                topLeftRadius: Math.min(sliders.leftRadiusLarge, width / 2)
+                bottomLeftRadius: Math.min(sliders.leftRadiusLarge, width / 2)
+                topRightRadius: Math.min(sliders.leftRadiusSmall, width / 2)
+                bottomRightRadius: Math.min(sliders.leftRadiusSmall, width / 2)
             }
 
             // 2. RIGHT TRACK (Inactive — icon + dot at right end)
@@ -98,14 +98,14 @@ ColumnLayout {
                 id: volRightTrack
                 x: parent.handlePos + sliders.handleWidth + sliders.gap
                 y: 0
-                width: Math.max(sliders.leftRadiusLarge * 2, parent.width - x)
+                width: Math.max(0, parent.width - x)
                 height: parent.height
                 color: Theme.surface_variant
 
-                topLeftRadius: sliders.leftRadiusSmall
-                bottomLeftRadius: sliders.leftRadiusSmall
-                topRightRadius: sliders.leftRadiusLarge
-                bottomRightRadius: sliders.leftRadiusLarge
+                topLeftRadius: Math.min(sliders.leftRadiusSmall, width / 2)
+                bottomLeftRadius: Math.min(sliders.leftRadiusSmall, width / 2)
+                topRightRadius: Math.min(sliders.leftRadiusLarge, width / 2)
+                bottomRightRadius: Math.min(sliders.leftRadiusLarge, width / 2)
 
                 // Icon at right end
                 Text {
@@ -131,7 +131,7 @@ ColumnLayout {
             y: volumeSlider.topPadding + (volumeSlider.availableHeight - height) / 2
 
             width: sliders.handleWidth
-            height: sliders.trackHeight + 2
+            height: sliders.trackHeight + 8
             radius: width / 2
             color: Theme.primary
         }
@@ -163,14 +163,14 @@ ColumnLayout {
                 id: brightLeftTrack
                 x: 0
                 y: 0
-                width: Math.max(sliders.leftRadiusLarge * 2, parent.handlePos - sliders.gap)
+                width: Math.max(0, parent.handlePos - sliders.gap)
                 height: parent.height
                 color: Theme.primary
 
-                topLeftRadius: sliders.leftRadiusLarge
-                bottomLeftRadius: sliders.leftRadiusLarge
-                topRightRadius: sliders.leftRadiusSmall
-                bottomRightRadius: sliders.leftRadiusSmall
+                topLeftRadius: Math.min(sliders.leftRadiusLarge, width / 2)
+                bottomLeftRadius: Math.min(sliders.leftRadiusLarge, width / 2)
+                topRightRadius: Math.min(sliders.leftRadiusSmall, width / 2)
+                bottomRightRadius: Math.min(sliders.leftRadiusSmall, width / 2)
             }
 
             // 2. RIGHT TRACK (Inactive — icon + dot at right end)
@@ -178,14 +178,14 @@ ColumnLayout {
                 id: brightRightTrack
                 x: parent.handlePos + sliders.handleWidth + sliders.gap
                 y: 0
-                width: Math.max(sliders.leftRadiusLarge * 2, parent.width - x)
+                width: Math.max(0, parent.width - x)
                 height: parent.height
                 color: Theme.surface_variant
 
-                topLeftRadius: sliders.leftRadiusSmall
-                bottomLeftRadius: sliders.leftRadiusSmall
-                topRightRadius: sliders.leftRadiusLarge
-                bottomRightRadius: sliders.leftRadiusLarge
+                topLeftRadius: Math.min(sliders.leftRadiusSmall, width / 2)
+                bottomLeftRadius: Math.min(sliders.leftRadiusSmall, width / 2)
+                topRightRadius: Math.min(sliders.leftRadiusLarge, width / 2)
+                bottomRightRadius: Math.min(sliders.leftRadiusLarge, width / 2)
 
                 // Icon at right end
                 Text {
@@ -211,7 +211,7 @@ ColumnLayout {
             y: brightnessSlider.topPadding + (brightnessSlider.availableHeight - height) / 2
 
             width: sliders.handleWidth
-            height: sliders.trackHeight + 2
+            height: sliders.trackHeight + 8
             radius: width / 2
             color: Theme.primary
         }

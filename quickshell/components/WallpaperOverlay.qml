@@ -87,7 +87,7 @@ PanelWindow {
             layer.enabled: true
             layer.samples: 16 // Ultra-smooth MSAA for mask edges
             layer.smooth: true
-            layer.textureMirroring: ShaderEffectSource.NoMirroring
+            layer.textureMirroring: ShaderEffectSource.MirrorVertically
 
             Image {
                 id: maskCanvas

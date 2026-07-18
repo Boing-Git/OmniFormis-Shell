@@ -29,18 +29,16 @@ ListView {
     
     orientation: ListView.Vertical
     boundsBehavior: Flickable.StopAtBounds
-    flickDeceleration: 100
-    maximumFlickVelocity: 4000
+    flickDeceleration: 1500
+    maximumFlickVelocity: 3000
+
 
     focus: true
-    keyNavigationEnabled: true
+    // keyNavigationEnabled: true - removed to stop auto-scroll on hover
     highlightFollowsCurrentItem: false
-    onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
+    // Removed onCurrentIndexChanged: positionViewAtIndex(...) to avoid fighting mouse flicking
     
-    highlightRangeMode: ListView.ApplyRange
-    preferredHighlightBegin: 20
-    preferredHighlightEnd: root.height - 20
-
+    // removed highlightRangeMode properties to prevent auto-snapping on mouse hover
     Keys.onReturnPressed: (event) => { if (currentItem) currentItem.triggerSelection(); event.accepted = true; }
     Keys.onSpacePressed: (event) => { if (currentItem) currentItem.triggerSelection(); event.accepted = true; }
     Keys.onEscapePressed: (event) => { root.escapePressed(); event.accepted = true; }
@@ -59,14 +57,17 @@ ListView {
             root.focusSearchBar();
         } else {
             decrementCurrentIndex();
+            positionViewAtIndex(currentIndex, ListView.Contain);
         }
         event.accepted = true;
     }
     Keys.onDownPressed: (event) => {
         if (currentIndex === -1 && count > 0) {
             currentIndex = 0;
+            positionViewAtIndex(currentIndex, ListView.Contain);
         } else {
             incrementCurrentIndex();
+            positionViewAtIndex(currentIndex, ListView.Contain);
         }
         event.accepted = true;
     }
@@ -140,7 +141,9 @@ ListView {
             acceptedButtons: Qt.LeftButton | Qt.RightButton
 
             onEntered: {
-                root.currentIndex = index;
+                if (!root.moving && !root.dragging) {
+                    root.currentIndex = index;
+                }
             }
 
             onClicked: (mouse) => {

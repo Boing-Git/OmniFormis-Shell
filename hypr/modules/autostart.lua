@@ -16,7 +16,6 @@ local vars = require("modules.variables")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
     hl.exec_cmd("awww-daemon --format xrgb")
-    hl.exec_cmd("hypridle")
     -- Auto mount external drives
     local automount_path = "/home/boing/Dotfiles/scripts/external-drive-automount.sh"
     if hy3.fs.exists(automount_path) then

@@ -4,3 +4,5 @@ WifiPage 1.0 WifiPage.qml
 BluetoothPage 1.0 BluetoothPage.qml
 BezierEditorPage 1.0 BezierEditorPage.qml
 UnifiedSettingsPage 1.0 UnifiedSettingsPage.qml
+AboutPage 1.0 AboutPage.qml
+TaskManagerPage 1.0 TaskManagerPage.qml

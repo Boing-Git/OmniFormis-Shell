@@ -85,7 +85,7 @@ local vars = {
     -- Set active window opacity
     active_opacity = 1.0,
     -- Set inactive window opacity
-    inactive_opacity = 0.9,
+    inactive_opacity = 0.95,
     -- Set window opacity for window rules
     windowOpacity = "0.9",
     -- Set gap size for single window
@@ -97,7 +97,7 @@ local vars = {
     -- Set shadow range
     shadow_range = 40,
     -- Set shadow render power
-    shadow_render_power = 1,
+    shadow_render_power = 3,
 
     -- Blur
     -- Enable blur
@@ -144,14 +144,14 @@ local vars = {
     env_qt_scale_factor = 1,
 
     -- Animation Style
-    -- Select animation style for hyprland ("slipstream", "expressive", "relaxed", "custom", "none")
+    -- Select animation style for hyprland ("expressive", "spring", "jelly", "flyingcards", "snappy", "cinematic", "minimal", "fluid", "aggressive", "elegant", "playful", "elastic", "swift", "relaxed", "slipstream", "standard", "fluent", "custom", "none")
     AnimateStyle = "slipstream",
     
     -- --- Custom Animation Profile ---
     
     -- Custom Curves
     -- Set Custom Standard Curve
-    CustomStandard = "0.20, 0.00, 0.00, 1.00",
+    CustomStandard = "0.98, 0.09, 0.42, 0.50",
     -- Set Custom Standard Decelerate Curve
     CustomStandardDecelerate = "0.0, 0.0, 0.0, 1.0",
     -- Set Custom Standard Accelerate Curve
