@@ -38,8 +38,8 @@ OmniFormis Shell features a unified installer that automatically detects your op
 ```bash
 git clone [https://github.com/Boing-Git/My-Dotfiles](https://github.com/Boing-Git/My-Dotfiles) ~/Dotfiles
 cd ~/Dotfiles
-chmod +x install.sh
-./install.sh
+chmod +x scripts/install.sh
+./scripts/install.sh
 ```
 
 ## 🎨 Architecture & Modules
@@ -49,20 +49,18 @@ This repository avoids monolithic configuration files. Every component is meticu
 ### [Hyprland (Lua Config)](hypr/)
 Instead of a static `hyprland.conf`, the WM is configured via `hyprland.lua`. 
 * **Modular Layouts**: Dwindle, Master, Scrolling.
-* **Dynamic Manager**: A custom `omniformis` CLI python tool lets you swap themes, change animations (15+ profiles like *Springy*, *Jelly*, *Cinematic*), and layouts on the fly.
+* **Dynamic Manager**: A custom `omniformis` Rust CLI tool lets you swap themes, change animations (15+ profiles like *Springy*, *Jelly*, *Cinematic*), and layouts on the fly.
 * **Native Keybinds**: Deeply programmable workspace loops and window manipulation using Lua scripting.
-* *[Read more in the Hyprland README](hypr/README.md)*
 
 ### [Quickshell UI (OmniFormis Core)](quickshell/)
 A custom-built, hardware-accelerated QML shell powering the core user interface.
 * **Full Shell Experience**: Includes top panels, volume OSDs, notification daemons, an M3-styled Control Center, and Hyprland workspace trackers.
 * **Built-in Settings App**: A unified, responsive GUI (`SettingsApp/UnifiedSettingsPage.qml`) that parses your `variables.lua` and Hyprland config dynamically. You can toggle special workspace rules, adjust window gaps via sliders, and customize layouts—all without touching a text editor!
 * **Dynamic Widgets & Interactions**: Features an analog desktop clock, segmented pill headers, and precise hover-zone transitions.
-* **Material You Theming**: Colors are extracted directly from the system scheme via Python scripts and injected as QML Singletons for real-time UI updates.
-* *[Read more in the Quickshell README](quickshell/README.md)*
+* **Material You Theming**: Colors are extracted directly from the system scheme via the Rust CLI and injected as QML Singletons for real-time UI updates.
 
 ### 🌈 Dynamic Color Engine
-The `color-schemes/` directory acts as the brain for system-wide color coordination. Using `set-theme.sh` and python utilities, changing a scheme instantly updates:
+The `color-schemes/` directory acts as the brain for system-wide color coordination. Using `set-theme.sh` and the Rust CLI, changing a scheme instantly updates:
 * OmniFormis Shell / Quickshell UI
 * Hyprland Borders & Animations
 * GTK & Qt applications (via `qt5ct`, `qt6ct`, `nwg-look`)
