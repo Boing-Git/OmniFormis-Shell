@@ -1,1 +1,1 @@
-/home/boing/.config/color-schemes/gruvbox-medium/light/hypr-colors.lua
+/home/boing/.config/color-schemes/material-you/dark/hypr-colors.lua

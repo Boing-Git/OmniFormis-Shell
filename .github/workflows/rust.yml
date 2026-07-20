@@ -14,15 +14,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install musl-tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Install Rust musl target
+        run: rustup target add x86_64-unknown-linux-musl
+
       - name: Build Release Binary
         working-directory: scripts/omniformis/
-        run: cargo build --release --verbose
+        run: cargo build --release --target x86_64-unknown-linux-musl --verbose
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            scripts/omniformis/target/release/omniformis
+            scripts/omniformis/target/x86_64-unknown-linux-musl/release/omniformis
             scripts/install.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

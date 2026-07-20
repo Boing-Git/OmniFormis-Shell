@@ -1,1 +1,1 @@
-/home/boing/.config/color-schemes/gruvbox-medium/light/wezterm.lua
+/home/boing/.config/color-schemes/material-you/dark/wezterm.lua

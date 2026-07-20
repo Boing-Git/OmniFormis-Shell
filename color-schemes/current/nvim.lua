@@ -1,1 +1,1 @@
-/home/boing/.config/color-schemes/gruvbox-medium/light/nvim.lua
+/home/boing/.config/color-schemes/material-you/dark/nvim.lua

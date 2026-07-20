@@ -1,28 +1,28 @@
 {
   "checksum": ":)",
-  "wallpaper": "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/Monocrome-Balls.png",
+  "wallpaper": "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/Green-Waves.png",
   "alpha": "100",
   "special": {
-    "background": "#131313",
-    "foreground": "#e2e2e2",
-    "cursor": "#ffffff"
+    "background": "#121414",
+    "foreground": "#e2e2e1",
+    "cursor": "#a9cecc"
   },
   "colors": {
-    "color0": "#131313",
-    "color1": "#f6cece",
-    "color2": "#d1bbbb",
-    "color3": "#e6dede",
-    "color4": "#ffffff",
-    "color5": "#e2e2e2",
-    "color6": "#553939",
-    "color7": "#c6c6c6",
-    "color8": "#474747",
-    "color9": "#cfbdbd",
-    "color10": "#bd9c9c",
-    "color11": "#d1c0c0",
-    "color12": "#e6e6e6",
-    "color13": "#c9c9c9",
-    "color14": "#d8d0d0",
-    "color15": "#e2e2e2"
+    "color0": "#121414",
+    "color1": "#f7f7cc",
+    "color2": "#afd5d2",
+    "color3": "#d0b9e7",
+    "color4": "#a9cecc",
+    "color5": "#d0c0e0",
+    "color6": "#335c59",
+    "color7": "#c1c8c7",
+    "color8": "#414848",
+    "color9": "#9fd8d5",
+    "color10": "#8dc4c0",
+    "color11": "#b793da",
+    "color12": "#89bbb9",
+    "color13": "#b79ecf",
+    "color14": "#0d3837",
+    "color15": "#e2e2e1"
   }
 }
