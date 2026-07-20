@@ -25,11 +25,11 @@ The entire system is glued together by a unified theming engine based on **Mater
 * **Desktop Shell**: [Quickshell](https://outfoxxed.me/quickshell/) (QtQuick/QML-based, replacing traditional Waybar/Eww setups with fluid animations)
 * **Terminal Emulator**: [WezTerm](https://wezfurlong.org/wezterm/)
 * **Shell & Prompt**: [Fish](https://fishshell.com/) with [Starship](https://starship.rs/)
-* **Editor**: [Neovim](https://neovim.io/)
+* **Editor**: [Neovim](https://neovim.io/) / [VS Codium](https://vscodium.com/)
 * **Launcher**: [Quickshell App Launcher](quickshell/) (replacing Fuzzel/Rofi)
 * **Audio Visualizer**: [Cava](https://github.com/karlstav/cava)
 * **System Monitoring**: Btop, Htop, Nvtop
-* **Theming & Color**: [Matugen](https://github.com/InioX/matugen) + Custom Python/Bash Scripts (`color-schemes/set-theme.sh`)
+* **Theming & Color**: [Matugen](https://github.com/InioX/matugen) + Custom Rust cli tool + Bash Scripts (`color-schemes/set-theme.sh`)
 
 ## 🛠️ Installation
 

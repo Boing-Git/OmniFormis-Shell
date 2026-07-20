@@ -1,21 +1,40 @@
 #!/usr/bin/env bash
 
+DIR="$HOME/Dotfiles"
+if [ -d "$DIR" ]; then
+  echo "The directory ~/Dotfiles exists. Pulling latest changes..."
+  cd "$DIR" && git pull && cd - >/dev/null
+else
+  echo "The directory ~/Dotfiles does not exist. Cloning repository..."
+  git clone https://github.com/Boing-Git/My-Dotfiles "$DIR"
+fi
+
 if grep -qi "nixos" /etc/os-release; then
     echo "Detected NixOS..."
     
-    git clone https://github.com/Boing-Git/NixOs-Dotfiles ~/Nixos
+    git clone https://github.com/Boing-Git/My-NixOs-Dotfiles ~/Nixos
     cd ~/Nixos
     
-    mkdir -p ~/.config/quickshell
-    git clone https://github.com/Boing-Git/Quickshell-Dotfiles ~/.config/quickshell
-    
-    mkdir -p ~/.config/hypr
-    git clone https://github.com/Boing-Git/Hyprland-Dotfiles ~/.config/hypr
-    
+    echo "Installing dotfiles..."
+    mkdir -p ~/.config
+    for item in ~/Dotfiles/* ~/Dotfiles/.* ; do
+        name=$(basename "$item")
+        if [[ "$name" == "." || "$name" == ".." || "$name" == ".git" || "$name" == "README.md" || "$name" == "CONTRIBUTING.md" || "$name" == "LICENSE" || "$name" == "install.sh" || "$name" == "RELEASE.md" || "$name" == "scripts" ]]; then
+            continue
+        fi
+        
+        if [ -d "$item" ]; then
+            mkdir -p ~/.config/"$name"
+            cp -rT "$item" ~/.config/"$name"
+        elif [ -f "$item" ]; then
+            cp "$item" ~/.config/"$name"
+        fi
+    done
+
     echo "Setting up omniformis CLI tool..."
     mkdir -p ~/.local/bin
-    chmod +x ~/.config/scripts/omniformis.py
-    ln -sf ~/.config/scripts/omniformis.py ~/.local/bin/omniformis
+    curl -L "https://github.com/Boing-Git/OmniFormis-Shell/releases/latest/download/omniformis" -o ~/.local/bin/omniformis
+    chmod +x ~/.local/bin/omniformis
     
     echo "Adding ~/.local/bin to Fish PATH..."
     if command -v fish >/dev/null 2>&1; then
@@ -87,15 +106,13 @@ elif grep -qi "arch" /etc/os-release; then
     # 5. Force the system to rebuild its font cache so it detects Rubik immediately
     fc-cache -fv
     
-    echo "Cloning and installing dotfiles..."
-    rm -rf ~/.dotfiles
-    git clone https://github.com/Boing-Git/My-Dotfiles ~/.dotfiles
+    echo "Installing dotfiles..."
     
     mkdir -p ~/.config
-    for item in ~/.dotfiles/* ~/.dotfiles/.* ; do
+    for item in ~/Dotfiles/* ~/Dotfiles/.* ; do
         name=$(basename "$item")
-        # Skip parent directories, git folder, and repo specific files
-        if [[ "$name" == "." || "$name" == ".." || "$name" == ".git" || "$name" == "README.md" || "$name" == "CONTRIBUTING.md" || "$name" == "LICENSE" || "$name" == "install.sh" ]]; then
+        # Skip parent directories, git folder, repo specific files, and scripts (which go to bin)
+        if [[ "$name" == "." || "$name" == ".." || "$name" == ".git" || "$name" == "README.md" || "$name" == "CONTRIBUTING.md" || "$name" == "LICENSE" || "$name" == "install.sh" || "$name" == "RELEASE.md" || "$name" == "scripts" ]]; then
             continue
         fi
         
@@ -192,8 +209,8 @@ elif grep -qi "arch" /etc/os-release; then
     
     echo "Setting up omniformis CLI tool..."
     mkdir -p ~/.local/bin
-    chmod +x ~/.config/scripts/omniformis.py
-    ln -sf ~/.config/scripts/omniformis.py ~/.local/bin/omniformis
+    curl -L "https://github.com/Boing-Git/OmniFormis-Shell/releases/latest/download/omniformis" -o ~/.local/bin/omniformis
+    chmod +x ~/.local/bin/omniformis
     
     echo "Adding ~/.local/bin to Fish PATH..."
     if command -v fish >/dev/null 2>&1; then
