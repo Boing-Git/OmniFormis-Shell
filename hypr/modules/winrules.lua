@@ -18,9 +18,11 @@ hl.window_rule({
 
 hl.window_rule({
     name = "native-opaque-apps",
-    match = { class = "^(foot|equibop|org\\.quickshell|imv|swappy)$" },
+    match = { class = "^(foot|equibop|imv|swappy)$" },
     opaque = true
 })
+
+
 
 hl.window_rule({
     name = "center-all-floating",
@@ -41,7 +43,7 @@ hl.window_rule({
 local float_classes = {
     "guifetch", "yad", "zenity", "wev", "org\\.gnome\\.FileRoller", "file-roller",
     "blueman-manager", "com\\.github\\.GradienceTeam\\.Gradience", "feh", "imv",
-    "system-config-printer", "org\\.quickshell"
+    "system-config-printer", "quickshell"
 }
 
 for _, app_class in ipairs(float_classes) do
@@ -257,3 +259,11 @@ if vars.enableSpecialWorkspaceGaps then
         gaps_out = singleWindowGapsOut
     })
 end
+
+hl.layer_rule({
+    name = "quickshell-blur",
+    match = { namespace = "quickshell" },
+    blur = true,
+    blur_popups = true,
+    ignore_alpha = 0.1
+})

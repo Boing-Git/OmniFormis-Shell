@@ -25,9 +25,9 @@ ShellRoot {
             onStreamFinished: {
                 let text = this.text.trim();
                 if (text.includes("nixos")) {
-                    root.globalOsIconPath = "file:///home/boing/Dotfiles/quickshell/assets/nixos-logo.png";
+                    root.globalOsIconPath = "file:///home/boing/Dotfiles/quickshell/theme/assets/nixos-logo.png";
                 } else if (text.includes("arch")) {
-                    root.globalOsIconPath = "file:///home/boing/Dotfiles/quickshell/assets/arch-logo.png";
+                    root.globalOsIconPath = "file:///home/boing/Dotfiles/quickshell/theme/assets/arch-logo.png";
                 }
             }
         }
@@ -125,10 +125,10 @@ ShellRoot {
     }
 
     DesktopClock {
-        // Draggable analog clock on the WlrLayer.Bottom
     }
     DesktopCalender {
-        // Draggable analog clock on the WlrLayer.Bottom
+    }
+    DesktopMediaPlayer {
     }
 
     // Launcher is now inside TopPills.qml

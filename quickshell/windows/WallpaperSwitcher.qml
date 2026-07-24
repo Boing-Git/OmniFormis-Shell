@@ -1,0 +1,267 @@
+import QtQuick
+import QtQuick.Effects
+import ".."
+import QtQuick.Controls
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
+import Quickshell.Hyprland
+import QtCore
+
+import "../theme/variables.js" as Vars
+import "WallpaperSwitcher"
+
+Item {
+    id: root
+
+    Layout.preferredWidth: 100
+    Layout.preferredHeight: 40
+
+    property bool expanded: false
+    property bool forceHidePill: false
+    property var focusWindow: null
+    property bool gameMode: false
+    property alias panel: panel
+    property alias panelMask: panelMask
+
+    opacity: forceHidePill ? 0.0 : 1.0
+    visible: opacity > 0
+
+    property string wallpaperDir: settings.wallpaperDir || (Quickshell.env("HOME") + "/Pictures/Wallpapers")
+    property string currentWallpaper: ""
+
+    Settings {
+        id: settings
+        category: "WallpaperSwitcher"
+        property string matugenScheme: "scheme-tonal-spot"
+        property string wallpaperDir: ""
+        property string currentWallpaper: ""
+    }
+
+    signal closeRequested
+
+    HyprlandFocusGrab {
+        active: root.expanded && root.focusWindow !== null
+        windows: root.focusWindow ? [root.focusWindow] : []
+        onCleared: root.expanded = false
+    }
+
+    onExpandedChanged: {
+        if (!expanded) {
+            controls.clearSearch();
+        } else {
+            controls.focusSearch();
+        }
+    }
+
+    Item {
+        id: panelMask
+        anchors.centerIn: panel
+        width: panel.width + 40
+        height: panel.height + 40
+    }
+
+    Rectangle {
+        id: panel
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: !root.gameMode
+            shadowBlur: 1.0
+            shadowColor: Qt.rgba(0, 0, 0, 0.25)
+            shadowVerticalOffset: 4
+            shadowHorizontalOffset: 0
+        }
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        width: root.expanded ? 1100 : 100
+        height: root.expanded ? 650 : 40
+
+        color: Vars.translucent ? Qt.rgba(Theme.surface.r, Theme.surface.g, Theme.surface.b, 0.85) : Theme.surface
+        topLeftRadius: root.gameMode || Vars.panelStyle === "Attached" || Vars.panelStyle === "Framed" ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
+        topRightRadius: root.gameMode || Vars.panelStyle === "Attached" || Vars.panelStyle === "Framed" ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
+        bottomLeftRadius: root.gameMode || Vars.panelStyle === "Flat" ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
+        bottomRightRadius: root.gameMode || Vars.panelStyle === "Flat" ? 0 : (root.expanded ? Vars.radiusExtraLarge : height / 2)
+
+        opacity: root.expanded || panel.width > 105 ? 1.0 : 0.0
+        visible: opacity > 0
+
+        Behavior on topLeftRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+        Behavior on topRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+        Behavior on bottomLeftRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+        Behavior on bottomRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+
+        Behavior on width {
+            enabled: !root.gameMode
+            NumberAnimation {
+                duration: Vars.animationDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Vars.customExpressiveSpatialSlow
+            }
+        }
+        Behavior on height {
+            enabled: !root.gameMode
+            NumberAnimation {
+                duration: Vars.animationDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Vars.customExpressiveSpatialSlow
+            }
+        }
+
+        Item {
+            anchors.fill: parent
+            anchors.margins: Vars.spacingLarge
+
+            opacity: root.expanded ? 1.0 : 0.0
+            visible: opacity > 0
+            Behavior on opacity {
+                enabled: !root.gameMode
+                SequentialAnimation {
+                    PauseAnimation {
+                        duration: root.expanded ? Vars.animationDuration : 0
+                    }
+                    NumberAnimation {
+                        duration: root.expanded ? Vars.animationDuration : Vars.animationDuration
+                        easing.type: Easing.BezierSpline
+                        easing.bezierCurve: root.expanded ? Vars.customEmphasizedDecelerate : Vars.customEmphasizedAccelerate
+                    }
+                }
+            }
+
+            ColumnLayout {
+                anchors.fill: parent
+                spacing: Vars.spacingMedium
+
+                WallpaperControls {
+                    id: controls
+                    rootRef: root
+                    settingsRef: settings
+                    loadWallpapersProcRef: loadWallpapersProc
+                    gridViewRef: gridView
+                    autocompleteProcRef: autocompleteProc
+                    autocompleteModelRef: autocompleteModel
+                }
+
+                WallpaperGrid {
+                    id: gridView
+                    model: sortFilterProxyModel.proxyModel
+                    rootRef: root
+
+                    onWallpaperSelected: path => {
+                        executeWallpaperChange(path);
+                    }
+                    onRequestFocusSearch: {
+                        pathInput.forceActiveFocus();
+                    }
+                }
+            }
+        }
+    }
+
+    function executeWallpaperChange(filePath) {
+        console.log("[USER ACTION] Wallpaper selected: " + filePath);
+        root.currentWallpaper = filePath;
+        settings.currentWallpaper = filePath;
+
+        matugenProc.command = ["matugen", "image", filePath, "-m", "light", "-t", settings.matugenScheme, "--source-color-index", "0"];
+        matugenProc.running = true;
+    }
+
+    Process {
+        id: matugenProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (this.text.trim().length > 0)
+                    console.log("[MATUGEN STDOUT]\n" + this.text);
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (this.text.trim().length > 0)
+                    console.error("[MATUGEN STDERR]\n" + this.text);
+            }
+        }
+        onExited: (code, status) => {
+            if (code === 0) {
+                // Delay slightly to ensure matugen has fully flushed to disk, then reload Hyprland and Quickshell
+                Quickshell.execDetached({
+                    command: ['bash', '-c', 'sleep 0.5; hyprctl reload; sleep 0.2; pkill quickshell; sleep 0.2; quickshell']
+                });
+            } else {
+                console.error("[USER ACTION] Matugen failed with exit code: " + code + ". Skipping color sync.");
+            }
+        }
+    }
+
+    ListModel {
+        id: wallpaperModel
+    }
+
+    ListModel {
+        id: proxyModelObj
+    }
+
+    QtObject {
+        id: sortFilterProxyModel
+        property string filterText: controls.filterText
+        onFilterTextChanged: updateVisualGrid()
+        function updateVisualGrid() {
+            proxyModelObj.clear();
+            for (var i = 0; i < wallpaperModel.count; i++) {
+                var item = wallpaperModel.get(i);
+                if (Vars.fuzzyMatch(filterText, item.fileName)) {
+                    proxyModelObj.append({
+                        "filePath": item.filePath,
+                        "fileName": item.fileName
+                    });
+                }
+            }
+        }
+        property var proxyModel: proxyModelObj
+    }
+
+    Process {
+        id: loadWallpapersProc
+        command: ["find", root.wallpaperDir.replace(/^~/, Quickshell.env("HOME")), "-maxdepth", "2", "-type", "f", "-regextype", "posix-extended", "-regex", ".*\\.(jpg|jpeg|png|gif)$"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                wallpaperModel.clear();
+                var lines = this.text.split("\n");
+                for (var i = 0; i < lines.length; i++) {
+                    var path = lines[i].trim();
+                    if (path.length > 0) {
+                        var name = path.substring(path.lastIndexOf('/') + 1);
+                        wallpaperModel.append({
+                            "filePath": path,
+                            "fileName": name
+                        });
+                    }
+                }
+                sortFilterProxyModel.updateVisualGrid();
+            }
+        }
+    }
+
+    ListModel {
+        id: autocompleteModel
+    }
+
+    Process {
+        id: autocompleteProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                autocompleteModel.clear();
+                var lines = this.text.split("\n");
+                for (var i = 0; i < lines.length; i++) {
+                    var path = lines[i].trim();
+                    if (path.length > 0) {
+                        autocompleteModel.append({
+                            "path": path
+                        });
+                    }
+                }
+            }
+        }
+    }
+}

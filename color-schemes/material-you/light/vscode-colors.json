@@ -1,28 +1,28 @@
 {
   "checksum": ":)",
-  "wallpaper": "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/Green-Waves.png",
+  "wallpaper": "/home/boing/Pictures/Wallpapers/Wallpapers-Bank/wallpapers/Fantasy-Lake1.png",
   "alpha": "100",
   "special": {
-    "background": "#dadad9",
-    "foreground": "#1a1c1c",
-    "cursor": "#001f1e"
+    "background": "#d8dadf",
+    "foreground": "#181c20",
+    "cursor": "#00588a"
   },
   "colors": {
-    "color0": "#dadad9",
-    "color1": "#072f2f",
-    "color2": "#41736f",
-    "color3": "#211133",
-    "color4": "#001f1e",
-    "color5": "#21162e",
-    "color6": "#cdeae6",
-    "color7": "#414848",
-    "color8": "#dde4e3",
-    "color9": "#36706f",
-    "color10": "#53948f",
-    "color11": "#391e59",
-    "color12": "#00524f",
-    "color13": "#3a2751",
-    "color14": "#0d3837",
-    "color15": "#1a1c1c"
+    "color0": "#d8dadf",
+    "color1": "#041c34",
+    "color2": "#35618c",
+    "color3": "#7a3096",
+    "color4": "#00588a",
+    "color5": "#733f87",
+    "color6": "#c9e2ff",
+    "color7": "#404750",
+    "color8": "#dce3ed",
+    "color9": "#00639b",
+    "color10": "#437bb1",
+    "color11": "#993dbc",
+    "color12": "#0079bd",
+    "color13": "#914faa",
+    "color14": "#0a73b7",
+    "color15": "#181c20"
   }
 }

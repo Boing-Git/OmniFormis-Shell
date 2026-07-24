@@ -5,7 +5,7 @@ use std::fs;
 use std::process::{Command, exit};
 
 fn get_variables_path() -> std::path::PathBuf {
-    expand_tilde("~/Dotfiles/quickshell/Variables/variables.js")
+    expand_tilde("~/Dotfiles/quickshell/theme/variables.js")
 }
 
 pub fn load_variables() -> String {

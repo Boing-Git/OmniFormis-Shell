@@ -8,10 +8,9 @@ local colors = Utils.colors
 
 hl.config({
     layerrule = {
-        "blur, org.quickshell",
-        "ignorealpha 0.5, org.quickshell",
-        "blur, overview",
-        "ignorealpha 0.5, overview"
+        "blur, quickshell",
+        "blur_popups, quickshell",
+        "ignorealpha 0.1, quickshell"
     },
     general = {
         gaps_in  = vars.GameMode and 0 or vars.gaps_in,

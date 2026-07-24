@@ -75,11 +75,11 @@ local vars = {
     -- Set the gap size between windows (inner)
     gaps_in = 5,
     -- Set the gap size between windows and screen edge (outer)
-    gaps_out = 25,
+    gaps_out = 27,
     -- Set the border size
     border_size = 2,
     -- Set window rounding
-    rounding = 17,
+    rounding = 13,
     -- Set rounding power (higher = larger area the rounding is applied)
     rounding_power = 20,
     -- Set active window opacity
@@ -99,17 +99,17 @@ local vars = {
     -- Enable window shadows
     shadow_enabled = true,
     -- Set shadow range
-    shadow_range = 40,
+    shadow_range = 30,
     -- Set shadow render power
-    shadow_render_power = 3,
+    shadow_render_power = 2,
 
     -- Blur
     -- Enable blur
     blur_enabled = true,
     -- Set blur size
-    blur_size = 10,
+    blur_size = 4,
     -- Set number of blur passes
-    blur_passes = 3,
+    blur_passes = 4,
     -- Set blur vibrancy
     blur_vibrancy = 0.1696,
 
@@ -131,7 +131,7 @@ local vars = {
     -- Enable session lock restore
     allow_session_lock_restore = true,
     -- Set variable refresh rate (0 = off, 1 = on, 2 = fullscreen only)
-    vrr = 0,
+    vrr = 1,
     -- Enable xwayland force zero scaling
     xwayland_force_zero_scaling = true,
     -- Enable xwayland nearest neighbor
@@ -149,7 +149,7 @@ local vars = {
 
     -- Animation Style
     -- Select animation style for hyprland ("expressive", "spring", "jelly", "flyingcards", "snappy", "cinematic", "minimal", "fluid", "aggressive", "elegant", "playful", "elastic", "swift", "relaxed", "slipstream", "standard", "fluent", "custom", "none")
-    AnimateStyle = "fluid",
+    AnimateStyle = "slipstream",
     
     -- --- Custom Animation Profile ---
     

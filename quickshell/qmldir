@@ -1,35 +1,37 @@
-singleton NotificationService 1.0 services/NotificationService.qml
-TopPills 1.0 components/TopPills.qml
-NotificationDaemon 1.0 services/NotificationDaemon.qml
-NotificationData 1.0 services/NotificationData.qml
-ClockPill 1.0 components/ClockPill.qml
-ControlCenter 1.0 components/ControlCenter.qml
-HyprWorkspaces 1.0 components/HyprWorkspaces.qml
-Launcher 1.0 components/Launcher.qml
-ScreenShot 1.0 components/ScreenShot.qml
-StatusBar 1.0 components/StatusBar.qml
-VolumeOsd 1.0 components/VolumeOsd.qml
-WallpaperSwitcher 1.0 components/WallpaperSwitcher.qml
-ColorSchemeSwitcher 1.0 components/ColorSchemeSwitcher.qml
-EmojiPicker 1.0 components/EmojiPicker.qml
-SettingsApp 1.0 components/SettingsApp.qml
-SettingsWindow 1.0 components/SettingsWindow.qml
+singleton NotificationService 1.0 daemons/NotificationService.qml
+TopPills 1.0 panels/TopPills.qml
+NotificationDaemon 1.0 daemons/NotificationDaemon.qml
+NotificationData 1.0 daemons/NotificationData.qml
+ClockPill 1.0 core/primitives/ClockPill.qml
+ControlCenter 1.0 panels/ControlCenter.qml
+HyprWorkspaces 1.0 windows/HyprWorkspaces.qml
+Launcher 1.0 windows/Launcher.qml
+ScreenShot 1.0 windows/ScreenShot.qml
+StatusBar 1.0 panels/StatusBar.qml
+VolumeOsd 1.0 popups/VolumeOsd.qml
+WallpaperSwitcher 1.0 windows/WallpaperSwitcher.qml
+ColorSchemeSwitcher 1.0 windows/ColorSchemeSwitcher.qml
+EmojiPicker 1.0 windows/EmojiPicker.qml
+SettingsApp 1.0 windows/SettingsApp.qml
+SettingsWindow 1.0 windows/SettingsWindow.qml
 
-NotificationCard 1.0 components/NotificationCard.qml
-NotificationPopup 1.0 components/NotificationPopup.qml
-PowerMenu 1.0 components/PowerMenu.qml
-singleton Theme 1.0 Variables/Theme.qml
+NotificationCard 1.0 popups/NotificationCard.qml
+NotificationPopup 1.0 popups/NotificationPopup.qml
+PowerMenu 1.0 windows/PowerMenu.qml
+singleton Theme 1.0 theme/Theme.qml
 
-PolkitAuth 1.0 services/PolkitAuth.qml
-PolkitDialog 1.0 components/PolkitDialog.qml
-Overview 1.0 components/Overview.qml
-singleton HyprlandData 1.0 services/HyprlandData.qml
-ModuleStore 1.0 components/ControlCenter/ModuleStore.qml
-WallpaperOverlay 1.0 components/WallpaperOverlay.qml
-M3Shapes 1.0 components/M3Shapes.qml
-AnalogClock 1.0 components/Widgets/AnalogClock.qml
-DesktopClock 1.0 components/Widgets/DesktopClock.qml
+PolkitAuth 1.0 daemons/PolkitAuth.qml
+PolkitDialog 1.0 popups/PolkitDialog.qml
+Overview 1.0 windows/Overview.qml
+singleton HyprlandData 1.0 daemons/HyprlandData.qml
+ModuleStore 1.0 panels/ControlCenter/ModuleStore.qml
+WallpaperOverlay 1.0 desktop/WallpaperOverlay.qml
+M3Shapes 1.0 core/primitives/M3Shapes.qml
+AnalogClock 1.0 desktop/Widgets/AnalogClock.qml
+DesktopClock 1.0 desktop/Widgets/DesktopClock.qml
 
-DesktopCalender 1.0 components/Widgets/DesktopCalender.qml
-ScreenFrame 1.0 components/ScreenFrame.qml
-InvertedCorner 1.0 components/InvertedCorner.qml
+DesktopCalender 1.0 desktop/Widgets/DesktopCalender.qml
+DesktopMediaPlayer 1.0 desktop/Widgets/DesktopMediaPlayer.qml
+DesktopWidgetsLayer 1.0 desktop/DesktopWidgetsLayer.qml
+ScreenFrame 1.0 desktop/ScreenFrame.qml
+InvertedCorner 1.0 core/primitives/InvertedCorner.qml

@@ -1,6 +1,0 @@
-AnalogClock 1.0 ./AnalogClock.qml
-DesktopClock 1.0 ./DesktopClock.qml
-
-DesktopCalender 1.0 ./DesktopCalender.qml
-Calender 1.0 ./Calender.qml
-M3Shapes 1.0 ../M3Shapes.qml

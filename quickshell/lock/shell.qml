@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.Pam
 import Quickshell.Widgets
-import "../Variables/variables.js" as Vars
+import "../theme/variables.js" as Vars
 import "../"
 
 ShellRoot {

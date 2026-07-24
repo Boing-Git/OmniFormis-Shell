@@ -16,6 +16,7 @@ ShellRoot {
         color: "transparent"
 
         // Layer shell overlay to sit above everything
+        WlrLayershell.namespace: "quickshell"
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 

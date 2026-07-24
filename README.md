@@ -2,11 +2,12 @@
 
 # OmniFormis Shell
 
-A deeply modular, dynamic, and hardware-accelerated desktop environment built for **NixOS** and **Arch Linux**, leveraging **Quickshell**.
+A deeply modular, dynamic, and hardware-accelerated desktop environment built for **NixOS** and **Arch Linux**, leveraging **Hyprland** with **Quickshell**.
 
 ![NixOS](https://img.shields.io/badge/OS-NixOS-5277C3?style=for-the-badge&logo=nixos&logoColor=white)
 ![Arch Linux](https://img.shields.io/badge/OS-Arch_Linux-1793D1?style=for-the-badge&logo=arch-linux&logoColor=white)
-![Quickshell](https://img.shields.io/badge/WM-Quickshell-8B5CF6?style=for-the-badge&logo=qt&logoColor=white)
+![Hyprland](https://img.shields.io/badge/WM-Hyprland-00A9FF?style=for-the-badge&logo=hyprland&logoColor=white)
+![Quickshell](https://img.shields.io/badge/Shell-Quickshell-8B5CF6?style=for-the-badge&logo=qt&logoColor=white)
 
 </div>
 
@@ -20,13 +21,13 @@ The entire system is glued together by a unified theming engine based on **Mater
 
 ## 🚀 Key Technologies & Stack
 
-* **Desktop Environment**: [Quickshell](https://outfoxxed.me/quickshell/) (QtQuick/QML-based native Wayland compositor and shell with fluid animations)
+* **Desktop Environment**: [Hyprland](https://hyprland.org/) with [Quickshell](https://outfoxxed.me/quickshell/) (QtQuick/QML-based native Wayland shell with fluid animations)
 * **Terminal Emulator**: [WezTerm](https://wezfurlong.org/wezterm/)
 * **Shell & Prompt**: [Fish](https://fishshell.com/) with [Starship](https://starship.rs/)
 * **Editor**: [Neovim](https://neovim.io/) / [VS Codium](https://vscodium.com/)
 * **Launcher**: [Quickshell App Launcher](quickshell/) (replacing Fuzzel/Rofi)
 * **Audio Visualizer**: [Cava](https://github.com/karlstav/cava)
-* **System Monitoring**: Btop, Htop, Nvtop
+* **System Monitoring**: Custom system monitoring implemented directly in Quickshell (replacing Btop), Htop, Nvtop
 * **Theming & Color**: [Matugen](https://github.com/InioX/matugen) + Custom Rust cli tool + Bash Scripts (`color-schemes/set-theme.sh`)
 
 ## 🛠️ Installation
@@ -34,18 +35,56 @@ The entire system is glued together by a unified theming engine based on **Mater
 OmniFormis Shell features a unified installer that automatically detects your operating system and executes the appropriate setup logic for both NixOS and Arch Linux.
 
 ```bash
-git clone [https://github.com/Boing-Git/My-Dotfiles](https://github.com/Boing-Git/My-Dotfiles) ~/Dotfiles
+git clone https://github.com/Boing-Git/My-Dotfiles ~/Dotfiles
 cd ~/Dotfiles
 chmod +x scripts/install.sh
 ./scripts/install.sh
 ```
+
+### 🧰 Manual Installation
+
+If the automated installer fails or you prefer to set things up manually, follow these steps:
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/Boing-Git/My-Dotfiles ~/Dotfiles
+   ```
+
+2. **Copy Configuration Files**:
+   Copy all relevant dotfiles into your `~/.config/` directory, excluding repository-specific files.
+   ```bash
+   mkdir -p ~/.config
+   rsync -av --exclude={'.git','README.md','CONTRIBUTING.md','LICENSE','install.sh','RELEASE.md','scripts'} ~/Dotfiles/ ~/.config/
+   ```
+
+3. **Install the OmniFormis CLI Tool**:
+   The custom CLI is required for theme management. Download the pre-compiled binary:
+   ```bash
+   mkdir -p ~/.local/bin
+   curl -L "https://github.com/Boing-Git/OmniFormis-Shell/releases/latest/download/omniformis" -o ~/.local/bin/omniformis
+   chmod +x ~/.local/bin/omniformis
+   ```
+   *Make sure `~/.local/bin` is added to your shell's PATH.*
+
+4. **Install Dependencies**:
+   Ensure you have all the required dependencies listed in the **Dependencies** section below installed on your system.
+
+### 📦 Dependencies
+
+Since NixOS uses a separate Flake repository for dependency resolution, Arch Linux users (or anyone installing manually) must ensure the following packages are installed on their system. Most of these can be found in the Arch official repositories or the AUR.
+
+* **Core & Utilities**: `hyprland`, `quickshell`, `hypridle`, `git`, `jq`, `eza`, `zoxide`, `wl-clipboard`, `cliphist`, `xdg-utils`, `tree`, `nitch`, `ddcutil`, `brightnessctl`, `lm_sensors`, `networkmanager`, `pipewire`, `app2unit`, `swappy`, `libqalculate`, `hexecute`
+* **Development Libraries & Tools**: `rust`, `cargo`, `gcc`, `rustup`, `cmake`, `ninja`, `pkgconf`, `qt6-base`, `qt6-declarative`, `python3` (with `tkinter`, `gobject`, `pywebview`, `flask`, `emoji`)
+* **Applications**: `vscodium`, `wezterm`, `nautilus`, `file-roller`, `spotify`, `github-desktop`, `github-cli`, `blanket`, `satty`, `grim`, `upscayl`, `loupe`, `playerctl`, `vlc`, `obs-studio`, `losslesscut`, `handbrake`, `zen-browser`
+* **Theming & Visuals**: `matugen`, `gtk3`, `cairo`, `pango`, `gobject-introspection`, `awww`, `cava`, `fftw`, `cbonsai`, `hyperhdr`, `mpvpaper`
+* **Fonts & Icons**: `ttf-space-mono-nerd`, `ttf-cascadia-code-nerd`, `ttf-material-symbols-variable`, `ttf-rubik`, `papirus-icon-theme`, `googledot-cursor-theme`
 
 ## 🎨 Architecture & Modules
 
 This repository avoids monolithic configuration files. Every component is meticulously split into clean, logical modules:
 
 ### [Quickshell (OmniFormis Core)](quickshell/)
-A custom-built, hardware-accelerated QML desktop environment powering both the window manager and the core user interface.
+A custom-built, hardware-accelerated QML desktop shell powering the core user interface on top of Hyprland.
 * **Full Shell Experience**: Includes top panels, volume OSDs, notification daemons, an M3-styled Control Center, and workspace trackers.
 * **Built-in Settings App**: A unified, responsive GUI (`SettingsApp/UnifiedSettingsPage.qml`) that parses your system configuration dynamically. You can toggle special workspace rules, adjust window gaps via sliders, and customize layouts—all without touching a text editor!
 * **Dynamic Widgets & Interactions**: Features an analog desktop clock, segmented pill headers, and precise hover-zone transitions.

@@ -9,11 +9,11 @@
     /* --- MATUGEN COLOR MAPPING --- */
 
     /* Primary Accents (Blue mapping) */
-    --blue1: #c4eae8;
-    --blue2: #103534;
-    --blue3: #a9cecc;
-    --blue4: #9fc4c2;
-    --blue5: #426463;
+    --blue1: #cee5ff;
+    --blue2: #1471ad;
+    --blue3: #96ccff;
+    --blue4: #ffffff;
+    --blue5: #00639b;
 
     /* Error / Danger (Red mapping) */
     --red1: #E85E75;
@@ -23,26 +23,26 @@
     --red5: #7D1224;
 
     /* Secondary Accents (Pink mapping -> Secondary) */
-    --pink1: #d7e5e4;
-    --pink2: #414e4d;
-    --pink3: #bbc9c8;
-    --pink4: #dcebe9;
+    --pink1: #cee5ff;
+    --pink2: #324b63;
+    --pink3: #afc9e5;
+    --pink4: #d1e6ff;
     /* ИСПРАВЛЕНО: inverse_secondary -> on_secondary (это темный цвет в темной теме) */
-    --pink5: #263332;
+    --pink5: #183249;
 
     /* Tertiary Accents (Teal mapping -> Tertiary) */
-    --teal1: #eddcfd;
-    --teal2: #362b44;
-    --teal3: #d0c0e0;
-    --teal4: #c7b7d7;
+    --teal1: #f9d8ff;
+    --teal2: #8d57a1;
+    --teal3: #ecb1ff;
+    --teal4: #ffffff;
     /* ИСПРАВЛЕНО: inverse_tertiary -> on_tertiary */
-    --teal5: #372c45;
+    --teal5: #4b1860;
 
     /* Purple mapping */
     --purple1: #997FDC;
-    --purple2: #bbc9c8;
-    --purple3: #bbc9c8;
-    --purple4: #dcebe9;
+    --purple2: #afc9e5;
+    --purple3: #afc9e5;
+    --purple4: #d1e6ff;
     --purple5: #3D2380;
 
     /* Green & Yellow (Static) */
@@ -59,23 +59,23 @@
     --yellow5: #6E520D;
 
     /* Neutrals / Greys (Surface Mapping) */
-    --grey1: #8b9291;
-    --grey2: #414848;
-    --grey3: #333535;
-    --grey4: #282a2a;
-    --grey5: #1e2020;
-    --grey6: #121414;
-    --grey7: #121414;
+    --grey1: #8a919b;
+    --grey2: #404750;
+    --grey3: #323539;
+    --grey4: #272a2e;
+    --grey5: #1d2024;
+    --grey6: #101418;
+    --grey7: #101418;
     --grey8: #000000;
 
     /* Text */
-    --white1: #e2e2e1;
-    --white2: #c1c8c7;
-    --white3: #c1c8c7;
+    --white1: #e0e2e8;
+    --white2: #c0c7d1;
+    --white3: #c0c7d1;
     --white4: #C2C2C2;
     --white5: #ADADAD;
 
-    --black1: #e2e2e1;
+    --black1: #e0e2e8;
     --black2: #1F1F1F;
     --black3: #333333;
     --black4: #474747;

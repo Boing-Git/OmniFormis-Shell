@@ -6,7 +6,7 @@ import Quickshell.Services.Greetd
 import Quickshell.Widgets
 import Quickshell.Io
 import QtQuick.Effects
-import "Variables/variables.js" as Vars
+import "theme/variables.js" as Vars
 import "."
 
 Rectangle {
