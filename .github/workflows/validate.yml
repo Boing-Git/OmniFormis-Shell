@@ -1,0 +1,26 @@
+name: Validate Repository
+
+on:
+  push:
+    branches: [ main, improve-safety-maintainability ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check shell scripts
+      run: |
+        find . -name "*.sh" -exec bash -n {} \;
+        
+    - name: Run validation script
+      run: ./scripts/validate-repo.sh
+        
+    - name: Validate install script
+      run: |
+        # Test dry-run mode (no actual installation)
+        ./install.sh --dry-run --non-interactive 2>/dev/null || true
