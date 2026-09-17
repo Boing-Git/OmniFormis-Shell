@@ -21,9 +21,15 @@ jobs:
         bash -n scripts/uninstall.sh
         bash -n scripts/check-deps.sh
         bash -n scripts/validate-repo.sh
-        shellcheck install.sh
-        shellcheck scripts/validate-repo.sh
+        # -x follows the sourced install/lib/*.sh files and -P SCRIPTDIR resolves
+        # their `source=` directives relative to the script itself, so variables
+        # that are only read there are not reported as unused (SC2034).
+        shellcheck -x -P SCRIPTDIR install.sh
+        shellcheck -x -P SCRIPTDIR scripts/validate-repo.sh
 
     - name: Check for missing dependencies
+      # exit 3 means "a required dependency is missing" (OMNI_EXIT_DEPENDENCY in
+      # install/lib/common.sh). The runner is not an Omarchy desktop, so the
+      # report is informational here and only unexpected codes fail the build.
       run: |
-        scripts/check-deps.sh --hints
+        scripts/check-deps.sh --hints || test $? -eq 3
