@@ -1,22 +1,27 @@
 # OmniFormis Shell
 
-A Hyprland + Quickshell desktop configuration for Arch Linux and NixOS.
+A Hyprland + Quickshell desktop configuration.
 
 ## Installation
 
-Clone the repository:
-
 ```bash
 git clone https://github.com/Boing-git/OmniFormis-Shell.git
+cd OmniFormis-Shell
+./install.sh --non-interactive
 ```
 
-Then run the installer:
+## Repository Structure
 
-```bash
-cd OmniFormis-Shell && ./install.sh
-```
+The repository is organized as follows:
+- `install.sh`: Main installer script.
+- `install/lib/`: Library of functions used by the installer.
+- `scripts/`: Utility scripts (e.g., uninstaller).
+- `docs/`: Documentation.
 
-## Documentation
+## Contributing
 
-- [INSTALL.md](docs/INSTALL.md) - Installation instructions for manual setup
-- [DEPENDENCIES.md](docs/DEPENDENCIES.md) - List of required packages
+This project uses a dotfiles-based approach to manage system configuration. Contributions are welcome via pull requests.
+
+## License
+
+MIT

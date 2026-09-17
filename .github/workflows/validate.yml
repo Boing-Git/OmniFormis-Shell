@@ -2,25 +2,28 @@ name: Validate Repository
 
 on:
   push:
-    branches: [ main, improve-safety-maintainability ]
-  pull_request:
     branches: [ main ]
+  pull_request:
 
 jobs:
   validate:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Check shell scripts
+
+    - name: Install shellcheck
+      run: sudo apt-get install -y shellcheck
+
+    - name: Validate shell scripts
       run: |
-        find . -name "*.sh" -exec bash -n {} \;
-        
-    - name: Run validation script
-      run: ./scripts/validate-repo.sh
-        
-    - name: Validate install script
+        bash -n install.sh
+        bash -n scripts/uninstall.sh
+        bash -n scripts/check-deps.sh
+        bash -n scripts/validate-repo.sh
+        shellcheck install.sh
+        shellcheck scripts/validate-repo.sh
+
+    - name: Check for missing dependencies
       run: |
-        # Test dry-run mode (no actual installation)
-        ./install.sh --dry-run --non-interactive 2>/dev/null || true
+        scripts/check-deps.sh --hints
