@@ -77,6 +77,7 @@ check_required_files() {
     step "Required files exist"
     local required=(
         install.sh
+        bootstrap.sh
         install/lib/common.sh
         install/lib/detect.sh
         install/lib/deps.sh
@@ -159,7 +160,7 @@ check_shellcheck() {
 check_executable_bits() {
     step "Entry points are executable"
     local file
-    for file in install.sh scripts/install.sh scripts/uninstall.sh scripts/check-deps.sh \
+    for file in install.sh bootstrap.sh scripts/install.sh scripts/uninstall.sh scripts/check-deps.sh \
         scripts/validate-repo.sh scripts/reload.sh scripts/auto_scheme_matugen.sh; do
         [[ -e "$file" ]] || continue
         if [[ -x "$file" ]]; then
