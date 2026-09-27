@@ -1,0 +1,37 @@
+name: Validate Repository
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install shellcheck
+      run: sudo apt-get install -y shellcheck
+
+    - name: Validate shell scripts
+      run: |
+        bash -n install.sh
+        bash -n bootstrap.sh
+        bash -n scripts/uninstall.sh
+        bash -n scripts/check-deps.sh
+        bash -n scripts/validate-repo.sh
+        # -x follows the sourced install/lib/*.sh files and -P SCRIPTDIR resolves
+        # their `source=` directives relative to the script itself, so variables
+        # that are only read there are not reported as unused (SC2034).
+        shellcheck -x -P SCRIPTDIR install.sh
+        shellcheck -x -P SCRIPTDIR bootstrap.sh
+        shellcheck -x -P SCRIPTDIR scripts/validate-repo.sh
+
+    - name: Check for missing dependencies
+      # exit 3 means "a required dependency is missing" (OMNI_EXIT_DEPENDENCY in
+      # install/lib/common.sh). The runner is not an Omarchy desktop, so the
+      # report is informational here and only unexpected codes fail the build.
+      run: |
+        scripts/check-deps.sh --hints || test $? -eq 3

@@ -18,7 +18,6 @@ METRICS=$(convert "$WALLPAPER" -colorspace HSL -format "%[fx:mean.g] %[fx:mean.b
 SATURATION=$(echo "$METRICS" | awk '{print $1}')
 BRIGHTNESS=$(echo "$METRICS" | awk '{print $2}')
 STD_HUE=$(echo "$METRICS" | awk '{print $3}')
-STD_SAT=$(echo "$METRICS" | awk '{print $4}')
 STD_BRIGHT=$(echo "$METRICS" | awk '{print $5}')
 
 # Decision Logic
