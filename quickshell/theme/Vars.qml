@@ -98,6 +98,10 @@ QtObject {
     property string desktopAudioVisualizerGradientStart: RawVars.desktopAudioVisualizerGradientStart !== undefined ? RawVars.desktopAudioVisualizerGradientStart : "primary"
     property string desktopAudioVisualizerGradientEnd: RawVars.desktopAudioVisualizerGradientEnd !== undefined ? RawVars.desktopAudioVisualizerGradientEnd : "tertiary"
     property string desktopAudioVisualizerLayout: RawVars.desktopAudioVisualizerLayout !== undefined ? RawVars.desktopAudioVisualizerLayout : "Circular"
+    property string desktopAudioVisualizerLineArrangement: RawVars.desktopAudioVisualizerLineArrangement !== undefined ? RawVars.desktopAudioVisualizerLineArrangement : "Row"
+    property real desktopAudioVisualizerLineThickness: RawVars.desktopAudioVisualizerLineThickness !== undefined ? RawVars.desktopAudioVisualizerLineThickness : 4
+    property bool desktopAudioVisualizerLineMirror: RawVars.desktopAudioVisualizerLineMirror !== undefined ? RawVars.desktopAudioVisualizerLineMirror : false
+    property string desktopAudioVisualizerLineDirection: RawVars.desktopAudioVisualizerLineDirection !== undefined ? RawVars.desktopAudioVisualizerLineDirection : "Left to Right"
     property string desktopAudioVisualizerPositionShape: RawVars.desktopAudioVisualizerPositionShape !== undefined ? RawVars.desktopAudioVisualizerPositionShape : "Circle"
     property real desktopAudioVisualizerShapeSize: RawVars.desktopAudioVisualizerShapeSize !== undefined ? RawVars.desktopAudioVisualizerShapeSize : 26
     property real desktopAudioVisualizerSpacing: RawVars.desktopAudioVisualizerSpacing !== undefined ? RawVars.desktopAudioVisualizerSpacing : 8
@@ -122,8 +126,11 @@ QtObject {
     // Low-spec mode, decided by Hyprland (hypr/modules/hardware.lua) from its LowSpec variable:
     // opaque panels, no wallpaper mask or audio visualizer, and less multisampling on layers
     property bool lowSpec: false
-    // 4x is the most that every GPU able to run Hyprland (GLES 3.0) is guaranteed to support
-    property int layerSamples: lowSpec ? 4 : 32
+    // 4x is the most that every GPU able to run Hyprland (GLES 3.0) is guaranteed to support.
+    // Game mode drops to the same 4x as low-spec hardware — every panel and card corner is still
+    // drawn as a layered, multisampled Shape even with blur/shadows/animations already off, and
+    // that's GPU compositing work worth skipping while a game wants the frames instead.
+    property int layerSamples: (lowSpec || gameMode) ? 4 : 32
     property FileView _lowSpecState: FileView {
         path: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/omniformis-low-spec"
         watchChanges: true
@@ -220,6 +227,10 @@ QtObject {
         if (root.desktopAudioVisualizerGradientStart !== RawVars.desktopAudioVisualizerGradientStart) root.desktopAudioVisualizerGradientStart = RawVars.desktopAudioVisualizerGradientStart;
         if (root.desktopAudioVisualizerGradientEnd !== RawVars.desktopAudioVisualizerGradientEnd) root.desktopAudioVisualizerGradientEnd = RawVars.desktopAudioVisualizerGradientEnd;
         if (root.desktopAudioVisualizerLayout !== RawVars.desktopAudioVisualizerLayout) root.desktopAudioVisualizerLayout = RawVars.desktopAudioVisualizerLayout;
+        if (root.desktopAudioVisualizerLineArrangement !== RawVars.desktopAudioVisualizerLineArrangement) root.desktopAudioVisualizerLineArrangement = RawVars.desktopAudioVisualizerLineArrangement;
+        if (root.desktopAudioVisualizerLineThickness !== RawVars.desktopAudioVisualizerLineThickness) root.desktopAudioVisualizerLineThickness = RawVars.desktopAudioVisualizerLineThickness;
+        if (root.desktopAudioVisualizerLineMirror !== RawVars.desktopAudioVisualizerLineMirror) root.desktopAudioVisualizerLineMirror = RawVars.desktopAudioVisualizerLineMirror;
+        if (root.desktopAudioVisualizerLineDirection !== RawVars.desktopAudioVisualizerLineDirection) root.desktopAudioVisualizerLineDirection = RawVars.desktopAudioVisualizerLineDirection;
         if (root.desktopAudioVisualizerPositionShape !== RawVars.desktopAudioVisualizerPositionShape) root.desktopAudioVisualizerPositionShape = RawVars.desktopAudioVisualizerPositionShape;
         if (root.desktopAudioVisualizerShapeSize !== RawVars.desktopAudioVisualizerShapeSize) root.desktopAudioVisualizerShapeSize = RawVars.desktopAudioVisualizerShapeSize;
         if (root.desktopAudioVisualizerSpacing !== RawVars.desktopAudioVisualizerSpacing) root.desktopAudioVisualizerSpacing = RawVars.desktopAudioVisualizerSpacing;

@@ -91,6 +91,11 @@ Item {
     onBottomRightRadiusChanged: updatePoints()
     Component.onCompleted: updatePoints()
 
+    // The default cornerPower is 2 (a plain circular corner), which every card background in the
+    // app — settings rows, desktop widgets, panels — renders through here. It only had the scene
+    // graph's own single-pass edge antialiasing; the power>2.0 "expressive squircle" path below got
+    // the much crisper layered multisampling. Giving this path the same layer brings every ordinary
+    // rounded corner up to that same quality instead of just the squircle ones.
     Rectangle {
         anchors.fill: parent
         color: root.color
@@ -103,6 +108,9 @@ Item {
         visible: root.power <= 2.0
         antialiasing: true
         smooth: true
+        layer.enabled: true
+        layer.smooth: true
+        layer.samples: Vars.layerSamples
     }
     
 

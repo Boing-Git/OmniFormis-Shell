@@ -16,8 +16,10 @@ PanelWindow {
     property real maskScale: Vars.wallpaperMaskScale !== undefined ? Vars.wallpaperMaskScale : 1.05
     property int maskOffsetX: Vars.wallpaperMaskOffsetX !== undefined ? Vars.wallpaperMaskOffsetX : 0
     property int maskOffsetY: Vars.wallpaperMaskOffsetY !== undefined ? Vars.wallpaperMaskOffsetY : 0
+    property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
+    property bool active: window.calenderEnabled && !window.gameMode
 
-    visible: window.calenderEnabled
+    visible: window.active
 
     WlrLayershell.namespace: "quickshell"
     WlrLayershell.layer: WlrLayer.Bottom
@@ -78,17 +80,20 @@ PanelWindow {
 
     Item {
         id: clockContainer
-        width: clock.width
-        height: clock.height
+        // Calender is a fixed 320x320, so this doesn't need to read it back from the Loader
+        // (whose .item is null while inactive, i.e. in game mode)
+        width: 320
+        height: 320
         x: computedX
         y: computedY
-        
+
         Behavior on x { enabled: window.anchorEnabled; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
         Behavior on y { enabled: window.anchorEnabled; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
 
-        Calender {
-            id: clock
+        Loader {
             anchors.centerIn: parent
+            active: window.active
+            sourceComponent: Calender {}
         }
 
         DragHandler {

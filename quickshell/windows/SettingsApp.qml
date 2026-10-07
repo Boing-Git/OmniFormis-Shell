@@ -72,6 +72,17 @@ Item {
             shape: "Puffy"
         },
 
+        // Performance
+        {
+            id: "GameMode",
+            name: "Game Mode",
+            subtitle: "No blur, shadows, animations or desktop widgets — every frame for the game",
+            icon: "",
+            section: "Performance",
+            hue: 0.68,
+            shape: "Puffy"
+        },
+
         // System & Input
         {
             id: "General",
@@ -180,7 +191,7 @@ Item {
 
         var searchableText = navItem.name + " " + navItem.subtitle + " " + navItem.id + " " + (navItem.section || "");
 
-        var unifiedCategories = ["General", "Input", "Keybinds", "Desktop", "Layout", "Theme", "Animations"];
+        var unifiedCategories = ["GameMode", "General", "Input", "Keybinds", "Desktop", "Layout", "Theme", "Animations"];
         if (unifiedCategories.includes(navItem.id)) {
             var vars = unifiedPage.allVars;
             if (vars) {
@@ -633,7 +644,7 @@ Item {
 
                     UnifiedSettingsPage {
                         id: unifiedPage
-                        activeCategory: (root.currentSection === "General" || root.currentSection === "Input" || root.currentSection === "Keybinds" || root.currentSection === "Desktop" || root.currentSection === "Layout" || root.currentSection === "Theme" || root.currentSection === "Animations") ? root.currentSection : "General"
+                        activeCategory: (root.currentSection === "GameMode" || root.currentSection === "General" || root.currentSection === "Input" || root.currentSection === "Keybinds" || root.currentSection === "Desktop" || root.currentSection === "Layout" || root.currentSection === "Theme" || root.currentSection === "Animations") ? root.currentSection : "General"
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         pageTitle: root.currentNavItem ? root.currentNavItem.name : ""

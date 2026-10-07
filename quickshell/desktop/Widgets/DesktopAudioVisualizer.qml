@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -16,8 +17,10 @@ PanelWindow {
     id: window
     color: "transparent"
 
-    // Off in low-spec mode: cava's 60 fps analysis plus a shape per bar redrawn every frame
-    property bool visualizerEnabled: (Vars.desktopAudioVisualizerEnabled !== undefined ? Vars.desktopAudioVisualizerEnabled : false) && !Vars.lowSpec
+    // Off in low-spec mode (cava's 60 fps analysis plus a shape per bar redrawn every frame) and
+    // in game mode, for the same reason — this already fully stops the cava process and hides the
+    // widget (onVisualizerEnabledChanged below), nothing further to wire up for either one
+    property bool visualizerEnabled: (Vars.desktopAudioVisualizerEnabled !== undefined ? Vars.desktopAudioVisualizerEnabled : false) && !Vars.lowSpec && !(Vars.gameMode !== undefined && Vars.gameMode)
     property bool anchorEnabled: Vars.desktopAudioVisualizerAnchorEnabled !== undefined ? Vars.desktopAudioVisualizerAnchorEnabled : false
     property string anchorPoint: Vars.desktopAudioVisualizerAnchorPoint !== undefined ? Vars.desktopAudioVisualizerAnchorPoint : "Center"
     property int anchorCurve: Vars.desktopAudioVisualizerAnchorCurve !== undefined ? Vars.desktopAudioVisualizerAnchorCurve : 0
@@ -39,6 +42,17 @@ PanelWindow {
     }
     property string layoutMode: Vars.desktopAudioVisualizerLayout !== undefined ? Vars.desktopAudioVisualizerLayout : "Circular"
     property string positionShape: Vars.desktopAudioVisualizerPositionShape !== undefined ? Vars.desktopAudioVisualizerPositionShape : "Circle"
+    // Only matters in Lines mode: Row draws the connected line flat, like Linear's bars would sit;
+    // Shape traces it around positionShape's outline instead, the same outline Circular's shapes
+    // sit on — a closed loop instead of an open row.
+    property string lineArrangement: Vars.desktopAudioVisualizerLineArrangement !== undefined ? Vars.desktopAudioVisualizerLineArrangement : "Row"
+    property real lineThickness: Vars.desktopAudioVisualizerLineThickness !== undefined ? Vars.desktopAudioVisualizerLineThickness : 4
+    // Row arrangement only (a closed loop has no "side" or "direction" to flip): Mirror folds the
+    // bars data in half and plays it back out again, so bass sits at both ends and treble meets in
+    // the middle — symmetric, like a classic two-channel spectrum analyzer. Direction is which way
+    // along the row the data reads, including rotating it onto a vertical column.
+    property bool lineMirror: Vars.desktopAudioVisualizerLineMirror !== undefined ? Vars.desktopAudioVisualizerLineMirror : false
+    property string lineDirection: Vars.desktopAudioVisualizerLineDirection !== undefined ? Vars.desktopAudioVisualizerLineDirection : "Left to Right"
     property real shapeSize: Vars.desktopAudioVisualizerShapeSize !== undefined ? Vars.desktopAudioVisualizerShapeSize : 26
     property real itemSpacing: Vars.desktopAudioVisualizerSpacing !== undefined ? Vars.desktopAudioVisualizerSpacing : 8
     property real circleRadius: Vars.desktopAudioVisualizerRadius !== undefined ? Vars.desktopAudioVisualizerRadius : 42
@@ -263,6 +277,23 @@ PanelWindow {
             // shapeSize keeps the shape's aspect 1:1 no matter how loud it gets; only scale,
             // position, color and rotation move, never the shape's own width vs. height.
             readonly property bool isCircular: window.layoutMode === "Circular"
+            // "Grid": a matrix of shapes cropped to positionShape's silhouette, each one's
+            // move/scale/rotate driven by whichever bar its distance from the grid's center maps
+            // to — the NCS-style dot-matrix look, with M3 shapes standing in for the dots.
+            readonly property bool isGrid: window.layoutMode === "Grid"
+            // "Lines": the shapes are gone entirely — just the bars' own peak positions (the same
+            // ones Linear mode would sit shapes on) connected into one continuous stroked path, the
+            // classic oscilloscope/spectrum-line look. Same footprint as Linear, since it falls
+            // through to the same width/height/barsArea sizing below.
+            readonly property bool isLines: window.layoutMode === "Lines"
+            // Lines mode's own "Shape" arrangement traces the line around positionShape's outline
+            // (closed loop) instead of a flat row — same outline, same ring sizing, Circular already
+            // uses, so it folds into every isCircular-keyed size below rather than duplicating it.
+            readonly property bool isLinesOnShape: isLines && window.lineArrangement === "Shape"
+            readonly property bool isRing: isCircular || isLinesOnShape
+            // The Row line rotated onto a vertical column — swaps which of width/height is the
+            // "along the row" axis versus the "amplitude" axis, below and in linePoints.
+            readonly property bool isLineVertical: isLines && !isLinesOnShape && (window.lineDirection === "Top to Bottom" || window.lineDirection === "Bottom to Top")
             readonly property real shapeSize: Math.max(6, window.shapeSize)
             readonly property real itemGap: Math.max(0, window.itemSpacing)
             readonly property real cellSize: shapeSize + itemGap
@@ -276,13 +307,22 @@ PanelWindow {
             // This keeps the container tight rather than the old fixed-multiplier over-estimate.
             readonly property real actualRingExtent: ringRadius * 1.65 + shapeSize * 0.65
             readonly property real ringDiameter: actualRingExtent * 2 + shapeSize
-            width: (isCircular ? ringDiameter : Math.max(1, window.barsCount) * cellSize - itemGap) + (backgroundEnabled ? Vars.spacingLarge * 2 : 0)
-            height: (isCircular ? ringDiameter : barMaxHeight + shapeSize) + (backgroundEnabled ? Vars.spacingLarge * 2 : 8)
+            // Side length of the grid in cells: enough cells that Bars (reused here as "shape
+            // count") fill a square, e.g. 24 bars -> a 5x5 grid.
+            readonly property int gridSide: Math.max(2, Math.ceil(Math.sqrt(Math.max(1, window.barsCount))))
+            readonly property real gridSpan: gridSide * cellSize - itemGap
+            // Linear's and a Row line's two footprint dimensions — swapped between width/height
+            // below when the line runs vertically instead of its usual horizontal row.
+            readonly property real lineAlongExtent: Math.max(1, window.barsCount) * cellSize - itemGap
+            readonly property real lineAcrossExtent: barMaxHeight + shapeSize
+            width: (isRing ? ringDiameter : isGrid ? gridSpan : isLineVertical ? lineAcrossExtent : lineAlongExtent) + (backgroundEnabled ? Vars.spacingLarge * 2 : 0)
+            height: (isRing ? ringDiameter : isGrid ? gridSpan : isLineVertical ? lineAlongExtent : lineAcrossExtent) + (backgroundEnabled ? Vars.spacingLarge * 2 : 8)
             // Background radius hugs the actual shape ring: in Circular mode it equals the ring's
             // true outer edge plus a medium padding gap — so the card clips tightly around the
             // shapes rather than leaving a large empty band. Capped at half the card size so it
-            // never exceeds a perfect circle. Linear mode keeps the shell's normal rounding.
-            readonly property real backgroundRadius: isCircular
+            // never exceeds a perfect circle. Linear and Grid keep the shell's normal rounding —
+            // Grid's own silhouette crop happens separately, inside the card.
+            readonly property real backgroundRadius: isRing
                 ? Math.min(actualRingExtent + Vars.spacingMedium, Math.min(width, height) / 2)
                 : Vars.radiusLarge
 
@@ -320,23 +360,48 @@ PanelWindow {
             Item {
                 id: barsArea
                 anchors.centerIn: parent
-                width: card.isCircular ? card.ringDiameter : Math.max(1, window.barsCount) * card.cellSize - card.itemGap
-                height: card.isCircular ? card.ringDiameter : card.barMaxHeight + card.shapeSize
-                visible: !window.cavaMissing
+                width: card.isRing ? card.ringDiameter : card.isGrid ? card.gridSpan : card.isLineVertical ? card.lineAcrossExtent : card.lineAlongExtent
+                height: card.isRing ? card.ringDiameter : card.isGrid ? card.gridSpan : card.isLineVertical ? card.lineAlongExtent : card.lineAcrossExtent
+                // In Grid mode this is cropped to positionShape's silhouette below, which needs it
+                // rendered into a texture the mask can read from — it stays "visible" (Qt keeps a
+                // layered item's texture live even while hidden) so only the masked copy is seen.
+                // In Lines mode there are no per-bar shapes at all, just the connected path below.
+                visible: !window.cavaMissing && !card.isGrid && !card.isLines
+                layer.enabled: card.isGrid
+                layer.smooth: true
+                layer.samples: Vars.layerSamples
 
                 Repeater {
-                    model: window.barsCount
+                    // Grid: a square of cells, side gridSide (e.g. 24 bars -> 25 cells in a 5x5
+                    // grid) — generally not exactly barsCount, since it has to be a perfect square.
+                    model: card.isGrid ? card.gridSide * card.gridSide : window.barsCount
                     delegate: Item {
                         id: bar
                         required property int index
-                        readonly property real percent: window.levels[index] !== undefined ? window.levels[index] : 0
+
+                        // Grid: this cell's column/row, and its distance from the grid's own center
+                        // cell, normalized 0 (center) to 1 (corner) and mapped onto the bars array —
+                        // center cells track the bass end, corner cells the treble end, so loudness
+                        // ripples outward from the middle like the reference's dot-matrix pulse.
+                        readonly property int gridCol: index % Math.max(1, card.gridSide)
+                        readonly property int gridRow: Math.floor(index / Math.max(1, card.gridSide))
+                        readonly property real gridCenterOffset: (card.gridSide - 1) / 2
+                        readonly property real gridDX: gridCol - gridCenterOffset
+                        readonly property real gridDY: gridRow - gridCenterOffset
+                        readonly property real gridCellDist: Math.hypot(gridDX, gridDY)
+                        readonly property real gridMaxDist: Math.max(0.0001, Math.hypot(gridCenterOffset, gridCenterOffset))
+                        readonly property real gridNormDist: Math.min(1, gridCellDist / gridMaxDist)
+                        readonly property int gridBarIndex: Math.min(window.barsCount - 1, Math.floor(gridNormDist * window.barsCount))
+                        readonly property int dataIndex: card.isGrid ? gridBarIndex : index
+                        readonly property real percent: window.levels[dataIndex] !== undefined ? window.levels[dataIndex] : 0
 
                         // Theme mode: the bars blend from the primary to the secondary accent around
-                        // the ring. Accent roles rather than fixed or container tones, which nearly
-                        // vanish against the card in dark or light mode. Custom mode: a single
-                        // user-chosen color for every bar instead. Either way, warmed toward the
-                        // tertiary accent as this bar gets louder (tintLayer below).
-                        readonly property real stopPos: window.barsCount > 1 ? index / (window.barsCount - 1) : 0
+                        // the ring (or, in Grid mode, from the center outward). Accent roles rather
+                        // than fixed or container tones, which nearly vanish against the card in dark
+                        // or light mode. Custom mode: a single user-chosen color for every bar
+                        // instead. Either way, warmed toward the tertiary accent as this bar gets
+                        // louder (tintLayer below).
+                        readonly property real stopPos: card.isGrid ? gridNormDist : (window.barsCount > 1 ? index / (window.barsCount - 1) : 0)
                         readonly property color gradientColor: Qt.rgba(Theme.primary.r + (Theme.secondary.r - Theme.primary.r) * stopPos,
                                                                        Theme.primary.g + (Theme.secondary.g - Theme.primary.g) * stopPos,
                                                                        Theme.primary.b + (Theme.secondary.b - Theme.primary.b) * stopPos, 1)
@@ -376,14 +441,27 @@ PanelWindow {
                         readonly property real linX: index * card.cellSize
                         readonly property real linY: (1 - percent) * card.barMaxHeight
 
+                        // Grid: each shape sits in its own cell, then "moves" — nudged further from
+                        // the grid's center as its mapped band gets louder, the same pulse-outward
+                        // feel Circular mode has, just radiating across a square instead of a ring.
+                        // Driven by the same Radius setting Circular's pulse uses (card.ringRadius),
+                        // so Radius controls how far things move in both layouts, not just one —
+                        // cranking it up visibly throws shapes further out of their cells on a loud
+                        // beat; cranking it down keeps them settled close to their resting position.
+                        readonly property real gridCellX: gridCol * card.cellSize + card.itemGap / 2
+                        readonly property real gridCellY: gridRow * card.cellSize + card.itemGap / 2
+                        readonly property real gridPulseOut: percent * card.ringRadius * 0.35
+                        readonly property real gridX: gridCellX + (gridCellDist > 0.0001 ? (gridDX / gridCellDist) * gridPulseOut : 0)
+                        readonly property real gridY: gridCellY + (gridCellDist > 0.0001 ? (gridDY / gridCellDist) * gridPulseOut : 0)
+
                         // Motion comes from `levels` and `angles`, which the smoother eases every
                         // display frame, so there are no per-property animations to restart and stutter
-                        x: card.isCircular ? circX : linX
-                        y: card.isCircular ? circY : linY
+                        x: card.isCircular ? circX : card.isGrid ? gridX : linX
+                        y: card.isCircular ? circY : card.isGrid ? gridY : linY
                         width: card.shapeSize
                         height: card.shapeSize
                         scale: 0.55 + percent * 0.65
-                        rotation: window.angles[index] !== undefined ? window.angles[index] : 0
+                        rotation: window.angles[dataIndex] !== undefined ? window.angles[dataIndex] : 0
 
                         property string currentPath: m3.getPath(barShape)
 
@@ -425,6 +503,195 @@ PanelWindow {
                         }
                     }
                 }
+            }
+
+            // Lines mode: one continuous stroked path through every bar's peak position, connected
+            // instead of carrying a shape each. Row: the same x/y a Linear bar would sit at (an open
+            // path). Shape: the same outline points and pulse-outward Circular's shapes sit on (a
+            // closed loop, drawn as such below rather than by repeating the first point — that
+            // leaves a straight seam where it rejoined, which the curve-smoothing couldn't round
+            // off like every other corner). Either way this reads window.levels directly, so it's
+            // naturally reactive to the same per-frame easing that drives every other layout, no
+            // separate animation.
+            property var linePoints: {
+                var pts = [];
+                if (!card.isLines)
+                    return pts;
+                var n = Math.max(1, window.barsCount);
+                if (card.isLinesOnShape) {
+                    var cx = barsArea.width / 2, cy = barsArea.height / 2;
+                    var scale = card.ringRadius / 45.0;
+                    for (var i = 0; i < n; i++) {
+                        var op = window.outlinePoints[i] !== undefined ? window.outlinePoints[i] : { x: 50, y: 8 };
+                        var dx = op.x - 50, dy = op.y - 50;
+                        var len = Math.max(0.0001, Math.hypot(dx, dy));
+                        var lvl = window.levels[i] !== undefined ? window.levels[i] : 0;
+                        var pulseOut = lvl * card.ringRadius * 0.5;
+                        pts.push(Qt.point(cx + dx * scale + (dx / len) * pulseOut, cy + dy * scale + (dy / len) * pulseOut));
+                    }
+                } else {
+                    // Mirror folds the data in half and reads it back out, so position j's level
+                    // comes from a "folded" data index — bass (index 0) ends up at both ends of the
+                    // row, treble meets in the middle — instead of j's own level directly.
+                    var mirrorOf = function (j) {
+                        return j <= (n - 1) / 2 ? j : n - 1 - j;
+                    };
+                    for (var j = 0; j < n; j++) {
+                        var dataIdx = window.lineMirror ? mirrorOf(j) : j;
+                        var lv = window.levels[dataIdx] !== undefined ? window.levels[dataIdx] : 0;
+                        // "along" is this bar's position down the row (0 at the start); "across" is
+                        // its amplitude, 0 (quiet) at the row's far edge rising toward 0 (loud) at
+                        // the near edge — exactly Linear's own layout, just not yet pinned to x/y.
+                        var along = j * card.cellSize + card.shapeSize / 2;
+                        var across = (1 - lv) * card.barMaxHeight + card.shapeSize / 2;
+                        var totalAlong = (n - 1) * card.cellSize + card.shapeSize;
+                        var x, y;
+                        switch (window.lineDirection) {
+                        case "Right to Left":
+                            x = totalAlong - along;
+                            y = across;
+                            break;
+                        case "Top to Bottom":
+                            x = across;
+                            y = along;
+                            break;
+                        case "Bottom to Top":
+                            x = across;
+                            y = totalAlong - along;
+                            break;
+                        default: // "Left to Right"
+                            x = along;
+                            y = across;
+                        }
+                        pts.push(Qt.point(x, y));
+                    }
+                }
+                return pts;
+            }
+            // Theme mode's primary->secondary blend doesn't translate to a single flat stroke
+            // color, so this picks the midpoint of that same blend; Custom and Gradient modes use
+            // the colors they already have (Gradient's start color, for a single flat stroke).
+            readonly property color lineColor: window.colorMode === "Custom" ? m3LineHelper.customColor : (window.colorMode === "Gradient" ? window.resolveThemeColor(window.gradientStart) : Qt.rgba((Theme.primary.r + Theme.secondary.r) / 2, (Theme.primary.g + Theme.secondary.g) / 2, (Theme.primary.b + Theme.secondary.b) / 2, 1))
+            QtObject {
+                id: m3LineHelper
+                readonly property color customColor: window.resolveThemeColor(window.colorChoice)
+            }
+
+            // A Canvas rather than a Shape+ShapePath: linePoints changes every display frame (up
+            // to the monitor's own refresh rate, same as every other layout's smoothed motion), and
+            // a Shape re-tessellates its whole path from scratch on every change — round caps/joins
+            // included. That pinned a full core continuously re-rasterising a 20-50 point stroke.
+            // A Canvas just draws straight into its own backing image each time, the same cheap
+            // approach the media player's own waveform already uses successfully at this frame
+            // rate — and unlike the Shape, it needs no layer of its own: a `layer` exists to let an
+            // item's rendered output be reused or composited with something else (a mask, an
+            // effect), which nothing here does, so wrapping it in one would just mean a second
+            // multisampled target resolved from scratch on every redraw for no benefit — the
+            // Canvas's own `antialiasing: true` already smooths its strokes directly.
+            Canvas {
+                id: lineCanvas
+                anchors.centerIn: parent
+                width: barsArea.width
+                height: barsArea.height
+                visible: card.isLines && !window.cavaMissing
+                renderTarget: Canvas.FramebufferObject
+                antialiasing: true
+                smooth: true
+
+                property var pts: card.linePoints
+                property bool closed: card.isLinesOnShape
+                property color strokeColor: card.lineColor
+                property real strokeW: Math.max(1, window.lineThickness)
+
+                // Straight segments between the raw points made every beat look jagged. This
+                // threads a quadratic curve through each point's midpoint with its neighbor instead
+                // — the standard cheap trick for a smooth line through a point set (no extra points
+                // computed, just curving toward each segment's midpoint rather than the point
+                // itself) — closing all the way around for the Shape arrangement's loop instead of
+                // stopping short, so the seam curves like every other corner instead of meeting flat.
+                function smoothPath(ctx, p, isClosed) {
+                    var n = p.length;
+                    if (n < 2)
+                        return;
+                    if (n === 2) {
+                        ctx.moveTo(p[0].x, p[0].y);
+                        ctx.lineTo(p[1].x, p[1].y);
+                        return;
+                    }
+                    var last = isClosed ? n : n - 1;
+                    var start = isClosed ? midpoint(p[n - 1], p[0]) : p[0];
+                    ctx.moveTo(start.x, start.y);
+                    for (var i = isClosed ? 0 : 1; i < last; i++) {
+                        var next = p[(i + 1) % n];
+                        var mid = midpoint(p[i], next);
+                        ctx.quadraticCurveTo(p[i].x, p[i].y, mid.x, mid.y);
+                    }
+                    if (!isClosed)
+                        ctx.lineTo(p[n - 1].x, p[n - 1].y);
+                    else
+                        ctx.closePath();
+                }
+                function midpoint(a, b) {
+                    return Qt.point((a.x + b.x) / 2, (a.y + b.y) / 2);
+                }
+
+                onPaint: {
+                    var ctx = getContext("2d");
+                    ctx.reset();
+                    ctx.clearRect(0, 0, width, height);
+                    if (pts.length < 2)
+                        return;
+                    ctx.beginPath();
+                    ctx.lineWidth = strokeW;
+                    ctx.lineCap = "round";
+                    ctx.lineJoin = "round";
+                    ctx.strokeStyle = strokeColor;
+                    smoothPath(ctx, pts, closed);
+                    ctx.stroke();
+                }
+
+                onPtsChanged: requestPaint()
+                onClosedChanged: requestPaint()
+                onStrokeColorChanged: requestPaint()
+                onStrokeWChanged: requestPaint()
+                onWidthChanged: requestPaint()
+                onHeightChanged: requestPaint()
+            }
+
+            // Grid mode's crop: positionShape's silhouette, filled solid so MultiEffect can use it
+            // as a mask — the same "white SVG shape as a mask source" technique the wallpaper and
+            // media player art use. Reusing positionShape here (rather than a new setting) means
+            // picking one of the organic cookie/blob shapes gives the wobbly, not-quite-circular
+            // ring boundary the NCS-style reference has, for free.
+            Item {
+                id: gridMaskContainer
+                x: barsArea.x
+                y: barsArea.y
+                width: barsArea.width
+                height: barsArea.height
+                visible: false
+                layer.enabled: card.isGrid
+                layer.smooth: true
+                layer.samples: Vars.layerSamples
+
+                Image {
+                    anchors.fill: parent
+                    smooth: true
+                    antialiasing: true
+                    mipmap: true
+                    source: card.isGrid ? "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + m3.getPath(window.positionShape) + "' fill='white'/></svg>" : ""
+                }
+            }
+
+            MultiEffect {
+                x: barsArea.x
+                y: barsArea.y
+                width: barsArea.width
+                height: barsArea.height
+                visible: card.isGrid && !window.cavaMissing
+                source: barsArea
+                maskEnabled: true
+                maskSource: gridMaskContainer
             }
         }
 

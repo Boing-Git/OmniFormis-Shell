@@ -100,10 +100,17 @@ Item {
         anchors.margins: Vars.spacingLarge
         spacing: 24
 
+        // A fixed width rather than fillWidth: with only one fillWidth sibling competing (the
+        // invisible spacer below, or a fillWidth value control), Qt's RowLayout handed nearly all
+        // of the row's slack to WHICHEVER fillWidth item happened to have the larger size hint —
+        // usually this column, since it has by far the largest preferred width — so it stretched to
+        // a different width on every row depending on which control sat next to it (very wide next
+        // to a small bool toggle, narrower next to a slider), leaving the whole list looking
+        // uneven. Pinning it keeps every row's title column the same width.
         ColumnLayout {
-            Layout.preferredWidth: 350
+            Layout.preferredWidth: 300
             Layout.minimumWidth: 200
-            Layout.fillWidth: true
+            Layout.maximumWidth: 300
             spacing: 4
             QsText {
                 text: rootPage ? rootPage.prettyTitle(delegateRoot.itemKey) : delegateRoot.itemKey
@@ -123,9 +130,15 @@ Item {
             }
         }
 
+        // Pushes a value control that can't position itself (the bool toggle, text/number fields,
+        // the shape grid) over to the right edge. Excluded for controls that already claim
+        // Layout.fillWidth and right-align their own content (the slider, and the enum/color chip
+        // flows) — with the title column now fixed-width, this is the row's only other stretchy
+        // item, so including it there too would just split the same growth between two things
+        // instead of letting the control itself reach the edge.
         Item {
             Layout.fillWidth: true
-            visible: delegateRoot.itemType !== "enum" && delegateRoot.itemType !== "presetManager" && !(delegateRoot.itemType === "number" && parseFloat(delegateRoot.itemVal) >= 50)
+            visible: delegateRoot.itemType !== "enum" && delegateRoot.itemType !== "presetManager" && delegateRoot.itemType !== "slider" && delegateRoot.itemType !== "color"
         }
 
         Rectangle {
@@ -929,14 +942,17 @@ Item {
                 id: colorFlow
                 width: parent.width
                 anchors.right: parent.right
-                layoutDirection: (delegateRoot.itemEnums.split("|||").length < 5) ? Qt.RightToLeft : Qt.LeftToRight
+                // Always RightToLeft, like the enum chip flow below — with 5 or more swatches this
+                // used to switch to LeftToRight, which (since the Item above is stretched to fill
+                // whatever space the row has going spare) packed every swatch against the Item's
+                // left edge and left a bare gap between them and the row's actual right edge.
+                layoutDirection: Qt.RightToLeft
                 spacing: 2
                 Repeater {
                     id: colorRepeater
                     model: {
                         if (!parent.visible) return [];
-                        let arr = delegateRoot.itemEnums.split("|||");
-                        return arr.length < 5 ? arr.reverse() : arr;
+                        return delegateRoot.itemEnums.split("|||").reverse();
                     }
                     delegate: Rectangle {
                         property bool isSelected: delegateRoot.itemVal === modelData
@@ -1016,6 +1032,10 @@ Item {
                         gradientStart: Vars.desktopAudioVisualizerGradientStart,
                         gradientEnd: Vars.desktopAudioVisualizerGradientEnd,
                         layout: Vars.desktopAudioVisualizerLayout,
+                        lineArrangement: Vars.desktopAudioVisualizerLineArrangement,
+                        lineThickness: Vars.desktopAudioVisualizerLineThickness,
+                        lineMirror: Vars.desktopAudioVisualizerLineMirror,
+                        lineDirection: Vars.desktopAudioVisualizerLineDirection,
                         positionShape: Vars.desktopAudioVisualizerPositionShape,
                         shapeSize: Vars.desktopAudioVisualizerShapeSize,
                         spacing: Vars.desktopAudioVisualizerSpacing,
@@ -1035,6 +1055,10 @@ Item {
                     rootPage.updateVariable("desktopAudioVisualizerGradientStart", p.gradientStart || "primary", delegateRoot.itemSource);
                     rootPage.updateVariable("desktopAudioVisualizerGradientEnd", p.gradientEnd || "tertiary", delegateRoot.itemSource);
                     rootPage.updateVariable("desktopAudioVisualizerLayout", p.layout, delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerLineArrangement", p.lineArrangement || "Row", delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerLineThickness", String(p.lineThickness || 4), delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerLineMirror", p.lineMirror ? "true" : "false", delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerLineDirection", p.lineDirection || "Left to Right", delegateRoot.itemSource);
                     rootPage.updateVariable("desktopAudioVisualizerPositionShape", p.positionShape || "Circle", delegateRoot.itemSource);
                     rootPage.updateVariable("desktopAudioVisualizerShapeSize", String(p.shapeSize), delegateRoot.itemSource);
                     rootPage.updateVariable("desktopAudioVisualizerSpacing", String(p.spacing), delegateRoot.itemSource);

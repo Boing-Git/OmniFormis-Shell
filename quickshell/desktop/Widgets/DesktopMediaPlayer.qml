@@ -18,8 +18,12 @@ PanelWindow {
     property int maskOffsetX: Vars.wallpaperMaskOffsetX !== undefined ? Vars.wallpaperMaskOffsetX : 0
     property int maskOffsetY: Vars.wallpaperMaskOffsetY !== undefined ? Vars.wallpaperMaskOffsetY : 0
     property bool anchorExpandFix: Vars.desktopMediaPlayerAnchorExpandFix !== undefined ? Vars.desktopMediaPlayerAnchorExpandFix : false
+    property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
+    // Hidden AND torn down in game mode — CC.MediaPlayer polls lyric sync and playback position on
+    // its own timers, which a merely-hidden PanelWindow wouldn't stop
+    property bool active: window.playerEnabled && !window.gameMode
 
-    visible: window.playerEnabled
+    visible: window.active
 
     WlrLayershell.namespace: "quickshell"
     WlrLayershell.layer: WlrLayer.Bottom
@@ -55,7 +59,7 @@ PanelWindow {
             
             var widgetX = targetX;
             var pt = window.anchorPoint;
-            var refWidth = window.anchorExpandFix ? ((player.isVertical ? 300 : 500) + 48) : playerContainer.width;
+            var refWidth = window.anchorExpandFix ? ((playerLoader.item && playerLoader.item.isVertical ? 300 : 500) + 48) : playerContainer.width;
             if (pt === "TopCenter" || pt === "Center" || pt === "BottomCenter") widgetX -= refWidth / 2;
             else if (pt === "TopRight" || pt === "MiddleRight" || pt === "BottomRight") widgetX -= refWidth;
             return widgetX;
@@ -72,7 +76,7 @@ PanelWindow {
             
             var widgetY = targetY;
             var pt = window.anchorPoint;
-            var refHeight = window.anchorExpandFix ? ((player.isVertical ? 300 : 180) + 48) : playerContainer.height;
+            var refHeight = window.anchorExpandFix ? ((playerLoader.item && playerLoader.item.isVertical ? 300 : 180) + 48) : playerContainer.height;
             if (pt === "MiddleLeft" || pt === "Center" || pt === "MiddleRight") widgetY -= refHeight / 2;
             else if (pt === "BottomLeft" || pt === "BottomCenter" || pt === "BottomRight") widgetY -= refHeight;
             return widgetY;
@@ -82,22 +86,25 @@ PanelWindow {
 
     Item {
         id: playerContainer
-        width: (player.isExpanded && player.isHorizontalExpansion ? 900 : 500) + 48
-        height: (player.isExpanded && !player.isHorizontalExpansion ? 650 : (player.isVertical ? 300 : 180)) + 48
+        width: (playerLoader.item && playerLoader.item.isExpanded && playerLoader.item.isHorizontalExpansion ? 900 : 500) + 48
+        height: (playerLoader.item && playerLoader.item.isExpanded && !playerLoader.item.isHorizontalExpansion ? 650 : (playerLoader.item && playerLoader.item.isVertical ? 300 : 180)) + 48
         x: computedX
         y: computedY
-        
+
         Behavior on width { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutCubic } }
         Behavior on height { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutCubic } }
         Behavior on x { enabled: window.anchorEnabled; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
         Behavior on y { enabled: window.anchorEnabled; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
 
-        CC.MediaPlayer {
-            id: player
+        Loader {
+            id: playerLoader
             anchors.fill: parent
             anchors.margins: 24 // Give space for shadow
-            // Same surface as every desktop widget (clock, visualizer, vitals)
-            cardColor: Theme.surface_container_high
+            active: window.active
+            sourceComponent: CC.MediaPlayer {
+                // Same surface as every desktop widget (clock, visualizer, vitals)
+                cardColor: Theme.surface_container_high
+            }
         }
 
         DragHandler {

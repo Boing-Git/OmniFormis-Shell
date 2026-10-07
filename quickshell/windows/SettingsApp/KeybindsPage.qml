@@ -424,17 +424,49 @@ Item {
                         Layout.topMargin: modelData.type === "header" ? Vars.spacingMedium : 0
                         sourceComponent: modelData.type === "header" ? headerComponent : rowComponent
 
+                        // Same pill-badge-and-divider section header as every other settings
+                        // list (UnifiedSettingsPage's section.delegate), so Shortcuts reads as
+                        // part of the same app instead of a plain bold label of its own.
                         Component {
                             id: headerComponent
-                            QsText {
+                            Item {
                                 width: rowLoader.width
-                                text: rowLoader.modelData.title
-                                font.family: Vars.fontFamily
-                                font.pixelSize: 13
-                                setWeight: 700
-                                color: Theme.primary
-                                leftPadding: Vars.spacingMedium
-                                horizontalAlignment: Text.AlignLeft
+                                height: 52
+
+                                RowLayout {
+                                    anchors {
+                                        left: parent.left; right: parent.right
+                                        verticalCenter: parent.verticalCenter
+                                        leftMargin: 2; rightMargin: 2
+                                    }
+                                    spacing: 10
+
+                                    Rectangle {
+                                        implicitWidth: headerBadgeText.implicitWidth + 18
+                                        implicitHeight: 24
+                                        radius: 12
+                                        antialiasing: true
+                                        color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.12)
+                                        Layout.alignment: Qt.AlignVCenter
+
+                                        QsText {
+                                            id: headerBadgeText
+                                            anchors.centerIn: parent
+                                            text: rowLoader.modelData.title
+                                            color: Theme.primary
+                                            font.pixelSize: 11
+                                            setWeight: 700
+                                            font.family: Vars.fontFamily
+                                            font.letterSpacing: 0.8
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        height: 1
+                                        color: Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.1)
+                                    }
+                                }
                             }
                         }
                         Component {

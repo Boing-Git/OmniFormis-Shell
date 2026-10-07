@@ -16,8 +16,13 @@ PanelWindow {
     property real maskScale: Vars.wallpaperMaskScale !== undefined ? Vars.wallpaperMaskScale : 1.05
     property int maskOffsetX: Vars.wallpaperMaskOffsetX !== undefined ? Vars.wallpaperMaskOffsetX : 0
     property int maskOffsetY: Vars.wallpaperMaskOffsetY !== undefined ? Vars.wallpaperMaskOffsetY : 0
+    property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
+    // Hidden AND torn down in game mode, not just hidden — a hidden PanelWindow still runs
+    // everything inside it (AnalogClock's own per-second Timer keeps ticking), so the Loader below
+    // destroys the clock outright instead of merely covering it up.
+    property bool active: window.clockEnabled && !window.gameMode
 
-    visible: window.clockEnabled
+    visible: window.active
 
     WlrLayershell.namespace: "quickshell"
     WlrLayershell.layer: WlrLayer.Bottom
@@ -78,17 +83,20 @@ PanelWindow {
 
     Item {
         id: clockContainer
-        width: clock.width
-        height: clock.height
+        // AnalogClock is a fixed 300x300, so this doesn't need to read it back from the Loader
+        // (whose .item is null while inactive, i.e. in game mode)
+        width: 300
+        height: 300
         x: computedX
         y: computedY
-        
+
         Behavior on x { enabled: window.anchorEnabled; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
         Behavior on y { enabled: window.anchorEnabled; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
 
-        AnalogClock {
-            id: clock
+        Loader {
             anchors.centerIn: parent
+            active: window.active
+            sourceComponent: AnalogClock {}
         }
 
         DragHandler {

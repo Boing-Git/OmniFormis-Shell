@@ -15,7 +15,7 @@ local vars = {
     Files = "nautilus",
     -- Set the system info app
     SysInfo = "btop",
-    -- Enable game mode (disables animations and system resources taking things out of the shell UI)
+    -- Frees up GPU/CPU for games: no blur, shadows, rounding, border, gaps or window animations, opaque windows, liquid glass and translucency off, lighter panel-corner anti-aliasing, and every desktop widget (clock, calendar, media player, system vitals, audio visualizer) hidden and fully stopped rather than just not animating
     GameMode = false,
     -- Low-spec mode for old or weak hardware such as older ThinkPads, turns off blur, shadows, translucency and heavy shell effects ("auto", "on", "off")
     LowSpec = "auto",

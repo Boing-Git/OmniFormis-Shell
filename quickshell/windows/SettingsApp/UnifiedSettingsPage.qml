@@ -59,10 +59,14 @@ ColumnLayout {
             "desktopAudioVisualizerGradientStart": "Audio Visualizer Gradient Start Color",
             "desktopAudioVisualizerGradientEnd": "Audio Visualizer Gradient End Color",
             "desktopAudioVisualizerLayout": "Audio Visualizer Arrangement",
+            "desktopAudioVisualizerLineArrangement": "Audio Visualizer Line Arrangement",
             "desktopAudioVisualizerPositionShape": "Audio Visualizer Position Shape",
             "desktopAudioVisualizerShapeSize": "Audio Visualizer Shape Size",
+            "desktopAudioVisualizerLineThickness": "Audio Visualizer Line Thickness",
+            "desktopAudioVisualizerLineMirror": "Audio Visualizer Line Mirror",
+            "desktopAudioVisualizerLineDirection": "Audio Visualizer Line Direction",
             "desktopAudioVisualizerSpacing": "Audio Visualizer Shape Spacing",
-            "desktopAudioVisualizerRadius": "Audio Visualizer Circle Radius",
+            "desktopAudioVisualizerRadius": "Audio Visualizer Radius / Movement",
             "desktopAudioVisualizerPresets": "Audio Visualizer Layout Presets",
             "gameMode": "Game Mode Optimization",
             "animationDuration": "Master Animation Duration",
@@ -133,19 +137,23 @@ ColumnLayout {
             "mediaPlayerLyricsExpansion": "Direction in which the media player expands to show lyrics.",
             "mediaPlayerLyricsAutoScroll": "Enable automatic scrolling and active line highlighting for synchronized lyrics.",
             "desktopMediaPlayerAnchorExpandFix": "Prevent desktop media player anchor from shifting position when expanded.",
-            "desktopAudioVisualizerShape": "The shape of each individual bar itself (what each little glyph looks like) — not where the bars are positioned. Only used when Bar Shape Mode is Single.",
-            "desktopAudioVisualizerShapeMode": "Single uses the one Bar Shape for every bar; All Shapes cycles every bar through the full set of M3 shapes instead.",
+            "desktopAudioVisualizerShape": "The shape of each individual bar itself (what each little glyph looks like) — not where the bars are positioned. Only used when Bar Shape Mode is Single. Has no effect in Lines mode, which has no per-bar shapes.",
+            "desktopAudioVisualizerShapeMode": "Single uses the one Bar Shape for every bar; All Shapes cycles every bar through the full set of M3 shapes instead. Has no effect in Lines mode.",
             "desktopAudioVisualizerColorMode": "Theme uses the shell's own accent gradient, warming toward louder bars. Custom paints every bar a single flat color. Gradient fills each shape with a two-color blend.",
             "desktopAudioVisualizerColor": "The color used for every bar when Color Mode is set to Custom. Has no effect otherwise.",
             "desktopAudioVisualizerGradientStart": "The first color of the two-color gradient painted across each shape when Color Mode is set to Gradient.",
             "desktopAudioVisualizerGradientEnd": "The second color of the two-color gradient painted across each shape when Color Mode is set to Gradient.",
-            "desktopAudioVisualizerLayout": "Arrange the visualizer's bars in a horizontal Linear row, or spread around an outline in Circular mode.",
-            "desktopAudioVisualizerPositionShape": "In Circular mode, the outline the bars are spread around and pulse outward from — a Circle for an even ring, or any other M3 shape to trace its silhouette instead. Has no effect in Linear mode.",
+            "desktopAudioVisualizerLayout": "Arrange the visualizer's bars in a horizontal Linear row, spread around an outline in Circular mode, fill a square matrix cropped to a shape's silhouette in Grid mode, or connect every bar's peak into one continuous stroked line in Lines mode — a classic spectrum-line look with no individual shapes.",
+            "desktopAudioVisualizerLineArrangement": "Only used in Lines mode. Row draws the connected line flat, like Linear's bars would sit. Shape traces it around Position Shape's outline instead — the same outline Circular's shapes sit on — as a closed loop that pulses outward with the beat.",
+            "desktopAudioVisualizerPositionShape": "In Circular mode, the outline the bars are spread around and pulse outward from. In Grid mode, the silhouette the whole matrix is cropped to instead — a Circle for a round viewport, or an organic M3 shape (like one of the Cookies) for a wobbly, not-quite-round edge. Has no effect in Linear or Lines mode.",
             "desktopAudioVisualizerShapeSize": "Size in pixels of each individual shape in the audio visualizer.",
+            "desktopAudioVisualizerLineThickness": "Stroke width in pixels of the connected line in Lines mode. Has no effect in Linear, Circular or Grid mode.",
+            "desktopAudioVisualizerLineMirror": "Folds the data in half and plays it back out, so bass sits at both ends of the row and treble meets in the middle — a symmetric, two-channel look. Only used in Lines mode's Row arrangement; has no effect on the Shape arrangement's closed loop.",
+            "desktopAudioVisualizerLineDirection": "Which way the row reads, including rotating it onto a vertical column (Top to Bottom / Bottom to Top). Only used in Lines mode's Row arrangement; has no effect on the Shape arrangement's closed loop.",
             "desktopAudioVisualizerSpacing": "Gap in pixels between neighboring shapes in the audio visualizer.",
-            "desktopAudioVisualizerRadius": "Overall radius of the outline the shapes sit on when the audio visualizer's layout is Circular.",
+            "desktopAudioVisualizerRadius": "In Circular mode, the overall radius of the outline the shapes sit on. In Grid mode, how far a shape gets pushed out of its cell on a loud beat — turn it up for a more energetic matrix, down to keep it settled. Has no effect in Linear or Lines mode.",
             "desktopAudioVisualizerPresets": "Save the current shape, layout, size, spacing and radius as a named preset, and reapply or delete saved ones.",
-            "gameMode": "Suspend heavy decorative shell animations and blur effects for optimal gaming performance.",
+            "gameMode": "The Quickshell half of Game Mode — hides every desktop widget (clock, calendar, media player, system vitals, audio visualizer) and fully stops their polling and subprocesses instead of just pausing their animations, drops panel and card corners to lighter 4x anti-aliasing, and turns off translucency. Toggling the main Game Mode switch (under System & Apps) sets this automatically and restarts the shell to apply it; this one only exists to flip it on its own, without touching Hyprland's side.",
             "animationDuration": "Master transition duration in milliseconds for interface micro-animations.",
             "flickDeceleration": "Friction rate applied when coasting through scrollable UI flick views.",
             "maximumFlickVelocity": "Maximum speed velocity clamp for touch and mouse scroll swiping.",
@@ -412,7 +420,9 @@ ColumnLayout {
 
                     // CRITICAL RULE: ALL wallpaper, wallpaper mask, clock, calendar, and desktop widgets MUST route to the "Desktop" category ("Desktop & Widgets"). NEVER place them in "Theme".
                     // Map hyprland variables to specialized UI categories
-                    if (key.toLowerCase().includes("wallpaper") || key.toLowerCase().includes("mask") || key.startsWith("desktop")) {
+                    if (key === "GameMode") {
+                        category = "GameMode";
+                    } else if (key.toLowerCase().includes("wallpaper") || key.toLowerCase().includes("mask") || key.startsWith("desktop")) {
                         category = "Desktop";
                     } else if (key === "gaps_in" || key === "gaps_out" || key === "singleWindowGapsOut" || key === "enableSingleWindowGaps" || key === "enableSpecialWorkspaceGaps" || key === "border_size" || key === "groupBar" || key === "Layout" || key === "resize_on_border") {
                         category = "Layout";
@@ -592,7 +602,9 @@ ColumnLayout {
                     // CRITICAL RULE: ALL wallpaper, wallpaper mask, clock, calendar, and desktop widgets MUST route to the "Desktop" category ("Desktop & Widgets"). NEVER place them in "Theme".
                     // Map quickshell variables to specialized UI categories
                     var category = "General";
-                    if (key === "clockPillMode" || key === "panelStyle" || key === "pillPosition") {
+                    if (key === "gameMode") {
+                        category = "GameMode";
+                    } else if (key === "clockPillMode" || key === "panelStyle" || key === "pillPosition") {
                         category = "Layout";
                     } else if (key.startsWith("desktop") || key.startsWith("clock") || key.startsWith("mediaPlayer") || key.startsWith("overview") || key.toLowerCase().includes("wallpaper") || key.toLowerCase().includes("mask")) {
                         category = "Desktop";
@@ -602,8 +614,6 @@ ColumnLayout {
                         category = "Theme";
                     } else if (key === "animationDuration" || key === "flickDeceleration" || key === "maximumFlickVelocity" || key.startsWith("custom") || key.startsWith("m3")) {
                         category = "Animations";
-                    } else if (key === "gameMode") {
-                        category = "General";
                     } else {
                         category = "General";
                     }
@@ -701,6 +711,14 @@ ColumnLayout {
                         min = 8;
                         max = 60;
                         step = 1;
+                    } else if (key === "desktopAudioVisualizerLineDirection") {
+                        type = "enum";
+                        enumsStr = "Left to Right|||Right to Left|||Top to Bottom|||Bottom to Top";
+                    } else if (key === "desktopAudioVisualizerLineThickness") {
+                        type = "slider";
+                        min = 1;
+                        max = 16;
+                        step = 0.5;
                     } else if (key === "desktopAudioVisualizerSpacing") {
                         type = "slider";
                         min = 0;
@@ -751,7 +769,10 @@ ColumnLayout {
                         enumsStr = "Circle|||Square|||Slanted|||Arch|||Flag|||Arrow|||Semicircle|||Oval|||Pill|||Triangle|||Diamond|||Clamshell|||Pentagon|||Gem|||VerySunny|||Sunny|||4SidedCookie|||6SidedCookie|||7SidedCookie|||9SidedCookie|||12SidedCookie|||GhostIsh|||4LeafClover|||8LeafClover|||Burst|||SoftBurst|||Boom|||SoftBoom|||Flower|||Puffy|||PuffyDiamond|||PixelCircle|||PixelTriangle|||Bun|||Heart";
                     } else if (key === "desktopAudioVisualizerLayout") {
                         type = "enum";
-                        enumsStr = "Linear|||Circular";
+                        enumsStr = "Linear|||Circular|||Grid|||Lines";
+                    } else if (key === "desktopAudioVisualizerLineArrangement") {
+                        type = "enum";
+                        enumsStr = "Row|||Shape";
                     } else if (key === "desktopAudioVisualizerShapeMode") {
                         type = "enum";
                         enumsStr = "Single|||All Shapes";

@@ -23,8 +23,11 @@ PanelWindow {
     property int maskOffsetX: Vars.wallpaperMaskOffsetX !== undefined ? Vars.wallpaperMaskOffsetX : 0
     property int maskOffsetY: Vars.wallpaperMaskOffsetY !== undefined ? Vars.wallpaperMaskOffsetY : 0
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
+    // Hidden AND stopped polling in game mode — spawning top/free/nvidia-smi every 2s to show
+    // system load is exactly the overhead a game-focused mode should be cutting, not keeping
+    property bool active: window.vitalsEnabled && !window.gameMode
 
-    visible: window.vitalsEnabled
+    visible: window.active
 
     WlrLayershell.namespace: "quickshell"
     WlrLayershell.layer: WlrLayer.Bottom
@@ -135,7 +138,7 @@ PanelWindow {
 
     Timer {
         interval: 2000
-        running: window.vitalsEnabled
+        running: window.active
         repeat: true
         triggeredOnStart: true
         onTriggered: {
@@ -286,16 +289,18 @@ PanelWindow {
 
             Image {
                 id: needle
-                width: parent.width * 0.5
+                width: parent.width * 0.4
                 height: width
                 anchors.centerIn: parent
                 smooth: true
                 antialiasing: true
                 mipmap: true
                 transformOrigin: Item.Center
-                // The M3 Arrow points straight up at rotation 0, so needleAngle maps directly
-                rotation: gauge.needleAngle
-                scale: 0.82 + (gauge.clampedPercent / 100) * 0.28
+                // The M3 "Arrow" shape points straight up at rotation 0, but mounted here it reads
+                // 180° out from needleAngle's own convention (0% = lower-left, 100% = lower-right),
+                // so the extra half-turn corrects it to actually point at the reading.
+                rotation: gauge.needleAngle + 180
+                scale: 0.8 + (gauge.clampedPercent / 100) * 0.3
                 source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + gaugeM3.getPath("Arrow") + "' fill='" + gauge.toRgb(gauge.accent) + "'/></svg>"
 
                 Behavior on rotation {

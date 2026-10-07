@@ -106,30 +106,51 @@ QtObject {
         return peaks;
     }
 
+    // Where a ray from the center at `dirX, dirY` crosses segment `(ax,ay)-(bx,by)`, as a distance
+    // along the ray, or null if the ray (not the full line) misses the segment. Standard 2D
+    // ray/segment intersection: https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection,
+    // solved via the perpendicular of the ray direction so it falls out as two dot products.
+    function rayHitsSegment(originX, originY, dirX, dirY, ax, ay, bx, by) {
+        var v1x = originX - ax, v1y = originY - ay;
+        var v2x = bx - ax, v2y = by - ay;
+        var v3x = -dirY, v3y = dirX;
+        var dot = v2x * v3x + v2y * v3y;
+        if (Math.abs(dot) < 1e-9) return null;
+        var t1 = (v2x * v1y - v2y * v1x) / dot; // distance along the ray
+        var t2 = (v1x * v3x + v1y * v3y) / dot; // 0-1 along the segment
+        // A small epsilon on the segment bounds, so a ray that passes exactly through a vertex
+        // shared by two edges (common for symmetric shapes, e.g. straight up through a Pentagon's
+        // top point) isn't rejected by both edges to floating-point rounding.
+        if (t1 >= -1e-6 && t2 >= -1e-6 && t2 <= 1 + 1e-6) return t1;
+        return null;
+    }
+
     // `count` points spread evenly by angle around a shape's own silhouette (its center taken as
-    // (50,50) in the 0-100 viewBox) rather than a plain circle — each point is the outline sample
-    // nearest that angle, so callers can arrange things along any M3 shape's actual contour
-    // (a spiky "Burst" traces its spikes, a "Heart" traces its lobes, "Circle" is a perfect ring).
+    // (50,50) in the 0-100 viewBox) rather than a plain circle — found by casting a ray from the
+    // center at each of the `count` angles and taking its nearest crossing with the outline, so
+    // callers can arrange things along any M3 shape's actual contour (a spiky "Burst" traces its
+    // spikes, a "Heart" traces its lobes, "Circle" is a perfect ring). Every angle gets its own
+    // point this way; the previous approach — picking whichever sampled outline point happened to
+    // be nearest each target angle — let several angles collapse onto the same crowded point (near
+    // a spike, where the outline runs almost parallel to the ray so many samples share an angle)
+    // while the sparser angles near a concave notch went unclaimed, leaving visible gaps.
     function getOutlinePoints(shapeName, count) {
         if (count <= 0) return [];
-        var pts = samplePath(getPath(shapeName), 20);
-        if (pts.length === 0) return [];
-        var withAngle = pts.map(function(p) {
-            var ang = Math.atan2(p.x - 50, -(p.y - 50)) * 180 / Math.PI;
-            if (ang < 0) ang += 360;
-            return { x: p.x, y: p.y, angle: ang };
-        });
+        var poly = samplePath(getPath(shapeName), 24);
+        var n = poly.length;
+        if (n < 3) return [];
         var result = [];
         for (var k = 0; k < count; k++) {
-            var target = (k / count) * 360;
-            var best = withAngle[0];
-            var bestDiff = 360;
-            for (var j = 0; j < withAngle.length; j++) {
-                var diff = Math.abs(withAngle[j].angle - target);
-                if (diff > 180) diff = 360 - diff;
-                if (diff < bestDiff) { bestDiff = diff; best = withAngle[j]; }
+            var theta = (k / count) * 2 * Math.PI;
+            var dirX = Math.sin(theta), dirY = -Math.cos(theta);
+            var bestT = -1;
+            for (var e = 0; e < n; e++) {
+                var a = poly[e], b = poly[(e + 1) % n];
+                var t = rayHitsSegment(50, 50, dirX, dirY, a.x, a.y, b.x, b.y);
+                if (t !== null && (bestT < 0 || t < bestT)) bestT = t;
             }
-            result.push({ x: best.x, y: best.y });
+            if (bestT < 0) bestT = 40; // shouldn't happen for a shape enclosing its own center
+            result.push({ x: 50 + dirX * bestT, y: 50 + dirY * bestT });
         }
         return result;
     }
