@@ -24,13 +24,16 @@ end
 ---- MONITORS ----
 ------------------
 
+-- 10-bit output only where it's worth it, low-spec machines (usually 6-bit laptop panels) stay 8-bit
+local bitdepth = require("modules.hardware").low_spec and 8 or 10
+
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 hl.monitor({
     output   = "HEADLESS-1",
     mode     = "2388x1668@60",
     position = "auto",
     scale    = "1",
-    bitdepth = 10,
+    bitdepth = bitdepth,
     cm       = "auto",
 })
 
@@ -39,7 +42,7 @@ hl.monitor({
     mode     = "1920x1080@60",
     position = "auto",
     scale    = "1",
-    bitdepth = 10,
+    bitdepth = bitdepth,
     cm       = "auto",
 })
 
@@ -48,7 +51,7 @@ hl.monitor({
     mode     = "preferred",
     position = "auto",
     scale    = "1",
-    bitdepth = 10,
+    bitdepth = bitdepth,
     cm       = "auto",
     icc      = "/home/boing/.local/share/icc/SxxBG40x.icm",
 })
@@ -58,6 +61,6 @@ hl.monitor({
     mode     = "preferred",
     position = "auto",
     scale    = "1",
-    bitdepth = 10,
+    bitdepth = bitdepth,
     cm       = "auto",
 })

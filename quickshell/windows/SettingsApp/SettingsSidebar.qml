@@ -74,20 +74,16 @@ ColumnLayout {
                 property color targetColor: isSelected ? (Vars.tColorSelected(Theme.primary_container)) : (navHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
                 Behavior on targetColor { ColorAnimation { duration: Vars.animationDuration } }
 
-                layer.enabled: true
-                layer.samples: 32
-                layer.smooth: true
                 scale: navHover.pressed ? 1.08 : 1.0
                 Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
 
 
                 Item {
                     anchors.fill: parent
-                    layer.enabled: true
-                    layer.samples: 32
                     opacity: delegateItem.targetColor.a
 
                     Rectangle {
+                        antialiasing: true
                         anchors.fill: parent
                         color: Qt.rgba(delegateItem.targetColor.r, delegateItem.targetColor.g, delegateItem.targetColor.b, 1.0)
                         
@@ -124,7 +120,14 @@ ColumnLayout {
                             ];
                             return colors[index % colors.length];
                         }
-                        property color onContainerColor: Qt.hsla(modelData.hue, 0.40, 0.25, 1.0)
+                        property color onContainerColor: {
+                            var onColors = [
+                                Theme.on_primary,
+                                Theme.on_secondary,
+                                Theme.on_tertiary
+                            ];
+                            return onColors[index % onColors.length];
+                        }
                         
                         Image {
                             anchors.fill: parent

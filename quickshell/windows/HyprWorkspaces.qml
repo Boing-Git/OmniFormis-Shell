@@ -31,16 +31,6 @@ Item {
     }
 
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
     property bool forceHidePill: false
     property alias panel: bg
     property alias panelMask: panelMask
@@ -51,8 +41,8 @@ Item {
     Item {
         id: panelMask
         anchors.centerIn: bg
-        width: bg.width + 40
-        height: bg.height + 40
+        width: (overlayVisible && !mainContainer.forceHidePill) ? (bg.width + 40) : 0
+        height: (overlayVisible && !mainContainer.forceHidePill) ? (bg.height + 40) : 0
     }
 
     property var currentWorkspace: Hyprland.focusedWorkspace
@@ -99,6 +89,9 @@ Item {
     MouseArea {
         id: hoverArea
         anchors.fill: parent
+        // Only active while the overlay is open; otherwise it sits over the clock pill
+        // position and steals hover from TopPills' clockHoverZone (breaks Auto Hide).
+        enabled: mainContainer.overlayVisible
         hoverEnabled: true
         acceptedButtons: Qt.NoButton
         onWheel: wheel => {
@@ -109,7 +102,7 @@ Item {
     Primitives.SquircleMask {
         id: bg
         layer.enabled: false
-        layer.samples: 32
+        layer.samples: Vars.layerSamples
         anchors.fill: parent
         color: Vars.tColor(Theme.surface, Vars.panelOpacity)
         property real targetRad: Math.min(mainContainer.width, mainContainer.height) / 2

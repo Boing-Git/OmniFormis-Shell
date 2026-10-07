@@ -1,0 +1,10 @@
+dist/
+node_modules/
+*.tsbuildinfo
+
+# Documentation site build output. `site/public/fonts/` is committed on purpose:
+# it holds the Material Symbols subset so a build needs no network access.
+site/.next/
+site/out/
+site/next-env.d.ts
+.vercel

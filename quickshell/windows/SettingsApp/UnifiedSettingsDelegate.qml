@@ -33,7 +33,7 @@ Item {
     height: Math.max(80, delegateRow.implicitHeight + 32)
     property bool isSelected: false
     
-    property color targetColor: delegateMouse.containsMouse ? Qt.tint((Vars.tColor(Theme.surface_container, Vars.componentOpacity)), Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08)) : (Vars.tColor(Theme.surface_container, Vars.componentOpacity))
+    property color targetColor: delegateMouse.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity))
     Behavior on targetColor {
         ColorAnimation {
             duration: Vars.animationDuration
@@ -43,9 +43,6 @@ Item {
     scale: delegateMouse.pressed ? 1.08 : 1.0
     Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
     
-    layer.enabled: true
-    layer.samples: 32
-    layer.smooth: true
     
     Item {
         anchors.fill: parent
@@ -55,6 +52,7 @@ Item {
         property bool isEffectivelyLast: delegateRoot.ListView.nextSection !== delegateRoot.ListView.section
 
         Rectangle {
+            antialiasing: true
             anchors.fill: parent
             color: Qt.rgba(parent.parent.targetColor.r, parent.parent.targetColor.g, parent.parent.targetColor.b, 1.0)
             
@@ -127,7 +125,7 @@ Item {
 
         Item {
             Layout.fillWidth: true
-            visible: delegateRoot.itemType !== "enum" && !(delegateRoot.itemType === "number" && parseFloat(delegateRoot.itemVal) >= 50)
+            visible: delegateRoot.itemType !== "enum" && delegateRoot.itemType !== "presetManager" && !(delegateRoot.itemType === "number" && parseFloat(delegateRoot.itemVal) >= 50)
         }
 
         Rectangle {
@@ -430,15 +428,6 @@ Item {
                         antialiasing: true
                         border.color: Theme.outline_variant
                         border.width: 1
-                        layer.enabled: true
-                        layer.samples: 32
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowBlur: 1.0
-                            shadowColor: Qt.rgba(0, 0, 0, 0.25)
-                            shadowVerticalOffset: 4
-                            shadowHorizontalOffset: 0
-                        }
                     }
 
                     MenuItem {
@@ -622,6 +611,7 @@ Item {
                 property bool isLeftOfCenter: handlePos + m3Slider.handleWidth / 2 < centerX
 
                 Rectangle {
+                    antialiasing: true
                     id: leftTrackCentered
                     x: 0
                     y: 0
@@ -666,6 +656,7 @@ Item {
                 }
 
                 Rectangle {
+                    antialiasing: true
                     id: rightTrackCentered
                     x: {
                         var startAt = parent.isLeftOfCenter ? parent.centerX + m3Slider.gap : parent.handlePos + m3Slider.handleWidth + m3Slider.gap;
@@ -722,6 +713,7 @@ Item {
                     property real handlePos: m3Slider.visualPosition * (width - m3Slider.handleWidth)
 
                     Rectangle {
+                        antialiasing: true
                         id: leftTrackUni
                         x: 0
                         y: 0
@@ -736,6 +728,7 @@ Item {
                     }
 
                     Rectangle {
+                        antialiasing: true
                         id: rightTrackUni
                         x: parent.handlePos + m3Slider.handleWidth + m3Slider.gap
                         y: 0
@@ -809,6 +802,7 @@ Item {
                         return delegateRoot.itemEnums.split("|||").reverse();
                     }
                     delegate: Rectangle {
+                        antialiasing: true
                         property bool isSelected: delegateRoot.itemVal === modelData
                         property var prevItem: index > 0 ? enumRepeater.itemAt(index - 1) : null
                         property var nextItem: index < (enumRepeater.count - 1) ? enumRepeater.itemAt(index + 1) : null
@@ -871,6 +865,7 @@ Item {
                 id: shapeRepeater
                 model: parent.visible ? delegateRoot.itemEnums.split("|||") : []
                 delegate: Rectangle {
+                    antialiasing: true
                     property bool isSelected: delegateRoot.itemVal === modelData
 
                     property bool hasLeft: index % 6 !== 0
@@ -897,11 +892,8 @@ Item {
                         height: 100
                         anchors.centerIn: parent
                         scale: 0.24
-                        layer.enabled: true
-                        layer.samples: 32
-                        layer.mipmap: true
-                        layer.smooth: true
                         antialiasing: true
+                        preferredRendererType: Shape.CurveRenderer
 
                         ShapePath {
                             fillColor: isSelected ? Theme.on_primary : Theme.on_surface
@@ -972,6 +964,258 @@ Item {
                             onClicked: {
                                 settingsModel.setProperty(delegateRoot.delegateIndex, "val", modelData);
                                 rootPage.updateVariable(delegateRoot.itemKey, modelData, delegateRoot.itemSource);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Saves the audio visualizer's shape/layout/size/spacing/radius as a named preset (stored
+        // as a JSON blob in the same Vars.desktopAudioVisualizerPresets variable everything else
+        // here persists through), and lets a saved one be reapplied or removed. Given its own
+        // full-width Item (like the enum/shape/color controls do) instead of squeezing into the
+        // narrow value column, since a name field + button + wrapping chip list need real room.
+        Item {
+            id: presetManagerWrap
+            visible: delegateRoot.itemType === "presetManager"
+            Layout.fillWidth: true
+            Layout.minimumWidth: 400
+            implicitHeight: presetManagerBox.implicitHeight
+
+            ColumnLayout {
+                id: presetManagerBox
+                width: parent.width
+                spacing: 10
+
+                function currentPresets() {
+                    try {
+                        var arr = JSON.parse(Vars.desktopAudioVisualizerPresets || "[]");
+                        return Array.isArray(arr) ? arr : [];
+                    } catch (e) {
+                        return [];
+                    }
+                }
+
+                function persist(arr) {
+                    var json = JSON.stringify(arr);
+                    settingsModel.setProperty(delegateRoot.delegateIndex, "val", json);
+                    rootPage.updateVariable(delegateRoot.itemKey, json, delegateRoot.itemSource);
+                }
+
+                function savePreset(name) {
+                    var trimmed = (name || "").trim();
+                    if (!trimmed) return;
+                    var arr = presetManagerBox.currentPresets();
+                    var entry = {
+                        name: trimmed,
+                        shape: Vars.desktopAudioVisualizerShape,
+                        shapeMode: Vars.desktopAudioVisualizerShapeMode,
+                        colorMode: Vars.desktopAudioVisualizerColorMode,
+                        color: Vars.desktopAudioVisualizerColor,
+                        gradientStart: Vars.desktopAudioVisualizerGradientStart,
+                        gradientEnd: Vars.desktopAudioVisualizerGradientEnd,
+                        layout: Vars.desktopAudioVisualizerLayout,
+                        positionShape: Vars.desktopAudioVisualizerPositionShape,
+                        shapeSize: Vars.desktopAudioVisualizerShapeSize,
+                        spacing: Vars.desktopAudioVisualizerSpacing,
+                        radius: Vars.desktopAudioVisualizerRadius
+                    };
+                    var idx = arr.findIndex(function(p) { return p.name === trimmed; });
+                    if (idx >= 0) arr[idx] = entry; else arr.push(entry);
+                    presetManagerBox.persist(arr);
+                    presetNameInput.text = "";
+                }
+
+                function applyPreset(p) {
+                    rootPage.updateVariable("desktopAudioVisualizerShape", p.shape, delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerShapeMode", p.shapeMode || "Single", delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerColorMode", p.colorMode || "Theme", delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerColor", p.color || "primary", delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerGradientStart", p.gradientStart || "primary", delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerGradientEnd", p.gradientEnd || "tertiary", delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerLayout", p.layout, delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerPositionShape", p.positionShape || "Circle", delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerShapeSize", String(p.shapeSize), delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerSpacing", String(p.spacing), delegateRoot.itemSource);
+                    rootPage.updateVariable("desktopAudioVisualizerRadius", String(p.radius), delegateRoot.itemSource);
+                    // Those keys live in other rows of this same list — reload so their sliders
+                    // and shape/enum pickers reflect the preset immediately instead of on next open.
+                    rootPage.loadSettings();
+                }
+
+                function deletePreset(name) {
+                    var arr = presetManagerBox.currentPresets().filter(function(p) { return p.name !== name; });
+                    presetManagerBox.persist(arr);
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Rectangle {
+                        Layout.preferredWidth: 180
+                        height: 36
+                        radius: Vars.radiusSmall
+                        antialiasing: true
+                        color: Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)
+                        border.color: presetNameInput.activeFocus ? Theme.primary : "transparent"
+                        border.width: 1
+
+                        TextField {
+                            id: presetNameInput
+                            anchors.fill: parent
+                            verticalAlignment: TextInput.AlignVCenter
+                            placeholderText: "Preset name"
+                            font.family: Vars.fontFamily
+                            font.pixelSize: 13
+                            color: Theme.on_surface
+                            selectByMouse: true
+                            clip: true
+                            background: Item {}
+                            padding: 0
+                            leftPadding: 10
+                            rightPadding: 10
+                            MouseArea { anchors.fill: parent; cursorShape: Qt.IBeamCursor; onPressed: (mouse) => { parent.forceActiveFocus(); mouse.accepted = false; } }
+                            onAccepted: presetManagerBox.savePreset(text)
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.preferredWidth: saveRow.implicitWidth + 24
+                        height: 36
+                        radius: Vars.radiusSmall
+                        antialiasing: true
+                        opacity: presetNameInput.text.trim().length > 0 ? 1.0 : 0.5
+                        color: saveMouse.containsMouse ? (Vars.tColorSelected(Theme.primary)) : (Vars.tColor(Theme.primary, 0.9))
+                        Behavior on color { ColorAnimation { duration: Vars.animationDuration } }
+                        Behavior on opacity { NumberAnimation { duration: Vars.animationDuration } }
+                        scale: saveMouse.pressed ? 1.05 : 1.0
+                        Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
+
+                        RowLayout {
+                            id: saveRow
+                            anchors.centerIn: parent
+                            spacing: 4
+                            QsText {
+                                text: "add"
+                                font.family: "Material Symbols Outlined"
+                                font.pixelSize: 16
+                                color: Theme.on_primary
+                            }
+                            QsText {
+                                text: "Save Preset"
+                                font.family: Vars.fontFamily
+                                font.pixelSize: 12
+                                setWeight: 600
+                                color: Theme.on_primary
+                            }
+                        }
+
+                        MouseArea {
+                            id: saveMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            enabled: presetNameInput.text.trim().length > 0
+                            onClicked: presetManagerBox.savePreset(presetNameInput.text)
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true }
+                }
+
+                QsText {
+                    Layout.fillWidth: true
+                    visible: presetRepeater.count === 0
+                    text: "No presets saved yet — name one above and hit Save Preset."
+                    font.family: Vars.fontFamily
+                    font.pixelSize: 12
+                    color: Theme.on_surface_variant
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 8
+                    visible: presetRepeater.count > 0
+
+                    Repeater {
+                        id: presetRepeater
+                        model: presetManagerBox.currentPresets()
+                        delegate: Rectangle {
+                            id: presetChip
+                            required property var modelData
+                            radius: height / 2
+                            height: 32
+                            width: chipRow.implicitWidth + 8
+                            antialiasing: true
+                            color: Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)
+
+                            RowLayout {
+                                id: chipRow
+                                anchors.centerIn: parent
+                                spacing: 2
+
+                                QsText {
+                                    text: presetChip.modelData.name
+                                    font.family: Vars.fontFamily
+                                    font.pixelSize: 12
+                                    setWeight: 600
+                                    color: Theme.on_surface
+                                    Layout.leftMargin: 12
+                                    Layout.rightMargin: 2
+                                }
+
+                                Rectangle {
+                                    width: 24
+                                    height: 24
+                                    radius: 12
+                                    antialiasing: true
+                                    color: applyMouse.containsMouse ? (Vars.tColorSelected(Theme.primary)) : "transparent"
+                                    Behavior on color { ColorAnimation { duration: Vars.animationDuration } }
+
+                                    QsText {
+                                        anchors.centerIn: parent
+                                        text: "check"
+                                        font.family: "Material Symbols Outlined"
+                                        font.pixelSize: 14
+                                        color: applyMouse.containsMouse ? Theme.on_primary : Theme.primary
+                                    }
+
+                                    MouseArea {
+                                        id: applyMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: presetManagerBox.applyPreset(presetChip.modelData)
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: 24
+                                    height: 24
+                                    radius: 12
+                                    antialiasing: true
+                                    Layout.rightMargin: 4
+                                    color: deleteMouse.containsMouse ? Theme.error : "transparent"
+                                    Behavior on color { ColorAnimation { duration: Vars.animationDuration } }
+
+                                    QsText {
+                                        anchors.centerIn: parent
+                                        text: "close"
+                                        font.family: "Material Symbols Outlined"
+                                        font.pixelSize: 14
+                                        color: deleteMouse.containsMouse ? Theme.on_error : Theme.error
+                                    }
+
+                                    MouseArea {
+                                        id: deleteMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: presetManagerBox.deletePreset(presetChip.modelData.name)
+                                    }
+                                }
                             }
                         }
                     }

@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 
 mod bezier;
 mod hypr;
+mod keybinds;
 mod qs;
 mod theme;
 mod utils;
@@ -49,11 +50,32 @@ enum Commands {
 #[derive(Subcommand)]
 enum HyprCommands {
     /// Get a hypr variable
-    Get { key: String },
-    /// Set a hypr variable
-    Set { key: String, value: String },
+    Get {
+        key: String,
+        /// Print the value as JSON
+        #[arg(long)]
+        json: bool,
+    },
+    /// Set a hypr variable (the value is validated against the variable's type)
+    Set {
+        key: String,
+        #[arg(allow_hyphen_values = true)]
+        value: String,
+    },
+    /// Flip a boolean hypr variable
+    Toggle { key: String },
     /// List hypr variables
-    List,
+    List {
+        /// Print machine-readable JSON instead of the table
+        #[arg(long)]
+        json: bool,
+    },
+    /// List every shortcut with its combination, the resolved keys and any clashes
+    Binds {
+        /// Print machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -61,22 +83,42 @@ enum ThemeCommands {
     /// Generate theme from QML files
     Generate {
         light_file: String,
-        dark_file: String,
+        dark_file: Option<String>,
     },
     /// List available themes
     List,
     /// Toggle between light and dark mode
     Toggle,
+    /// Set a specific color scheme
+    Set {
+        name: String,
+        mode: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
 enum QsCommands {
     /// Get a QS variable
-    Get { key: String },
-    /// Set a QS variable
-    Set { key: String, value: String },
+    Get {
+        key: String,
+        /// Print the value as JSON
+        #[arg(long)]
+        json: bool,
+    },
+    /// Set a QS variable (the value is validated against the variable's type)
+    Set {
+        key: String,
+        #[arg(allow_hyphen_values = true)]
+        value: String,
+    },
+    /// Flip a boolean QS variable
+    Toggle { key: String },
     /// List QS variables
-    List,
+    List {
+        /// Print machine-readable JSON instead of "key: value" lines
+        #[arg(long)]
+        json: bool,
+    },
     /// Kill Quickshell processes
     Kill,
     /// Start Quickshell
@@ -115,14 +157,16 @@ fn main() {
             ThemeCommands::Generate {
                 light_file,
                 dark_file,
-            } => theme::generate(&light_file, &dark_file),
+            } => theme::generate(&light_file, dark_file.as_deref()),
             ThemeCommands::List => theme::list(),
             ThemeCommands::Toggle => theme::toggle(),
+            ThemeCommands::Set { name, mode } => theme::set(&name, mode.as_deref()),
         },
         Commands::Qs { cmd } => match cmd {
-            QsCommands::Get { key } => qs::get(&key),
+            QsCommands::Get { key, json } => qs::get(&key, json),
             QsCommands::Set { key, value } => qs::set(&key, &value),
-            QsCommands::List => qs::list(),
+            QsCommands::Toggle { key } => qs::toggle(&key),
+            QsCommands::List { json } => qs::list(json),
             QsCommands::Kill => qs::kill(),
             QsCommands::Start { detached } => qs::launch(detached),
             QsCommands::Launch { detached } => qs::launch(detached),
@@ -134,9 +178,11 @@ fn main() {
             BezierCommands::List => bezier::list(),
         },
         Commands::Hypr { cmd } => match cmd {
-            HyprCommands::Get { key } => hypr::get(&key),
+            HyprCommands::Get { key, json } => hypr::get(&key, json),
             HyprCommands::Set { key, value } => hypr::set(&key, &value),
-            HyprCommands::List => hypr::list(),
+            HyprCommands::Toggle { key } => hypr::toggle(&key),
+            HyprCommands::List { json } => hypr::list(json),
+            HyprCommands::Binds { json } => keybinds::list(json),
         },
         Commands::Kill => qs::kill(),
         Commands::Launch { detached } => qs::launch(detached),

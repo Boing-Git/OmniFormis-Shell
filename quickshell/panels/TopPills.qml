@@ -17,7 +17,7 @@ PanelWindow {
     exclusiveZone: 0
     WlrLayershell.namespace: "quickshell"
     WlrLayershell.layer: WlrLayer.Top
-    property bool hasAnyPopupOpen: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded
+    property bool hasAnyPopupOpen: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded
     WlrLayershell.keyboardFocus: hasAnyPopupOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     anchors {
         top: true
@@ -72,36 +72,10 @@ PanelWindow {
     signal openGameLibraryRequested
 
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
 
     property int currentSpacingSmall: Vars.spacingSmall !== undefined ? Vars.spacingSmall : 11
     property int currentRadiusExtraLarge: Vars.radiusExtraLarge !== undefined ? Vars.radiusExtraLarge : 38
     property int currentAnimationDuration: Vars.animationDuration !== undefined ? Vars.animationDuration : 240
-
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            var spaceS = Vars.spacingSmall !== undefined ? Vars.spacingSmall : 11;
-            if (topWindow.currentSpacingSmall !== spaceS) topWindow.currentSpacingSmall = spaceS;
-
-            var radXL = Vars.radiusExtraLarge !== undefined ? Vars.radiusExtraLarge : 38;
-            if (topWindow.currentRadiusExtraLarge !== radXL) topWindow.currentRadiusExtraLarge = radXL;
-
-            var animD = Vars.animationDuration !== undefined ? Vars.animationDuration : 240;
-            if (topWindow.currentAnimationDuration !== animD) topWindow.currentAnimationDuration = animD;
-        }
-    }
 
     Process {
         id: gameModeChecker
@@ -121,6 +95,7 @@ PanelWindow {
         if (item !== colorSchemeSwitcherItem) colorSchemeSwitcherItem.expanded = false;
         if (item !== powerMenuItem) powerMenuItem.expanded = false;
         if (item !== emojiPickerItem) emojiPickerItem.expanded = false;
+        if (item !== cheatSheetItem) cheatSheetItem.expanded = false;
         if (item !== notificationPopupItem) notificationPopupItem.expanded = false;
         if (item !== settingsAppItem) settingsAppItem.expanded = false;
         if (item !== workspacesItem) workspacesItem.cancelOverlay();
@@ -137,46 +112,46 @@ PanelWindow {
             item: topWindow.hasAnyPopupOpen ? popupScrim : null
         }
         Region {
-            item: clockHoverZone
+            item: clockPill.isShown ? clockPill : clockHoverZone
         }
         Region {
-            item: clockPill
+            item: (workspacesItem.overlayVisible && !workspacesItem.forceHidePill) ? workspacesItem.panelMask : null
         }
         Region {
-            item: workspacesItem.panelMask
+            item: controlCenterItem.expanded ? controlCenterItem.panelMask : null
         }
         Region {
-            item: controlCenterItem.panelMask
+            item: launcherItem.expanded ? launcherItem.panelMask : null
         }
         Region {
-            item: launcherItem.panelMask
+            item: powerMenuItem.expanded ? powerMenuItem.panelMask : null
         }
         Region {
-            item: powerMenuItem.panelMask
+            item: polkitItem.expanded ? polkitScrim : null
         }
         Region {
-            item: polkitItem.expanded ? polkitScrim : polkitItem.panelMask
+            item: wallpaperSwitcherItem.expanded ? wallpaperSwitcherItem.panelMask : null
         }
         Region {
-            item: wallpaperSwitcherItem.panelMask
+            item: colorSchemeSwitcherItem.expanded ? colorSchemeSwitcherItem.panelMask : null
         }
         Region {
-            item: colorSchemeSwitcherItem.panelMask
+            item: notificationPopupItem.expanded ? notificationPopupItem.panelMask : null
         }
         Region {
-            item: notificationPopupItem.panelMask
+            item: emojiPickerItem.expanded ? emojiPickerItem.panelMask : null
         }
         Region {
-            item: emojiPickerItem.panelMask
+            item: cheatSheetItem.expanded ? cheatSheetItem.panelMask : null
         }
         Region {
-            item: settingsAppItem.panelMask
+            item: settingsAppItem.expanded ? settingsAppItem.panelMask : null
         }
         Region {
-            item: volumeOsdItem.panelMask
+            item: volumeOsdItem.isVisible ? volumeOsdItem.panelMask : null
         }
         Region {
-            item: brightnessOsdItem.panelMask
+            item: brightnessOsdItem.isVisible ? brightnessOsdItem.panelMask : null
         }
     }
 
@@ -221,23 +196,16 @@ PanelWindow {
         anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
         anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
         anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        width: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? (clockPill.isShown ? 80 : 18) : Math.max(300, clockPill.width + 60)
-        height: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? Math.max(300, clockPill.height + 60) : (clockPill.isShown ? 80 : 18)
+        width: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? 18 : clockPill.width
+        height: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? clockPill.height : 18
         
         MouseArea {
             id: clockHoverArea
-            anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-            anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-            anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-            anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-            anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-            anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-            width: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? (clockPill.isShown ? 54 : 18) : Math.max(260, clockPill.width + 20)
-            height: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? Math.max(260, clockPill.height + 20) : (clockPill.isShown ? 54 : 18)
+            anchors.fill: parent
             hoverEnabled: true
             acceptedButtons: Qt.NoButton
             onEntered: {
-                if (!(launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || volumeOsdItem.isVisible || workspacesItem.overlayVisible)) {
+                if (!(launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible || workspacesItem.overlayVisible)) {
                     topWindow.suppressHover = false;
                 }
             }
@@ -245,23 +213,118 @@ PanelWindow {
                 topWindow.suppressHover = false;
             }
             onPositionChanged: {
-                if (topWindow.suppressHover && !(launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || volumeOsdItem.isVisible || workspacesItem.overlayVisible)) {
+                if (topWindow.suppressHover && !(launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible || workspacesItem.overlayVisible)) {
                     topWindow.suppressHover = false;
                 }
             }
         }
     }
 
-    // --- Main UI Content ---
-    Item {
-        anchors.fill: parent
+    readonly property var hyprMonitor: Hyprland.monitorFor(topWindow.screen)
+    property bool isWindowPushingPill: false
 
-        MouseArea {
-            anchors.fill: parent
-            z: -1
-            onClicked: closeAll()
+    function updateWindowPushing() {
+        if (!HyprlandData || !HyprlandData.windowList) {
+            isWindowPushingPill = false;
+            return;
+        }
+        var list = HyprlandData.windowList;
+        if (list.length === 0) {
+            isWindowPushingPill = false;
+            return;
         }
 
+        var curWsId = hyprMonitor?.activeWorkspace?.id ?? (Hyprland.focusedWorkspace?.id ?? 1);
+        var curMonId = hyprMonitor?.id;
+        var monX = hyprMonitor?.x ?? (topWindow.screen ? topWindow.screen.x : 0);
+        var monY = hyprMonitor?.y ?? (topWindow.screen ? topWindow.screen.y : 0);
+        var monW = topWindow.screen ? topWindow.screen.width : (hyprMonitor?.width ?? 1920);
+        var monH = topWindow.screen ? topWindow.screen.height : (hyprMonitor?.height ?? 1080);
+
+        var pillW = clockPill.width > 0 ? clockPill.width : 100;
+        var pillH = clockPill.height > 0 ? clockPill.height : 40;
+        var margin = topWindow.defaultEdgeMargin;
+        var pillX = 0;
+        var pillY = 0;
+
+        if (topWindow.pillPos === "Bottom") {
+            pillX = (monW - pillW) / 2;
+            pillY = monH - pillH - margin;
+        } else if (topWindow.pillPos === "Left") {
+            pillX = margin;
+            pillY = (monH - pillH) / 2;
+        } else if (topWindow.pillPos === "Right") {
+            pillX = monW - pillW - margin;
+            pillY = (monH - pillH) / 2;
+        } else { // Top
+            pillX = (monW - pillW) / 2;
+            pillY = margin;
+        }
+
+        var cushion = 10;
+        var pLeft = pillX - cushion;
+        var pRight = pillX + pillW + cushion;
+        var pTop = pillY - cushion;
+        var pBottom = pillY + pillH + cushion;
+
+        var pushing = false;
+        for (var i = 0; i < list.length; i++) {
+            var win = list[i];
+            if (!win || !win.mapped || win.hidden) continue;
+
+            var winWsId = win.workspace ? win.workspace.id : null;
+            var onThisWs = (winWsId === curWsId) || win.pinned;
+            if (!onThisWs) continue;
+
+            if (curMonId !== undefined && win.monitor !== undefined && win.monitor !== curMonId) {
+                continue;
+            }
+
+            if (win.fullscreen && win.fullscreen !== 0) {
+                pushing = true;
+                break;
+            }
+
+            if (!win.at || !win.size || win.size[0] <= 0 || win.size[1] <= 0) continue;
+
+            var wx = win.at[0] - monX;
+            var wy = win.at[1] - monY;
+            var ww = win.size[0];
+            var wh = win.size[1];
+
+            if ((wx < pRight) && (wx + ww > pLeft) && (wy < pBottom) && (wy + wh > pTop)) {
+                pushing = true;
+                break;
+            }
+        }
+        if (isWindowPushingPill !== pushing) {
+            isWindowPushingPill = pushing;
+        }
+    }
+
+    Connections {
+        target: HyprlandData
+        function onWindowListChanged() {
+            if (Vars.clockPillMode === "Dodge Windows" || Vars.clockPillMode === "Dodge") {
+                topWindow.updateWindowPushing();
+            }
+        }
+    }
+
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (Vars.clockPillMode === "Dodge Windows" || Vars.clockPillMode === "Dodge") {
+                topWindow.updateWindowPushing();
+            }
+        }
+    }
+
+    Timer {
+        interval: 150
+        running: Vars.clockPillMode === "Dodge Windows" || Vars.clockPillMode === "Dodge"
+        repeat: true
+        onTriggered: topWindow.updateWindowPushing()
     }
 
     ClockPill {
@@ -274,7 +337,20 @@ PanelWindow {
         anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
         anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
         
-        property bool isShown: (!topWindow.suppressHover && (topWindow.pillHoverGrace || clockHoverArea.containsMouse || clockPill.isHovered) && !(launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || volumeOsdItem.isVisible || workspacesItem.overlayVisible))
+        readonly property bool hasAnyOverlay: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible || workspacesItem.overlayVisible
+        readonly property bool isHoverTriggered: !topWindow.suppressHover && (topWindow.pillHoverGrace || clockHoverArea.containsMouse || clockPill.isHovered)
+
+        property bool isShown: {
+            if (hasAnyOverlay) return false;
+            var mode = Vars.clockPillMode || "Always Visible";
+            if (mode === "Always Visible" || mode === "Always") {
+                return true;
+            }
+            if (mode === "Dodge Windows" || mode === "Dodge") {
+                return (!topWindow.isWindowPushingPill || isHoverTriggered);
+            }
+            return isHoverTriggered;
+        }
         
         anchors.topMargin: (topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left") ? 0 : topWindow.defaultEdgeMargin
         anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
@@ -282,6 +358,7 @@ PanelWindow {
         anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
         
         opacity: isShown ? 1.0 : 0.0
+        visible: opacity > 0
         
         Behavior on opacity {
             enabled: !topWindow.gameMode
@@ -324,7 +401,7 @@ PanelWindow {
         anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
         anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
         anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
-        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || volumeOsdItem.isVisible
+        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible
 
         onRequestCloseAll: {
             // A workspace switch happened and the pill is visible — dismiss any open popups
@@ -401,6 +478,21 @@ PanelWindow {
                 _forceDropGrab = true;
                 closeAllExcept(wallpaperSwitcherItem);
                 wallpaperSwitcherItem.expanded = true;
+                _forceDropGrab = false;
+            }
+        }
+    }
+
+    function toggleCheatSheet() {
+        if (!polkitItem.expanded) {
+            let wasExpanded = cheatSheetItem.expanded;
+            if (wasExpanded) {
+                cheatSheetItem.expanded = false;
+            } else {
+                topWindow.popupOpened();
+                _forceDropGrab = true;
+                closeAllExcept(cheatSheetItem);
+                cheatSheetItem.expanded = true;
                 _forceDropGrab = false;
             }
         }
@@ -591,7 +683,7 @@ PanelWindow {
         width: 100
         height: 40
         focusWindow: topWindow
-        forceHidePill: launcherItem.expanded || volumeOsdItem.isVisible || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded
+        forceHidePill: launcherItem.expanded || volumeOsdItem.isVisible || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded
 
         onExpandedChanged: {
             if (expanded) {
@@ -625,6 +717,10 @@ PanelWindow {
             closeAll();
             Qt.callLater(() => { topWindow.openGameLibraryRequested(); });
         }
+
+        onOpenCheatSheetRequested: {
+            toggleCheatSheet();
+        }
     }
 
     VolumeOsd {
@@ -640,7 +736,7 @@ PanelWindow {
         anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
         anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
         anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
-        preventShow: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || launcherItem.panel.width > 105 || controlCenterItem.panel.width > 105 || powerMenuItem.panel.width > 105 || polkitItem.panel.width > 105 || notificationPopupItem.panel.width > 105 || emojiPickerItem.panel.width > 105 || wallpaperSwitcherItem.panel.width > 105 || colorSchemeSwitcherItem.panel.width > 105 || settingsAppItem.panel.width > 105 || brightnessOsdItem.isVisible
+        preventShow: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || launcherItem.panel.width > 105 || controlCenterItem.panel.width > 105 || powerMenuItem.panel.width > 105 || polkitItem.panel.width > 105 || notificationPopupItem.panel.width > 105 || emojiPickerItem.panel.width > 105 || wallpaperSwitcherItem.panel.width > 105 || colorSchemeSwitcherItem.panel.width > 105 || settingsAppItem.panel.width > 105 || cheatSheetItem.panel.width > 105 || brightnessOsdItem.isVisible
     }
 
     BrightnessOsd {
@@ -656,7 +752,7 @@ PanelWindow {
         anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
         anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
         anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
-        preventShow: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || launcherItem.panel.width > 105 || controlCenterItem.panel.width > 105 || powerMenuItem.panel.width > 105 || polkitItem.panel.width > 105 || notificationPopupItem.panel.width > 105 || emojiPickerItem.panel.width > 105 || wallpaperSwitcherItem.panel.width > 105 || colorSchemeSwitcherItem.panel.width > 105 || settingsAppItem.panel.width > 105 || volumeOsdItem.isVisible
+        preventShow: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || launcherItem.panel.width > 105 || controlCenterItem.panel.width > 105 || powerMenuItem.panel.width > 105 || polkitItem.panel.width > 105 || notificationPopupItem.panel.width > 105 || emojiPickerItem.panel.width > 105 || wallpaperSwitcherItem.panel.width > 105 || colorSchemeSwitcherItem.panel.width > 105 || settingsAppItem.panel.width > 105 || cheatSheetItem.panel.width > 105 || volumeOsdItem.isVisible
     }
 
     WallpaperSwitcher {
@@ -673,7 +769,7 @@ PanelWindow {
         anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
         anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
         focusWindow: topWindow
-        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || volumeOsdItem.isVisible
+        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible
 
         onExpandedChanged: {
             if (expanded) {
@@ -724,7 +820,7 @@ PanelWindow {
         anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
         anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
         focusWindow: topWindow
-        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || volumeOsdItem.isVisible
+        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible
 
         onExpandedChanged: {
             if (expanded) {
@@ -755,7 +851,7 @@ PanelWindow {
         anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
         anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
         focusWindow: topWindow
-        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || colorSchemeSwitcherItem.expanded || volumeOsdItem.isVisible
+        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || colorSchemeSwitcherItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible
         onDetachToggled: function(isFloating) {
             if (isFloating) topWindow.toggleFloatingSettings();
         }
@@ -774,8 +870,34 @@ PanelWindow {
         onCloseRequested: expanded = false
     }
 
+    KeybindCheatSheet {
+        id: cheatSheetItem
+        gameMode: topWindow.gameMode
+        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
+        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
+        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
+        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
+        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
+        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
+        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
+        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
+        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
+        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        focusWindow: topWindow
+        forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || volumeOsdItem.isVisible
+
+        onExpandedChanged: {
+            if (expanded) {
+                topWindow.popupOpened();
+                closeAllExcept(cheatSheetItem);
+            }
+        }
+
+        onCloseRequested: expanded = false
+    }
+
     Repeater {
-        model: [launcherItem, clockPill, workspacesItem, powerMenuItem, emojiPickerItem, colorSchemeSwitcherItem, wallpaperSwitcherItem, settingsAppItem, controlCenterItem, notificationPopupItem, polkitItem, volumeOsdItem, brightnessOsdItem]
+        model: [launcherItem, clockPill, workspacesItem, powerMenuItem, emojiPickerItem, colorSchemeSwitcherItem, wallpaperSwitcherItem, settingsAppItem, controlCenterItem, notificationPopupItem, polkitItem, volumeOsdItem, brightnessOsdItem, cheatSheetItem]
         delegate: Item {
             property var targetPanel: modelData
             property bool hasPanel: !!(targetPanel?.panel)

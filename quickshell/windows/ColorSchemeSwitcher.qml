@@ -21,16 +21,6 @@ Item {
     property bool forceHidePill: false
     property var focusWindow: null
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
     property alias panel: panel
     property alias panelMask: panelMask
 
@@ -53,32 +43,32 @@ Item {
             innerUI.visible = true;
             controlBar.forceSearchFocus();
             innerUI.visible = Qt.binding(() => root.expanded || innerUI.opacity > 0);
-            loadThemesProc.running = true;
+            root.reloadThemes();
         }
     }
 
     Item {
         id: panelMask
-                anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
+        anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
         anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
         anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
         anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
         
-        anchors.topMargin: -20
-        anchors.bottomMargin: -20
-        anchors.leftMargin: -20
-        anchors.rightMargin: -20
-        width: root.expanded ? 440 : 140
-        height: root.expanded ? 360 : 80
+        anchors.topMargin: root.expanded ? -20 : 0
+        anchors.bottomMargin: root.expanded ? -20 : 0
+        anchors.leftMargin: root.expanded ? -20 : 0
+        anchors.rightMargin: root.expanded ? -20 : 0
+        width: root.expanded ? 440 : 0
+        height: root.expanded ? 360 : 0
     }
 
     Primitives.SquircleMask {
         id: panel
         property bool isBackgroundActive: root.expanded || (MorphState.openCount === 0 && MorphState.activeItem === panel && panel.width > 105)
         layer.enabled: false
-        layer.samples: 32
+        layer.samples: Vars.layerSamples
         anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
@@ -99,21 +89,19 @@ Item {
         opacity: isBackgroundActive || innerUI.opacity > 0 ? 1.0 : 0.0
         visible: opacity > 0
 
-        Behavior on topLeftRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on topRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on bottomLeftRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on bottomRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
         Behavior on width { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
         Behavior on height { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
 
         Item {
             id: innerUI
+            // Content must never draw outside the morphing panel
+            clip: true
             anchors.fill: parent
             anchors.margins: Vars.spacingLarge
             
             opacity: root.expanded ? 1.0 : 0.0
             visible: root.expanded || opacity > 0
-            Behavior on opacity { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: root.expanded ? Vars.customEmphasizedDecelerate : Vars.customEmphasizedAccelerate } }
+            Behavior on opacity { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.getFadeCurve(root.expanded) } }
 
             ColumnLayout {
                 anchors.fill: parent
@@ -132,8 +120,10 @@ Item {
                         if (root.currentTheme !== "") {
                             root.executeThemeChange(root.currentTheme);
                         }
+                        loadThemesProc.running = false;
+                        loadThemesProc.running = true;
                     }
-                    onRefreshClicked: loadThemesProc.running = true
+                    onRefreshClicked: root.reloadThemes()
                 }
 
                 CS.ThemeGrid {
@@ -154,11 +144,35 @@ Item {
         }
     }
 
+    function reloadThemes() {
+        currentThemeProc.running = false;
+        currentThemeProc.running = true;
+    }
+
     function executeThemeChange(themeName) {
         console.log("[USER ACTION] Theme selected: " + themeName + " (" + root.currentMode + ")");
         root.currentTheme = themeName;
-        themeChangeProc.command = ["bash", "-c", "bash ~/.config/color-schemes/set-theme.sh '" + themeName + "' '" + root.currentMode + "'"];
+        // Arguments are passed positionally so a theme name can never be interpreted by the shell
+        themeChangeProc.command = ["bash", "-c", "exec bash \"$HOME/.config/color-schemes/set-theme.sh\" \"$1\" \"$2\"", "set-theme", themeName, root.currentMode];
         themeChangeProc.running = true;
+    }
+
+    // The active scheme and mode are encoded in where current/quickTheme.qml points:
+    // ~/.config/color-schemes/<name>/<mode>/quickTheme.qml
+    Process {
+        id: currentThemeProc
+        command: ["bash", "-c", "readlink -f \"$HOME/.config/color-schemes/current/quickTheme.qml\" 2>/dev/null"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var m = this.text.trim().match(/color-schemes\/([^\/]+)\/(dark|light)\/quickTheme\.qml$/);
+                if (m) {
+                    root.currentTheme = m[1];
+                    root.currentMode = m[2];
+                }
+                loadThemesProc.running = false;
+                loadThemesProc.running = true;
+            }
+        }
     }
 
     Process {
@@ -183,12 +197,40 @@ Item {
         id: sortFilterProxyModel
         property string filterText: controlBar.searchText
         onFilterTextChanged: updateVisualGrid()
+
+        // Diff against the visible model instead of clearing it, so tiles that stay keep their
+        // identity and the grid can animate the ones that come and go while typing.
         function updateVisualGrid() {
-            proxyModel.clear();
+            var wanted = [];
             for (var i = 0; i < themeModel.count; i++) {
                 var item = themeModel.get(i);
-                if (Vars.fuzzyMatch(filterText, item.themeName)) {
-                    proxyModel.append({ "themeName": item.themeName, "themePrimary": item.themePrimary });
+                if (Vars.fuzzyMatch(filterText, item.themeName))
+                    wanted.push(item);
+            }
+            var names = {};
+            for (var w = 0; w < wanted.length; w++)
+                names[wanted[w].themeName] = true;
+
+            for (var r = proxyModel.count - 1; r >= 0; r--) {
+                if (!names[proxyModel.get(r).themeName])
+                    proxyModel.remove(r);
+            }
+            for (var t = 0; t < wanted.length; t++) {
+                var entry = wanted[t];
+                var row = { "themeName": entry.themeName, "themePrimary": entry.themePrimary, "themeSecondary": entry.themeSecondary, "themeTertiary": entry.themeTertiary, "themeSurface": entry.themeSurface, "themeOnSurface": entry.themeOnSurface };
+                if (t < proxyModel.count && proxyModel.get(t).themeName === entry.themeName) {
+                    proxyModel.set(t, row);
+                    continue;
+                }
+                var found = -1;
+                for (var j = t + 1; j < proxyModel.count; j++) {
+                    if (proxyModel.get(j).themeName === entry.themeName) { found = j; break; }
+                }
+                if (found >= 0) {
+                    proxyModel.move(found, t, 1);
+                    proxyModel.set(t, row);
+                } else {
+                    proxyModel.insert(t, row);
                 }
             }
         }
@@ -197,24 +239,32 @@ Item {
 
     Process {
         id: loadThemesProc
-        // Get directory names and their primary color from dark/quickTheme.qml
-        command: ["bash", "-c", "for d in ~/.config/color-schemes/*/; do name=$(basename \"$d\"); if [ \"$name\" != \"current\" ] && [ \"$name\" != \"currect\" ]; then primary=$(grep 'readonly property color primary:' \"$d/dark/quickTheme.qml\" 2>/dev/null | cut -d'\"' -f2); echo \"$name|$primary\"; fi; done"]
-        running: true
+        // One line per scheme: name|primary|secondary|tertiary|surface|on_surface for the active mode
+        command: ["bash", "-c", "mode=\"$1\"; get() { grep -m1 \"readonly property color $1:\" \"$2\" 2>/dev/null | cut -d'\"' -f2; }; for d in \"$HOME\"/.config/color-schemes/*/; do name=$(basename \"$d\"); [ \"$name\" = current ] && continue; f=\"$d$mode/quickTheme.qml\"; [ -f \"$f\" ] || f=\"${d}dark/quickTheme.qml\"; [ -f \"$f\" ] || continue; echo \"$name|$(get primary \"$f\")|$(get secondary \"$f\")|$(get tertiary \"$f\")|$(get surface \"$f\")|$(get on_surface \"$f\")\"; done", "load-themes", root.currentMode]
         stdout: StdioCollector {
             onStreamFinished: {
                 themeModel.clear();
                 var lines = this.text.split("\n");
+                var hex = /^#[0-9a-fA-F]{6,8}$/;
+                var pick = function (v, fallback) { return (v && hex.test(v)) ? v : fallback; };
                 for (var i = 0; i < lines.length; i++) {
                     var line = lines[i].trim();
-                    if (line.length > 0) {
-                        var parts = line.split("|");
-                        var name = parts[0];
-                        var primary = parts.length > 1 && parts[1] ? parts[1] : "#cccccc";
-                        themeModel.append({ "themeName": name, "themePrimary": primary });
-                    }
+                    if (line.length === 0) continue;
+                    var parts = line.split("|");
+                    var primary = pick(parts[1], "#cccccc");
+                    themeModel.append({
+                        "themeName": parts[0],
+                        "themePrimary": primary,
+                        "themeSecondary": pick(parts[2], primary),
+                        "themeTertiary": pick(parts[3], primary),
+                        "themeSurface": pick(parts[4], "#1c1b1f"),
+                        "themeOnSurface": pick(parts[5], "#e6e1e5")
+                    });
                 }
                 sortFilterProxyModel.updateVisualGrid();
             }
         }
     }
+
+    Component.onCompleted: root.reloadThemes()
 }

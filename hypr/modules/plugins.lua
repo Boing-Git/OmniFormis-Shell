@@ -4,12 +4,17 @@ local function file_exists(name)
    if f ~= nil then io.close(f) return true else return false end
 end
 
+local hw = require("modules.hardware")
+
 local plugin_path = "/etc/profiles/per-user/" .. os.getenv("USER") .. "/lib/libhyprglass.so"
 if not file_exists(plugin_path) then
     plugin_path = os.getenv("HOME") .. "/.nix-profile/lib/libhyprglass.so"
 end
 
-os.execute("hyprctl plugin load " .. plugin_path .. " &")
+-- The liquid glass shader is too heavy for low-spec GPUs, so it isn't loaded there at all
+if not hw.low_spec then
+    os.execute("hyprctl plugin load " .. plugin_path .. " &")
+end
 local vars = require("modules.variables")
 local Utils = require("utils")
 local colors = Utils.colors
@@ -69,7 +74,7 @@ local function configure_hyprglass()
     end
 
     hg.config({
-        enabled = (not vars.GameMode) and vars.liquidGlass,
+        enabled = (not vars.GameMode) and (not hw.low_spec) and vars.liquidGlass,
         default_theme = system_theme,
         default_preset = vars.liquidGlassPreset or "glass",
         tint_color = tint_color,
@@ -103,7 +108,9 @@ local function configure_hyprglass()
     return true
 end
 
-if not configure_hyprglass() then
+-- On low-spec hardware the plugin is only present if it was loaded before LowSpec turned on,
+-- and then configure_hyprglass() has just switched it off, so there's nothing to wait for
+if not configure_hyprglass() and not hw.low_spec then
     local retries = 0
     local t
     t = hl.timer(function()

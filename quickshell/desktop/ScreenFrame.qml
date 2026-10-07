@@ -17,16 +17,6 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     color: "transparent"
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
 
     visible: Vars.panelStyle === "Attached" && !gameMode
     mask: Region {}
@@ -47,8 +37,8 @@ PanelWindow {
 
     Item {
         anchors.fill: parent
-        layer.enabled: (Vars._translucent && !Vars.gameMode) || false
-        layer.samples: 32
+        layer.enabled: Vars.isTranslucent()
+        layer.samples: Vars.layerSamples
 
         Rectangle {
             anchors.fill: parent

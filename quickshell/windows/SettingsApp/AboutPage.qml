@@ -123,7 +123,7 @@ Item {
                     Layout.preferredHeight: 72
                     radius: 16
                     antialiasing: true
-                    color: Vars.tColor(Theme.surface_container, Vars.componentOpacity)
+                    color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
                     
                     Rectangle {
                         width: parent.radius; height: parent.radius; color: parent.color
@@ -156,7 +156,7 @@ Item {
                     Layout.preferredHeight: hardwareLayout.implicitHeight + 32
                     radius: 16
                     antialiasing: true
-                    color: Vars.tColor(Theme.surface_container, Vars.componentOpacity)
+                    color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
                     
                     Rectangle {
                         width: parent.radius; height: parent.radius; color: parent.color
@@ -241,7 +241,7 @@ Item {
                     Layout.preferredHeight: 72
                     radius: 16
                     antialiasing: true
-                    color: Vars.tColor(Theme.surface_container, Vars.componentOpacity)
+                    color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
                     
                     Rectangle {
                         width: parent.radius; height: parent.radius; color: parent.color

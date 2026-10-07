@@ -27,33 +27,26 @@ Rectangle {
         return vals[0];
     }
     property bool isPlaying: mprisPlayer ? mprisPlayer.isPlaying : false
+    // A card inside the Control Center, which is itself a surface_container panel. The desktop
+    // widget sets this to the surface every desktop widget shares.
+    property color cardColor: Theme.surface_container_highest
 
     property string currentMediaPlayerShape: Vars.mediaPlayerShape !== undefined ? Vars.mediaPlayerShape : "12SidedCookie"
     property real currentMediaPlayerArtScale: Vars.mediaPlayerArtScale !== undefined ? Vars.mediaPlayerArtScale : 1.0
 
     property real currentMediaPlayerArtOffsetX: Vars.mediaPlayerArtOffsetX !== undefined ? Vars.mediaPlayerArtOffsetX : 0
     property real currentMediaPlayerArtOffsetY: Vars.mediaPlayerArtOffsetY !== undefined ? Vars.mediaPlayerArtOffsetY : 0
+    property alias playerDropdownVisible: playerDropdown.visible
 
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            var shape = Vars.mediaPlayerShape !== undefined ? Vars.mediaPlayerShape : "12SidedCookie";
-            if (mediaPlayerRoot.currentMediaPlayerShape !== shape) {
-                mediaPlayerRoot.currentMediaPlayerShape = shape;
-            }
-            var scale = Vars.mediaPlayerArtScale !== undefined ? Vars.mediaPlayerArtScale : 1.0;
-            if (mediaPlayerRoot.currentMediaPlayerArtScale !== scale) {
-                mediaPlayerRoot.currentMediaPlayerArtScale = scale;
-            }
-            var offsetX = Vars.mediaPlayerArtOffsetX !== undefined ? Vars.mediaPlayerArtOffsetX : 0;
-            if (mediaPlayerRoot.currentMediaPlayerArtOffsetX !== offsetX) {
-                mediaPlayerRoot.currentMediaPlayerArtOffsetX = offsetX;
-            }
-            var offsetY = Vars.mediaPlayerArtOffsetY !== undefined ? Vars.mediaPlayerArtOffsetY : 0;
-            if (mediaPlayerRoot.currentMediaPlayerArtOffsetY !== offsetY) {
-                mediaPlayerRoot.currentMediaPlayerArtOffsetY = offsetY;
+    function updateDropdownPosition() {
+        if (playerDropdown.visible && typeof playerSelectorPill !== 'undefined' && playerSelectorPill !== null) {
+            var p = playerSelectorPill.mapToItem(mediaPlayerRoot, 0, 0);
+            playerDropdown.x = Math.max(8, Math.min(mediaPlayerRoot.width - playerDropdown.width - 8, p.x - (playerDropdown.width - playerSelectorPill.width)));
+            var dropHeight = playerDropdown.height;
+            if (p.y + playerSelectorPill.height + 8 + dropHeight > mediaPlayerRoot.height || p.y > mediaPlayerRoot.height / 2) {
+                playerDropdown.y = Math.max(8, p.y - dropHeight - 8);
+            } else {
+                playerDropdown.y = p.y + playerSelectorPill.height + 8;
             }
         }
     }
@@ -228,13 +221,14 @@ Rectangle {
         id: combinedBackground
         anchors.fill: parent
         layer.enabled: true
-        layer.samples: 32
+        layer.smooth: true
+        layer.samples: Vars.layerSamples
         visible: false
 
         // Base background for when there is no album art or in opaque mode
         Rectangle {
             anchors.fill: parent
-            color: Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)
+            color: Vars.tColor(mediaPlayerRoot.cardColor, Vars.componentOpacity)
             visible: bgArt.source === "" || !Vars.isTranslucent()
         }
 
@@ -243,7 +237,8 @@ Rectangle {
             id: blurredBgLayer
             anchors.fill: parent
             layer.enabled: true
-            layer.samples: 32
+            layer.smooth: true
+            layer.samples: Vars.layerSamples
             layer.effect: MultiEffect {
                 blurEnabled: true
                 blurMax: Vars.blurAmount
@@ -263,8 +258,8 @@ Rectangle {
         // Overlay for when album art is present to ensure text readability
         Rectangle {
             anchors.fill: parent
-            color: Theme.surface_container_highest
-            opacity: (Vars._translucent && !Vars.gameMode) ? (Vars.componentOpacity * 0.8) : 0.85
+            color: mediaPlayerRoot.cardColor
+            opacity: Vars.isTranslucent() ? (Vars.componentOpacity * 0.8) : 0.85
             visible: bgArt.source !== "" && Vars.isTranslucent()
         }
     }
@@ -272,15 +267,6 @@ Rectangle {
     // Stage 2: Mask the combined background to perfectly fit the rounded corners
     Item {
         anchors.fill: parent
-        layer.enabled: true
-        layer.samples: 32
-        layer.effect: MultiEffect {
-            shadowEnabled: !Vars.gameMode && !Vars._translucent
-            shadowBlur: 1.0
-            shadowColor: Qt.rgba(0, 0, 0, 0.25)
-            shadowVerticalOffset: 4
-            shadowHorizontalOffset: 0
-        }
 
         MultiEffect {
             anchors.fill: parent
@@ -326,7 +312,8 @@ Rectangle {
         id: contentLayer
         anchors.fill: parent
         layer.enabled: true
-        layer.samples: 32
+        layer.smooth: true
+        layer.samples: Vars.layerSamples
         layer.effect: MultiEffect {
             maskEnabled: true
             maskSource: rootMask
@@ -385,7 +372,7 @@ Rectangle {
                     anchors.fill: parent
                     visible: false
                     layer.enabled: true
-                    layer.samples: 32
+                    layer.samples: Vars.layerSamples
                     layer.smooth: true
                     layer.textureSize: Qt.size(width * Math.max(1, mediaPlayerRoot.currentMediaPlayerArtScale) * 2, height * Math.max(1, mediaPlayerRoot.currentMediaPlayerArtScale) * 2)
 
@@ -453,7 +440,7 @@ Rectangle {
                     anchors.fill: parent
                     visible: false
                     layer.enabled: true
-                    layer.samples: 32
+                    layer.samples: Vars.layerSamples
                     layer.smooth: true
                     layer.textureSize: Qt.size(width * Math.max(1, mediaPlayerRoot.currentMediaPlayerArtScale) * 2, height * Math.max(1, mediaPlayerRoot.currentMediaPlayerArtScale) * 2)
 
@@ -563,7 +550,8 @@ Rectangle {
                         Layout.minimumWidth: Layout.preferredWidth
                         radius: 18
                         antialiasing: true
-                        color: Theme.primary
+                        // Tonal, so play/pause stays the one filled primary action on the card
+                        color: Theme.secondary_container
                         visible: Mpris.players.values.length > 1
 
                         RowLayout {
@@ -574,7 +562,7 @@ Rectangle {
                                 text: mprisPlayer ? (mprisPlayer.identity || "Unknown") : "Player"
                                 font.family: Vars.fontFamily
                                 font.pixelSize: 14
-                                color: Theme.on_primary
+                                color: Theme.on_secondary_container
                                 setWeight: 600
                             }
                             QsText {
@@ -583,7 +571,7 @@ Rectangle {
                                 antialiasing: true
                                 renderType: Text.QtRendering
                                 font.hintingPreference: Font.PreferNoHinting
-                                color: Theme.on_primary
+                                color: Theme.on_secondary_container
                                 setWeight: 700
                                 text: "\ue5cf" // expand_more
                             }
@@ -697,7 +685,7 @@ Rectangle {
                         antialiasing: true
                         smooth: true
                         layer.enabled: true
-                        layer.samples: 32
+                        layer.samples: Vars.layerSamples
                         layer.smooth: true
 
                         property color waveColor: Theme.primary
@@ -938,24 +926,28 @@ Rectangle {
     }
     } // end of contentLayer
 
+    // Backdrop area to dismiss player dropdown when clicking outside
+    MouseArea {
+        anchors.fill: parent
+        z: 95
+        enabled: playerDropdown.visible
+        visible: enabled
+        onClicked: playerDropdown.visible = false
+    }
+
     // MPRIS Player Dropdown
     Item {
         id: playerDropdown
         x: 0
         y: 0
-        
-        onVisibleChanged: {
-            if (visible && typeof playerSelectorPill !== 'undefined' && playerSelectorPill !== null) {
-                var p = playerSelectorPill.mapToItem(mediaPlayerRoot, 0, 0);
-                x = p.x - (width - playerSelectorPill.width);
-                y = p.y + playerSelectorPill.height + 8;
-            }
-        }
-        width: 180
-        height: playerColumn.implicitHeight + 8
+        width: 190
+        height: Math.min(Math.max(44, mediaPlayerRoot.height - 24), playerColumn.implicitHeight + 8)
         property real radius: Vars.radiusMedium
         visible: false
-        z: 10
+        z: 100
+
+        onVisibleChanged: mediaPlayerRoot.updateDropdownPosition()
+        onHeightChanged: mediaPlayerRoot.updateDropdownPosition()
 
         Rectangle {
             id: dropdownMask
@@ -965,96 +957,97 @@ Rectangle {
             color: "black"
             visible: false
             layer.enabled: true
-            layer.samples: 32
+            layer.smooth: true
+            layer.samples: Vars.layerSamples
         }
 
         Item {
             id: dropdownShadow
             anchors.fill: parent
-            layer.enabled: true
-            layer.samples: 32
-            layer.effect: MultiEffect {
-                shadowEnabled: !Vars.gameMode && !Vars._translucent
-                shadowBlur: 1.0
-                shadowColor: Qt.rgba(0,0,0,0.25)
-                shadowVerticalOffset: 4
-                shadowHorizontalOffset: 0
-            }
 
             Item {
                 id: dropdownFinalMasked
                 anchors.fill: parent
                 layer.enabled: true
-                layer.samples: 32
+                layer.smooth: true
+                layer.samples: Vars.layerSamples
                 layer.effect: MultiEffect {
                     maskEnabled: true
                     maskSource: dropdownMask
                 }
 
-                // removed ShaderEffectSource to prevent double-blur in translucent mode
-
                 Rectangle {
                     anchors.fill: parent
                     radius: playerDropdown.radius
                     antialiasing: true
-                    color: Theme.primary
+                    // The same tonal family as the selector it opens from
+                    color: Theme.secondary_container
                     border.width: 0
                 }
-
             } // End of dropdownFinalMasked
         } // End of dropdownShadow
 
-        Column {
-            id: playerColumn
+        Flickable {
+            id: playerDropdownFlickable
             anchors.fill: parent
             anchors.margins: 4
+            contentHeight: playerColumn.implicitHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
 
-            Repeater {
-                model: Mpris.players.values
-                delegate: Rectangle {
-                    width: playerColumn.width
-                    height: 36
-                    radius: Vars.radiusSmall
-                    antialiasing: true
-                    color: itemMouse.containsMouse ? Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.12) : "transparent"
+            Column {
+                id: playerColumn
+                width: playerDropdownFlickable.width
+                spacing: 2
 
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 12
+                Repeater {
+                    model: Mpris.players.values
+                    delegate: Rectangle {
+                        width: playerColumn.width
+                        height: 36
+                        radius: Vars.radiusSmall
+                        antialiasing: true
+                        // M3 hover state layer: the content color at 8%
+                        color: itemMouse.containsMouse ? Qt.rgba(Theme.on_secondary_container.r, Theme.on_secondary_container.g, Theme.on_secondary_container.b, 0.08) : "transparent"
 
-                        QsText {
-                            text: modelData.identity || "Unknown"
-                            font.family: Vars.fontFamily
-                            font.pixelSize: 14
-                            color: mprisPlayer === modelData ? Theme.on_primary : Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.7)
-                            Layout.fillWidth: true
-                            elide: Text.ElideRight
-                            verticalAlignment: Text.AlignVCenter
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 12
+                            anchors.rightMargin: 12
+                            spacing: 12
+
+                            QsText {
+                                text: modelData.identity || "Unknown"
+                                font.family: Vars.fontFamily
+                                font.pixelSize: 14
+                                color: mprisPlayer === modelData ? Theme.on_secondary_container : Qt.rgba(Theme.on_secondary_container.r, Theme.on_secondary_container.g, Theme.on_secondary_container.b, 0.7)
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            QsText {
+                                font.family: "Material Symbols Outlined"
+                                font.pixelSize: 18
+                                antialiasing: true
+                                renderType: Text.QtRendering
+                                font.hintingPreference: Font.PreferNoHinting
+                                color: Theme.on_secondary_container
+                                text: "\ue876" // check
+                                visible: mprisPlayer === modelData
+                                verticalAlignment: Text.AlignVCenter
+                            }
                         }
 
-                        QsText {
-                            font.family: "Material Symbols Outlined"
-                            font.pixelSize: 18
-                            antialiasing: true
-                            renderType: Text.QtRendering
-                            font.hintingPreference: Font.PreferNoHinting
-                            color: Theme.on_primary
-                            text: "\ue876" // check
-                            visible: mprisPlayer === modelData
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                    }
-
-                    MouseArea {
-                        id: itemMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            mediaPlayerRoot.preferredMprisPlayer = modelData;
-                            playerDropdown.visible = false;
+                        MouseArea {
+                            id: itemMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                mediaPlayerRoot.preferredMprisPlayer = modelData;
+                                playerDropdown.visible = false;
+                            }
                         }
                     }
                 }

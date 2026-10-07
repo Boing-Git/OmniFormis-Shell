@@ -10,7 +10,7 @@ mkdir -p "$CURRENT_DIR"
 available_themes=()
 for d in "$THEMES_DIR"/*/; do
     theme_name=$(basename "$d")
-    if [[ "$theme_name" != "current" && "$theme_name" != "currect" && "$theme_name" != "*" ]]; then
+    if [[ "$theme_name" != "current" && "$theme_name" != "*" ]]; then
         available_themes+=("$theme_name")
     fi
 done
@@ -153,6 +153,15 @@ if [ -f "$CURRENT_DIR/steam.css" ]; then
     
     # Reload Steam theme via adwaita-steam-gtk
     nohup adwaita-steam-gtk -i >/dev/null 2>&1 &
+fi
+
+# Update Vesktop (Vencord) Theme
+VESKTOP_CSS_FILE="$HOME/.config/vesktop/themes/matugen.css"
+if [ -f "$CURRENT_DIR/vesktop.css" ]; then
+    mkdir -p "$(dirname "$VESKTOP_CSS_FILE")"
+    rm -f "$VESKTOP_CSS_FILE"
+    ln -sf "$CURRENT_DIR/vesktop.css" "$VESKTOP_CSS_FILE"
+    echo "Linked vesktop.css to ~/.config/vesktop/themes/matugen.css"
 fi
 
 # Reload other apps

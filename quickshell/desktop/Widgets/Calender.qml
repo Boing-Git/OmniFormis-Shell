@@ -52,17 +52,8 @@ Item {
         radius: 24
         antialiasing: true
         
-        opacity: (Vars._translucent && !Vars.gameMode) ? 0.85 : 1.0
+        opacity: Vars.isTranslucent() ? 0.85 : 1.0
         
-        layer.enabled: true
-        layer.samples: 32
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowBlur: 1.0
-            shadowColor: Qt.rgba(0, 0, 0, 0.25)
-            shadowVerticalOffset: 4
-            shadowHorizontalOffset: 0
-        }
 
         ColumnLayout {
             anchors.fill: parent

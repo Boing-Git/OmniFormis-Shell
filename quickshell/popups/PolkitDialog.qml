@@ -18,16 +18,6 @@ Item {
     property bool expanded: flow !== null && !flow.isCompleted
     property var focusWindow: null
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
 
 
 
@@ -110,26 +100,26 @@ Item {
 
     Item {
         id: panelMask
-                anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
+        anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
         anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
         anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
         anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
         
-        anchors.topMargin: -20
-        anchors.bottomMargin: -20
-        anchors.leftMargin: -20
-        anchors.rightMargin: -20
-        width: root.expanded ? 460 : 140
-        height: root.expanded ? 400 : 80
+        anchors.topMargin: root.expanded ? -20 : 0
+        anchors.bottomMargin: root.expanded ? -20 : 0
+        anchors.leftMargin: root.expanded ? -20 : 0
+        anchors.rightMargin: root.expanded ? -20 : 0
+        width: root.expanded ? 460 : 0
+        height: root.expanded ? 400 : 0
     }
 
     Primitives.SquircleMask {
         id: panel
         property bool isBackgroundActive: root.expanded || (MorphState.openCount === 0 && MorphState.activeItem === panel && panel.width > 105)
         layer.enabled: false
-        layer.samples: 32
+        layer.samples: Vars.layerSamples
         anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
@@ -155,10 +145,6 @@ Item {
         bottomLeftRadius: Vars.getBottomLeftRadius(Vars.panelStyle, Vars.pillPosition, false, targetRad)
         bottomRightRadius: Vars.getBottomRightRadius(Vars.panelStyle, Vars.pillPosition, false, targetRad)
 
-        Behavior on topLeftRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on topRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on bottomLeftRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on bottomRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
         Behavior on width { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
         Behavior on height { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
 
@@ -173,6 +159,8 @@ Item {
         // EXPANDED UI
         Item {
             id: innerUI
+            // Content must never draw outside the morphing panel
+            clip: true
             anchors.fill: parent
 
             opacity: root.expanded ? 1.0 : 0.0

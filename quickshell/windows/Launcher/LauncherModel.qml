@@ -8,7 +8,7 @@ import "../../theme"
 
 Item {
     id: rootModel
-    
+
     property string filterText: ""
     property var emojiModel: []
     property var fileModel: []
@@ -19,8 +19,6 @@ Item {
     function refreshClipboard() {
         cliphistProc.running = true;
     }
-
-
 
     Process {
         id: emojiLoader
@@ -41,7 +39,7 @@ Item {
                             } else {
                                 glyph = line;
                             }
-                            
+
                             arr.push({
                                 name: line,
                                 command: ["wl-copy", glyph],
@@ -104,15 +102,17 @@ Item {
                         if (tabIndex !== -1) {
                             var id = line.substring(0, tabIndex);
                             var snippet = line.substring(tabIndex + 1);
-                            
+
                             var isImage = snippet.startsWith("[[ binary data") && (snippet.indexOf("png") !== -1 || snippet.indexOf("jpeg") !== -1 || snippet.indexOf("jpg") !== -1 || snippet.indexOf("webp") !== -1 || snippet.indexOf("bmp") !== -1);
-                            
+
                             var isFileUri = snippet.startsWith("file://");
                             var isUriImage = false;
                             var cleanPath = "";
                             if (isFileUri) {
                                 cleanPath = snippet.replace("file://", "").split(" ")[0].split("\n")[0].trim();
-                                try { cleanPath = decodeURIComponent(cleanPath); } catch(e) {}
+                                try {
+                                    cleanPath = decodeURIComponent(cleanPath);
+                                } catch (e) {}
                                 var ext = cleanPath.substring(cleanPath.lastIndexOf('.')).toLowerCase();
                                 if (ext === ".png" || ext === ".jpg" || ext === ".jpeg" || ext === ".webp" || ext === ".gif") {
                                     isUriImage = true;
@@ -120,13 +120,17 @@ Item {
                             }
 
                             var clipImgPath = "";
-                            if (isImage) clipImgPath = "/tmp/qs_clip/clip_" + id + ".img";
-                            else if (isUriImage) clipImgPath = cleanPath;
-                            
+                            if (isImage)
+                                clipImgPath = "/tmp/qs_clip/clip_" + id + ".img";
+                            else if (isUriImage)
+                                clipImgPath = cleanPath;
+
                             var dispName = snippet;
-                            if (isImage) dispName = "Copied Image (" + id + ")";
-                            else if (isFileUri) dispName = "File: " + cleanPath.substring(cleanPath.lastIndexOf('/') + 1);
-                            
+                            if (isImage)
+                                dispName = "Copied Image (" + id + ")";
+                            else if (isFileUri)
+                                dispName = "File: " + cleanPath.substring(cleanPath.lastIndexOf('/') + 1);
+
                             arr.push({
                                 name: dispName,
                                 clipId: id,
@@ -182,91 +186,173 @@ Item {
         }
     }
 
+    // The DesktopEntries -> plain-object conversion (icon string building, command fallback,
+    // JSON.stringify) was previously redone from scratch on every keystroke, which is the app
+    // list's only genuinely expensive step. It now only reruns when the installed apps actually
+    // change, so a keystroke only has to fuzzy-match against an already-built array.
+    property var baseApps: []
+
+    function rebuildBaseApps() {
+        var out = [];
+        if (typeof DesktopEntries !== "undefined" && DesktopEntries.applications) {
+            var appsSource = DesktopEntries.applications.values;
+            if (appsSource) {
+                for (var k = 0; k < appsSource.length; k++) {
+                    var rApp = appsSource[k];
+                    if (!rApp)
+                        continue;
+
+                    var execCmd = rApp.command || [];
+                    var iconStr = rApp.icon || "";
+
+                    if (iconStr !== "" && iconStr.indexOf("/") !== 0) {
+                        iconStr = "?fallback=" + iconStr;
+                    }
+
+                    var finalCommand = Array.isArray(execCmd) && execCmd.length > 0 ? execCmd : ["bash", "-c", "gtk-launch " + (rApp.id || "")];
+                    out.push({
+                        name: rApp.name || "Unknown",
+                        icon: iconStr,
+                        command: finalCommand,
+                        commandStr: JSON.stringify(finalCommand),
+                        workingDirectory: rApp.workingDirectory || Quickshell.env("HOME"),
+                        isFile: false,
+                        isDir: false,
+                        isSetting: false,
+                        isClearAll: false,
+                        isClipboard: false,
+                        isMath: false
+                    });
+                }
+            }
+        }
+        rootModel.baseApps = out;
+    }
+
+    Connections {
+        target: (typeof DesktopEntries !== "undefined" && DesktopEntries.applications) ? DesktopEntries.applications : null
+        function onValuesChanged() { rootModel.rebuildBaseApps(); }
+    }
+
     property alias filteredModel: dynamicModel
 
-    ListModel { id: dynamicModel }
+    ListModel {
+        id: dynamicModel
+    }
 
-    Timer {
-        id: syncTimer
-        interval: 10
-        running: false
-        onTriggered: {
-            var targetArray = computeTargetArray();
-            var keyProp = "name";
-            
-            // 1. Remove items not in targetArray
-            for (var i = dynamicModel.count - 1; i >= 0; i--) {
-                var item = dynamicModel.get(i);
-                var found = false;
-                for (var j = 0; j < targetArray.length; j++) {
-                    if (targetArray[j][keyProp] === item[keyProp]) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
+    // Runs the diff as soon as the UI thread is next idle instead of after a fixed delay, so
+    // results keep up even while typing continuously, and Qt.callLater coalesces a burst of
+    // keystrokes into a single update instead of running once per key.
+    function scheduleSync() {
+        Qt.callLater(rootModel.runSync);
+    }
+
+    function runSync() {
+        var targetArray = computeTargetArray();
+        var keyProp = "name";
+
+        // Build a set of target keys for O(1) lookups
+        var targetKeys = {};
+        for (var j = 0; j < targetArray.length; j++) {
+            var key = targetArray[j][keyProp];
+            if (key !== undefined) {
+                targetKeys[key] = true;
+            }
+        }
+
+        // 1. Remove items not in targetArray
+        for (var i = dynamicModel.count - 1; i >= 0; i--) {
+            var item = dynamicModel.get(i);
+            if (item) {
+                var key = item[keyProp];
+                if (!targetKeys[key]) {
                     dynamicModel.remove(i, 1);
                 }
             }
-            
-            // 2. Add items
-            for (var i = 0; i < targetArray.length; i++) {
-                var targetItem = targetArray[i];
-                var found = false;
-                for (var j = 0; j < dynamicModel.count; j++) {
-                    if (dynamicModel.get(j)[keyProp] === targetItem[keyProp]) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    var toAdd = {
-                        name: targetItem.name || "",
-                        command: targetItem.command || [],
-                        commandStr: targetItem.commandStr || "",
-                        workingDirectory: targetItem.workingDirectory || "",
-                        icon: targetItem.icon || "",
-                        isFile: targetItem.isFile || false,
-                        isDir: targetItem.isDir || false,
-                        isSetting: targetItem.isSetting || false,
-                        isClearAll: targetItem.isClearAll || false,
-                        isClipboard: targetItem.isClipboard || false,
-                        isMath: targetItem.isMath || false,
-                        iconName: targetItem.iconName || "",
-                        clipId: targetItem.clipId || "",
-                        fullLine: targetItem.fullLine || "",
-                        clipImagePath: targetItem.clipImagePath || ""
-                    };
-                    dynamicModel.append(toAdd);
+        }
+
+        // Build a set of existing keys for O(1) lookups
+        var existingKeys = {};
+        for (var j = 0; j < dynamicModel.count; j++) {
+            var item = dynamicModel.get(j);
+            if (item) {
+                var key = item[keyProp];
+                if (key !== undefined) {
+                    existingKeys[key] = true;
                 }
             }
-            
-            // 3. Move items
-            for (var i = 0; i < targetArray.length; i++) {
-                var targetItem = targetArray[i];
-                var currentIndex = -1;
-                for (var j = i; j < dynamicModel.count; j++) {
-                    if (dynamicModel.get(j)[keyProp] === targetItem[keyProp]) {
-                        currentIndex = j;
-                        break;
-                    }
-                }
-                if (currentIndex !== -1 && currentIndex !== i) {
-                    dynamicModel.move(currentIndex, i, 1);
-                }
+        }
+
+        // 2. Add items
+        var itemsToAdd = [];
+        for (var i = 0; i < targetArray.length; i++) {
+            var targetItem = targetArray[i];
+            var key = targetItem[keyProp];
+            if (key !== undefined && !existingKeys[key]) {
+                var toAdd = {
+                    name: targetItem.name || "",
+                    command: targetItem.command || [],
+                    commandStr: targetItem.commandStr || "",
+                    workingDirectory: targetItem.workingDirectory || "",
+                    icon: targetItem.icon || "",
+                    isFile: targetItem.isFile || false,
+                    isDir: targetItem.isDir || false,
+                    isSetting: targetItem.isSetting || false,
+                    isClearAll: targetItem.isClearAll || false,
+                    isClipboard: targetItem.isClipboard || false,
+                    isMath: targetItem.isMath || false,
+                    iconName: targetItem.iconName || "",
+                    clipId: targetItem.clipId || "",
+                    fullLine: targetItem.fullLine || "",
+                    clipImagePath: targetItem.clipImagePath || ""
+                };
+                itemsToAdd.push(toAdd);
+                existingKeys[key] = true;
+            }
+        }
+
+        for (var k = 0; k < itemsToAdd.length; k++) {
+            dynamicModel.append(itemsToAdd[k]);
+        }
+
+        // 3. Move items using a shadow array to avoid O(N^2) dynamicModel.get() calls
+        var currentKeys = [];
+        for (var m = 0; m < dynamicModel.count; m++) {
+            var mItem = dynamicModel.get(m);
+            currentKeys.push(mItem ? mItem[keyProp] : null);
+        }
+
+        var maxItemsToMove = Math.min(targetArray.length, 50);
+        for (var i = 0; i < maxItemsToMove; i++) {
+            var targetItem = targetArray[i];
+            var key = targetItem[keyProp];
+
+            if (currentKeys[i] === key) {
+                continue;
+            }
+
+            var currentIndex = currentKeys.indexOf(key, i + 1);
+
+            if (currentIndex !== -1) {
+                dynamicModel.move(currentIndex, i, 1);
+                var movedKey = currentKeys.splice(currentIndex, 1)[0];
+                currentKeys.splice(i, 0, movedKey);
             }
         }
     }
 
-    onFilterTextChanged: syncTimer.restart()
-    onEmojiModelChanged: syncTimer.restart()
-    onFileModelChanged: syncTimer.restart()
-    onClipboardModelChanged: syncTimer.restart()
-    Component.onCompleted: syncTimer.restart()
+    onFilterTextChanged: scheduleSync()
+    onEmojiModelChanged: scheduleSync()
+    onFileModelChanged: scheduleSync()
+    onClipboardModelChanged: scheduleSync()
+    Component.onCompleted: {
+        rebuildBaseApps();
+        scheduleSync();
+    }
 
     function computeTargetArray() {
         var text = rootModel.filterText.toLowerCase();
-        
+
         if (text.startsWith("=")) {
             var expr = text.substring(1).trim();
             if (expr.length > 0) {
@@ -275,19 +361,21 @@ Item {
                     if (safeExpr.length > 0) {
                         var result = eval(safeExpr);
                         if (result !== undefined && !isNaN(result)) {
-                            return [{
-                                name: result.toString(),
-                                command: ["wl-copy", result.toString()],
-                                commandStr: JSON.stringify(["wl-copy", result.toString()]),
-                                workingDirectory: Quickshell.env("HOME"),
-                                icon: "",
-                                isFile: false,
-                                isDir: false,
-                                isMath: true
-                            }];
+                            return [
+                                {
+                                    name: result.toString(),
+                                    command: ["wl-copy", result.toString()],
+                                    commandStr: JSON.stringify(["wl-copy", result.toString()]),
+                                    workingDirectory: Quickshell.env("HOME"),
+                                    icon: "",
+                                    isFile: false,
+                                    isDir: false,
+                                    isMath: true
+                                }
+                            ];
                         }
                     }
-                } catch(e) {}
+                } catch (e) {}
             }
             return [];
         }
@@ -352,18 +440,21 @@ Item {
             }
             if (query.startsWith("web")) {
                 var webQuery = query.substring(3).trim();
-                return [{
-                    name: "Search Google for: " + (webQuery === "" ? "..." : webQuery),
-                    command: webQuery === "" ? [] : ["xdg-open", "https://www.google.com/search?q=" + encodeURIComponent(webQuery)],
-                    workingDirectory: Quickshell.env("HOME"),
-                    icon: "",
-                    isFile: false,
-                    isSetting: true,
-                    iconName: "travel_explore"
-                }];
+                return [
+                    {
+                        name: "Search Google for: " + (webQuery === "" ? "..." : webQuery),
+                        command: webQuery === "" ? [] : ["xdg-open", "https://www.google.com/search?q=" + encodeURIComponent(webQuery)],
+                        workingDirectory: Quickshell.env("HOME"),
+                        icon: "",
+                        isFile: false,
+                        isSetting: true,
+                        iconName: "travel_explore"
+                    }
+                ];
             }
             if (query.startsWith("emoji")) {
-                if (query === "emoji") return emojiModel;
+                if (query === "emoji")
+                    return emojiModel;
                 var emojiQuery = query.substring(5).trim();
                 return emojiModel.filter(item => Vars.fuzzyMatch(emojiQuery, item.name));
             }
@@ -375,7 +466,7 @@ Item {
                 } else {
                     results = clipboardModel.filter(item => Vars.fuzzyMatch(clipQuery, item.name));
                 }
-                
+
                 var finalResults = results.slice();
                 finalResults.unshift({
                     name: "Clear Clipboard History",
@@ -393,49 +484,20 @@ Item {
             }
             if (query.startsWith("tools")) {
                 var toolsQuery = query.substring(5).trim();
-                if (toolsQuery === "") return settingsOptions;
+                if (toolsQuery === "")
+                    return settingsOptions;
                 return settingsOptions.filter(item => Vars.fuzzyMatch(toolsQuery, item.name));
             }
         }
 
-        var allApps = [];
-        if (typeof DesktopEntries !== "undefined" && DesktopEntries.applications) {
-            var appsSource = DesktopEntries.applications.values;
-            
-            if (appsSource) {
-                for (var k = 0; k < appsSource.length; k++) {
-                    var rApp = appsSource[k];
-                    if (!rApp) continue;
-                    
-                    var execCmd = rApp.command || [];
-                    var iconStr = rApp.icon || "";
-                    
-                    if (iconStr !== "" && iconStr.indexOf("/") !== 0) {
-                         iconStr = "?fallback=" + iconStr;
-                    }
-                    
-                    var finalCommand = Array.isArray(execCmd) && execCmd.length > 0 ? execCmd : ["bash", "-c", "gtk-launch " + (rApp.id || "")];
-                    allApps.push({
-                        name: rApp.name || "Unknown",
-                        icon: iconStr,
-                        command: finalCommand,
-                        commandStr: JSON.stringify(finalCommand),
-                        workingDirectory: rApp.workingDirectory || Quickshell.env("HOME"),
-                        isFile: false,
-                        isDir: false,
-                        isSetting: false,
-                        isClearAll: false,
-                        isClipboard: false,
-                        isMath: false
-                    });
-                }
-            }
-        }
-        
+        // Built once in rebuildBaseApps() and kept up to date via the DesktopEntries connection,
+        // instead of being rebuilt (with JSON.stringify per app) on every keystroke.
+        var allApps = rootModel.baseApps;
+
         if (text === "") {
             return allApps;
         }
-        
+
         var matchedApps = [];
         for (var l = 0; l < allApps.length; l++) {
             var score = Vars.fuzzyMatchScore(text, allApps[l].name);
@@ -445,8 +507,8 @@ Item {
                 matchedApps.push(appWithScore);
             }
         }
-        
-        matchedApps.sort(function(a, b) {
+
+        matchedApps.sort(function (a, b) {
             return b.score - a.score;
         });
         if (text.indexOf("./") !== -1) {
@@ -454,7 +516,7 @@ Item {
             var matchedFiles = fileQuery === "" ? rootModel.fileModel.slice(0, 50) : rootModel.fileModel.filter(file => Vars.fuzzyMatch(fileQuery, file.name));
             return matchedApps.concat(matchedFiles);
         }
-        
+
         return matchedApps;
     }
 }

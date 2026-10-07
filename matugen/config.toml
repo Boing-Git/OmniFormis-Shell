@@ -3,7 +3,7 @@ variant = "dark"
 json_format = "hex"
 
 [config.wallpaper]
-command = "awww img --transition-type center --transition-duration 1.5 --transition-bezier 0.05,0.7,0.1,1 {{ image }}"
+command = "awww img --transition-type center --transition-duration 1.5 --transition-bezier 0.05,0.7,0.1,1 '{{ image }}'"
 set = true
 
 [templates.vscode-raw-dark]
@@ -25,12 +25,12 @@ output_path = '~/.config/color-schemes/material-you/light/vscode-colors.json'
 [templates.wezterm-dark]
 input_path = './templates/dark/wezterm.lua'
 output_path = '~/.config/color-schemes/material-you/dark/wezterm.lua'
-post_hook = 'touch ~/.config/wezterm/wezterm.lua'
+post_hook = 'touch ~/.config/wezterm/wezterm.lua 2>/dev/null || true'
 
 [templates.wezterm-light]
 input_path = './templates/light/wezterm.lua'
 output_path = '~/.config/color-schemes/material-you/light/wezterm.lua'
-post_hook = 'touch ~/.config/wezterm/wezterm.lua'
+post_hook = 'touch ~/.config/wezterm/wezterm.lua 2>/dev/null || true'
 
 [templates.obs-dark]
 input_path = './templates/dark/obs.obt'
@@ -131,3 +131,11 @@ output_path = '~/.config/color-schemes/material-you/dark/steam.css'
 [templates.steam-light]
 input_path = './templates/light/steam.css'
 output_path = '~/.config/color-schemes/material-you/light/steam.css'
+
+[templates.vesktop-dark]
+input_path = './templates/dark/vesktop.css'
+output_path = '~/.config/color-schemes/material-you/dark/vesktop.css'
+
+[templates.vesktop-light]
+input_path = './templates/light/vesktop.css'
+output_path = '~/.config/color-schemes/material-you/light/vesktop.css'

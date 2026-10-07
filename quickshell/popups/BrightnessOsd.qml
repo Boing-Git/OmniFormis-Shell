@@ -20,24 +20,14 @@ Item {
     property bool isVisible: false
     property bool preventShow: false
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
     property alias panel: osdBackground
     property alias panelMask: panelMask
     
     Item {
         id: panelMask
         anchors.centerIn: osdBackground
-        width: osdBackground.width + 40
-        height: osdBackground.height + 40
+        width: isVisible ? (osdBackground.width + 40) : 0
+        height: isVisible ? (osdBackground.height + 40) : 0
     }
     
     property real smoothBrightness: Vars.currentBrightness !== undefined ? Vars.currentBrightness : 1.0
@@ -126,9 +116,9 @@ Item {
         color: Theme.surface
         
         layer.enabled: false
-        layer.samples: 32
+        layer.samples: Vars.layerSamples
 
-        opacity: mainContainer.isVisible ? ((Vars._translucent && !Vars.gameMode) ? Vars.panelOpacity : 1.0) : 0.0
+        opacity: mainContainer.isVisible ? (Vars.isTranslucent() ? Vars.panelOpacity : 1.0) : 0.0
         visible: opacity > 0
 
         Behavior on width {
@@ -228,6 +218,7 @@ Item {
                 }
 
                 Rectangle {
+                    antialiasing: true
                     id: osdLeftTrack
                     x: 0
                     y: 0
@@ -252,6 +243,7 @@ Item {
                 }
 
                 Rectangle {
+                    antialiasing: true
                     id: osdRightTrack
                     x: parent.handlePos + mainContainer.handleWidth + mainContainer.gap
                     y: 0
@@ -289,6 +281,7 @@ Item {
                 }
 
                 Rectangle {
+                    antialiasing: true
                     id: osdTopTrack
                     x: 0
                     y: 0
@@ -303,6 +296,7 @@ Item {
                 }
 
                 Rectangle {
+                    antialiasing: true
                     id: osdBottomTrack
                     x: 0
                     y: parent.handlePos + mainContainer.handleWidth + mainContainer.gap

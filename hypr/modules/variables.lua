@@ -10,23 +10,25 @@ local vars = {
     -- Set the terminal
     Term = "wezterm",
     -- Set the code editor
-    Editor = "antigravity",
+    Editor = "antigravity-ide",
     -- Set the file manager
     Files = "nautilus",
     -- Set the system info app
     SysInfo = "btop",
     -- Enable game mode (disables animations and system resources taking things out of the shell UI)
     GameMode = false,
+    -- Low-spec mode for old or weak hardware such as older ThinkPads, turns off blur, shadows, translucency and heavy shell effects ("auto", "on", "off")
+    LowSpec = "auto",
     -- Select layout for hyprland
     Layout = "Scrolling",
 
     -- Input
     -- Set keyboard layout
-    kb_layout = "us,us",
+    kb_layout = "us",
     -- Set keyboard variant
-    kb_variant = "colemak_dh,",
+    kb_variant = "colemak_dh",
     -- Set keyboard options
-    kb_options = "grp:alt_shift_toggle,caps:escape",
+    kb_options = "grp:alt_shift_toggle",
     -- Set follow mouse mode
     follow_mouse = 1,
     -- Set mouse sensitivity
@@ -53,27 +55,15 @@ local vars = {
     -- Set the Fourth modifier 
     QM = "CTRL",
 
-    -- Quickshell Keybinds
-    -- Set the key to open launcher
-    QuickLauncherKey = "D",
-    -- Set the key to take a screenshot
-    QsScreenshotKey = "S",
-    -- Set the key to open wallpaper menu
-    QsWallpaperKey = "W",
-    -- Set the key to open color scheme menu
-    QsColorSchemeKey = "T",
-    -- Set the key to open control center
-    QsControlCenterKey = "C",
-    -- Set the key to open power menu
-    QsPowerMenuKey = "P",
-    -- Set the key to open overview
-    QsOverviewKey = "TAB",
-    -- Set the key to open emoji picker
-    QsEmojiPickerKey = "comma",
-    -- Set the key to open clipboard
-    QsClipboardKey = "V",
-    -- Set the key to open lens (circle to search)
-    QsLensKey = "X",
+    -- Navigation Keys
+    -- Key that moves left when vim keys are on
+    VimLeftKey = "m",
+    -- Key that moves down when vim keys are on
+    VimDownKey = "n",
+    -- Key that moves up when vim keys are on
+    VimUpKey = "e",
+    -- Key that moves right when vim keys are on
+    VimRightKey = "i",
 
     -- Decoration
     -- Set the gap size between windows (inner)
@@ -85,7 +75,7 @@ local vars = {
     -- Set window rounding
     rounding = 13,
     -- Set rounding power (higher = larger area the rounding is applied)
-    rounding_power = 22,
+    rounding_power = 4,
     -- Set active window opacity
     active_opacity = 1.0,
     -- Set inactive window opacity
@@ -109,7 +99,7 @@ local vars = {
 
     -- Blur
     -- Enable blur
-    blur_enabled = true,
+    blur_enabled = false,
     -- Set blur size
     blur_size = 4,
     -- Set number of blur passes
@@ -157,7 +147,7 @@ local vars = {
 
     -- Animation Style
     -- Select animation style for hyprland ("expressive", "spring", "jelly", "flyingcards", "snappy", "cinematic", "minimal", "fluid", "aggressive", "elegant", "playful", "elastic", "swift", "relaxed", "slipstream", "standard", "fluent", "custom", "none")
-    AnimateStyle = "slipstream",
+    AnimateStyle = "expressive",
     
     -- --- Custom Animation Profile ---
     

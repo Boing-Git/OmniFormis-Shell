@@ -6,6 +6,7 @@ import Quickshell.Networking
 import Quickshell.Bluetooth
 import Quickshell.Services.Pipewire
 import Quickshell.Hyprland
+import Quickshell.Io
 import "../../theme"
 import "../.."
 
@@ -18,16 +19,6 @@ ColumnLayout {
     }
     property bool isEditorMode: false
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
     property bool systemModeIsDark: Theme.surface.r < 0.5
     property int activeMaxRow: 4
     property real baseCellWidth: (width - (12 * 3)) / 4
@@ -37,6 +28,7 @@ ColumnLayout {
     signal openWallpaperRequested()
     signal openOverviewRequested()
     signal openGameLibraryRequested()
+    signal openCheatSheetRequested()
     
     // External states for some modules
     property var audioNode: Pipewire.defaultAudioSink
@@ -66,9 +58,62 @@ ColumnLayout {
     }
 
     readonly property string bluetoothIcon: {
-        if (!adapterState) return "\ue1a9"; 
-        if (!connectDevice) return "\ue1a7"; 
-        return "\ue1a8"; 
+        if (!adapterState) return "\ue1a9";
+        if (!connectDevice) return "\ue1a7";
+        return "\ue1a8";
+    }
+
+    // Disk usage: kept at grid level (not inside the submenu) so the collapsed tile's subtitle
+    // stays live even while the submenu is closed, same "total" row DiskMenu.qml's detailed list
+    // excludes to avoid double-counting.
+    property var diskRows: []
+    property string diskSummary: ""
+
+    Process {
+        id: diskUsageProc
+        command: ["df", "-B1", "--output=target,size,used,avail,pcent", "--total", "-x", "tmpfs", "-x", "devtmpfs", "-x", "squashfs", "-x", "overlay"]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var lines = this.text.trim().split("\n");
+                var rows = [];
+                var totalLine = null;
+                for (var i = 1; i < lines.length; i++) {
+                    var parts = lines[i].trim().split(/\s+/);
+                    if (parts.length < 5) continue;
+                    var pcent = parts[4].replace("%", "");
+                    var rowSize = parseFloat(parts[1]) || 0;
+                    // Skip tiny pseudo-mounts (e.g. the EFI variables partition) that clutter the
+                    // list without being a filesystem anyone cares about the free space on.
+                    if (parts[0] !== "total" && rowSize < 104857600) continue;
+                    var row = {
+                        target: parts[0],
+                        size: rowSize,
+                        used: parseFloat(parts[2]) || 0,
+                        avail: parseFloat(parts[3]) || 0,
+                        percent: parseFloat(pcent) || 0
+                    };
+                    if (row.target === "total") totalLine = row;
+                    else rows.push(row);
+                }
+                moduleGridRoot.diskRows = rows;
+                if (totalLine) {
+                    var freeGb = (totalLine.avail / 1073741824).toFixed(0);
+                    var totalGb = (totalLine.size / 1073741824).toFixed(0);
+                    moduleGridRoot.diskSummary = freeGb + " GB free of " + totalGb + " GB";
+                } else {
+                    moduleGridRoot.diskSummary = "";
+                }
+            }
+        }
+    }
+
+    Timer {
+        interval: 30000
+        running: moduleGridRoot.visible
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: diskUsageProc.running = true
     }
 
     ListModel { id: activeTiles }
@@ -86,7 +131,7 @@ ColumnLayout {
     }
 
     function getDefaultColSpan(moduleId) {
-        return (moduleId === "wifi" || moduleId === "bluetooth" || moduleId === "display" || moduleId === "color" || moduleId === "wallpaper" || moduleId === "overview" || moduleId === "game_library") ? 2 : 1;
+        return (moduleId === "wifi" || moduleId === "bluetooth" || moduleId === "display" || moduleId === "color" || moduleId === "wallpaper" || moduleId === "overview" || moduleId === "game_library" || moduleId === "disk") ? 2 : 1;
     }
 
     function saveLayout() {
@@ -286,10 +331,12 @@ ColumnLayout {
             {"moduleId": "overview", "colSpan": 1},
             {"moduleId": "game_mode", "colSpan": 1},
             {"moduleId": "system_mode", "colSpan": 1},
-            {"moduleId": "game_library", "colSpan": 1}
+            {"moduleId": "game_library", "colSpan": 1},
+            {"moduleId": "disk", "colSpan": 2},
+            {"moduleId": "cheat_sheet", "colSpan": 1}
         ];
-        
-        let validModules = ["wifi", "bluetooth", "audio", "display", "peace", "color", "wallpaper", "overview", "game_mode", "system_mode", "game_library"];
+
+        let validModules = ["wifi", "bluetooth", "audio", "display", "peace", "color", "wallpaper", "overview", "game_mode", "system_mode", "game_library", "disk", "cheat_sheet"];
         
         activeTiles.clear();
         availableTiles.clear();
@@ -409,9 +456,10 @@ ColumnLayout {
                                         (moduleId === "peace" ? NotificationService.peaceMode : false) ||
                                         (moduleId === "game_mode" ? moduleGridRoot.gameMode : false) ||
                                         (moduleId === "system_mode" ? moduleGridRoot.systemModeIsDark : false) ||
-                                        (moduleId === "game_library" ? false : false)
-                                        
-                property bool hasSubMenu: moduleId === "wifi" || moduleId === "bluetooth" || moduleId === "display" || moduleId === "color" || moduleId === "wallpaper" || moduleId === "overview" || moduleId === "game_library"
+                                        (moduleId === "game_library" ? false : false) ||
+                                        (moduleId === "disk" ? false : false)
+
+                property bool hasSubMenu: moduleId === "wifi" || moduleId === "bluetooth" || moduleId === "display" || moduleId === "color" || moduleId === "wallpaper" || moduleId === "overview" || moduleId === "game_library" || moduleId === "disk"
                                         
                 property string mIcon: moduleId === "wifi" ? moduleGridRoot.wifiIcon :
                                        moduleId === "bluetooth" ? moduleGridRoot.bluetoothIcon :
@@ -423,8 +471,10 @@ ColumnLayout {
                                        moduleId === "overview" ? "grid_view" : 
                                        moduleId === "game_mode" ? "sports_esports" :
                                        moduleId === "system_mode" ? (moduleGridRoot.systemModeIsDark ? "dark_mode" : "light_mode") :
-                                       moduleId === "game_library" ? "videogame_asset" : ""
-                                       
+                                       moduleId === "game_library" ? "videogame_asset" :
+                                       moduleId === "disk" ? "hard_drive" :
+                                       moduleId === "cheat_sheet" ? "keyboard" : ""
+
                 property string mTitle: moduleId === "wifi" ? "Wi-Fi" :
                                         moduleId === "bluetooth" ? "Bluetooth" :
                                         moduleId === "audio" ? "Audio" :
@@ -435,7 +485,9 @@ ColumnLayout {
                                         moduleId === "overview" ? "Overview" : 
                                         moduleId === "game_mode" ? "Game Mode" : 
                                         moduleId === "system_mode" ? "System Mode" :
-                                        moduleId === "game_library" ? "Game Library" : ""
+                                        moduleId === "game_library" ? "Game Library" :
+                                        moduleId === "disk" ? "Storage" :
+                                        moduleId === "cheat_sheet" ? "Shortcuts" : ""
                                         
                 function getExpandedSubtitle() {
                     switch(moduleId) {
@@ -465,7 +517,11 @@ ColumnLayout {
                             return moduleGridRoot.systemModeIsDark ? "Dark" : "Light";
                         case "game_library":
                             return "Steam Games";
-                        default: 
+                        case "disk":
+                            return moduleGridRoot.diskSummary;
+                        case "cheat_sheet":
+                            return "Keybinds";
+                        default:
                             return "";
                     }
                 }
@@ -474,6 +530,8 @@ ColumnLayout {
                     if (moduleId === "wifi") activeDelegateWrapper.gridRoot.subMenuRequested("wifi");
                     else if (moduleId === "bluetooth") activeDelegateWrapper.gridRoot.subMenuRequested("bluetooth");
                     else if (moduleId === "display") activeDelegateWrapper.gridRoot.subMenuRequested("display");
+                    else if (moduleId === "disk") activeDelegateWrapper.gridRoot.subMenuRequested("disk");
+                    else if (moduleId === "cheat_sheet") activeDelegateWrapper.gridRoot.openCheatSheetRequested();
                     else if (moduleId === "color") activeDelegateWrapper.gridRoot.openColorSchemeRequested()
                     else if (moduleId === "wallpaper") activeDelegateWrapper.gridRoot.openWallpaperRequested()
                     else if (moduleId === "overview") activeDelegateWrapper.gridRoot.openOverviewRequested()
@@ -634,6 +692,7 @@ ColumnLayout {
 
                     // Overlay to show edit mode is active, slightly dimming the content
                     Rectangle {
+                        antialiasing: true
                         anchors.fill: parent; radius: 16
                         color: dragArea.drag.active ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.0) : (dragArea.containsMouse ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.08) : Qt.rgba(0, 0, 0, 0.1))
                         Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customEmphasizedDecelerate } }
@@ -657,6 +716,7 @@ ColumnLayout {
                     }
                     // Top-Left Remove Button (-)
                     Rectangle {
+                        antialiasing: true
                         width: 24; height: 24; radius: 12
                         anchors.top: parent.top
                         anchors.left: parent.left

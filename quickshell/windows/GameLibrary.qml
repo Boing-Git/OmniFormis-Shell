@@ -44,17 +44,6 @@ Item {
 
     signal closeRequested
 
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
-
     Variants {
         model: Quickshell.screens
 
@@ -150,7 +139,8 @@ Item {
                 id: panelBackground
                 property bool isBackgroundActive: overviewContainer.visibleState || (MorphState.openCount === 0 && MorphState.activeItem === panelBackground && panelBackground.width > 105)
                 layer.enabled: true
-                layer.samples: 32
+                layer.smooth: true
+                layer.samples: Vars.layerSamples
                 
                 anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
                 anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
@@ -205,11 +195,6 @@ Item {
                 color: Vars.tColorActive(isBackgroundActive, Theme.surface, Vars.panelOpacity)
                 
                 opacity: isBackgroundActive || expandedUI.opacity > 0 ? 1.0 : 0.0
-                
-                Behavior on topLeftRadius { enabled: !overviewContainer.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-                Behavior on topRightRadius { enabled: !overviewContainer.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-                Behavior on bottomLeftRadius { enabled: !overviewContainer.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-                Behavior on bottomRightRadius { enabled: !overviewContainer.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
 
                 Behavior on width {
                     enabled: !overviewContainer.gameMode
@@ -248,11 +233,11 @@ Item {
                     clip: true
                     Behavior on opacity {
                         enabled: !overviewContainer.gameMode
-                        NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customEmphasizedDecelerate }
+                        NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.getFadeCurve(overviewContainer.visibleState) }
                     }
 
 
-                    ScrollView {
+                    Flickable {
                         id: libraryScrollView
                         anchors.centerIn: parent
                         width: gridLayout.implicitWidth
@@ -260,8 +245,16 @@ Item {
                         contentWidth: gridLayout.implicitWidth
                         contentHeight: gridLayout.implicitHeight
                         clip: true
-                        ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                        ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                        maximumFlickVelocity: Vars.maximumFlickVelocity
+
+                        NumberAnimation {
+                            id: scrollAnim
+                            target: libraryScrollView
+                            property: "contentY"
+                            duration: Vars.animationDuration
+                            easing.type: Easing.BezierSpline
+                            easing.bezierCurve: Vars.customExpressiveSpatialSlow
+                        }
 
                         GridLayout {
                             id: gridLayout
@@ -560,10 +553,15 @@ Item {
                     let itemTop = row * (itemH + spacing);
                     let itemBottom = itemTop + itemH;
                     
+                    let targetY = libraryScrollView.contentY;
                     if (itemTop < libraryScrollView.contentY) {
-                        libraryScrollView.contentY = itemTop;
+                        targetY = itemTop;
                     } else if (itemBottom > libraryScrollView.contentY + libraryScrollView.height) {
-                        libraryScrollView.contentY = itemBottom - libraryScrollView.height;
+                        targetY = itemBottom - libraryScrollView.height;
+                    }
+                    if (targetY !== libraryScrollView.contentY) {
+                        scrollAnim.to = targetY;
+                        scrollAnim.restart();
                     }
                 }
 

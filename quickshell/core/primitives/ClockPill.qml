@@ -18,16 +18,6 @@ Item {
     property string timeString: ""
     property string dateString: ""
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
     property alias panel: clockRect
     property bool isHovered: dragArea.containsMouse
 
@@ -46,6 +36,7 @@ Item {
         z: 1
 
         Rectangle {
+            antialiasing: true
             anchors.fill: parent
             topLeftRadius: clockRect.topLeftRadius
             topRightRadius: clockRect.topRightRadius

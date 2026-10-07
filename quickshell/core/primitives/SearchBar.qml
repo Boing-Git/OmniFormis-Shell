@@ -2,11 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import "../../theme"
-import "../../theme"
 
-Rectangle {
+Item {
     id: root
-    color: "transparent"
 
     property alias text: searchInput.text
     property alias searchInput: searchInput
@@ -22,11 +20,20 @@ Rectangle {
     property color defaultTextColor: Theme.on_surface
     property color activeTextColor: Theme.on_primary_container
     property color defaultPlaceholderColor: Theme.on_surface_variant
+    property color activePlaceholderColor: Qt.rgba(activeTextColor.r, activeTextColor.g, activeTextColor.b, 0.7)
+    property int borderWidth: searchInput.activeFocus ? 2 : 0
+    property color borderColor: Theme.primary
+    property int fontWeight: -1
     property real outerTopLeftRadius: Vars.radiusExtraLarge
     property real outerTopRightRadius: Vars.radiusExtraLarge
     property real outerBottomLeftRadius: Vars.radiusExtraLarge
     property real outerBottomRightRadius: Vars.radiusExtraLarge
     property real containerPadding: Vars.spacingLarge
+
+    property real topLeftRadius: Math.max(0, outerTopLeftRadius - containerPadding)
+    property real topRightRadius: Math.max(0, outerTopRightRadius - containerPadding)
+    property real bottomLeftRadius: Math.max(0, outerBottomLeftRadius - containerPadding)
+    property real bottomRightRadius: Math.max(0, outerBottomRightRadius - containerPadding)
 
     signal downPressed(var event)
     signal returnPressed(var event)
@@ -39,21 +46,18 @@ Rectangle {
     Layout.maximumHeight: defaultHeight
 
     Rectangle {
+        antialiasing: true
         anchors.fill: parent
         color: searchInput.activeFocus ? activeColor : defaultColor
-        border.color: searchInput.activeFocus ? Theme.primary : "transparent"
-        border.width: searchInput.activeFocus ? 2 : 0
-        
-        topLeftRadius: Math.max(0, root.outerTopLeftRadius - root.containerPadding)
-        topRightRadius: Math.max(0, root.outerTopRightRadius - root.containerPadding)
-        bottomLeftRadius: Math.max(0, root.outerBottomLeftRadius - root.containerPadding)
-        bottomRightRadius: Math.max(0, root.outerBottomRightRadius - root.containerPadding)
+        border.color: root.borderColor
+        border.width: root.borderWidth
+
+        topLeftRadius: root.topLeftRadius
+        topRightRadius: root.topRightRadius
+        bottomLeftRadius: root.bottomLeftRadius
+        bottomRightRadius: root.bottomRightRadius
 
         Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-        Behavior on topLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on topRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on bottomLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on bottomRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
 
         MouseArea {
             anchors.fill: parent
@@ -82,6 +86,7 @@ Rectangle {
             font.pixelSize: 24
             color: searchInput.activeFocus ? root.activeTextColor : root.defaultTextColor
             visible: root.showIcon
+            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
         }
 
         TextInput {
@@ -89,6 +94,7 @@ Rectangle {
             Layout.fillWidth: true
             font.family: Vars.fontFamily
             font.pixelSize: 16
+            font.weight: root.fontWeight >= 0 ? root.fontWeight : Font.Normal
             color: searchInput.activeFocus ? root.activeTextColor : root.defaultTextColor
             focus: root.keepFocus
             selectByMouse: true
@@ -98,7 +104,6 @@ Rectangle {
             property bool _deliberateFocusLoss: false
 
             onActiveFocusChanged: {
-                console.log("[DEBUG] SearchBar activeFocus changed:", activeFocus);
                 if (activeFocus) {
                     _deliberateFocusLoss = false;
                     Qt.inputMethod.reset();
@@ -110,10 +115,12 @@ Rectangle {
                 text: root.placeholderText
                 font.family: Vars.fontFamily
                 font.pixelSize: searchInput.font.pixelSize
-                color: root.defaultPlaceholderColor
+                setWeight: root.fontWeight >= 0 ? root.fontWeight : Font.Normal
+                color: searchInput.activeFocus ? root.activePlaceholderColor : root.defaultPlaceholderColor
                 opacity: 0.8
                 visible: !searchInput.text && !searchInput.activeFocus
                 anchors.verticalCenter: parent.verticalCenter
+                Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
             }
 
             Keys.onDownPressed: (event) => {
@@ -141,6 +148,7 @@ Rectangle {
             color: searchInput.activeFocus ? root.activeTextColor : root.defaultTextColor
             visible: searchInput.text.length > 0
             Layout.alignment: Qt.AlignVCenter
+            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
@@ -152,5 +160,3 @@ Rectangle {
         }
     }
 }
-
-

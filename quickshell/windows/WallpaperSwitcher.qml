@@ -22,16 +22,6 @@ Item {
     property bool forceHidePill: false
     property var focusWindow: null
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
     property alias panel: panel
     property alias panelMask: panelMask
 
@@ -50,6 +40,12 @@ Item {
         property string awwwTransitionType: "wipe"
         property string awwwTransitionStep: "90"
         property string awwwTransitionAngle: "30"
+    }
+
+    Settings {
+        id: themeModeSettings
+        category: "ColorScheme"
+        property string currentMode: "dark"
     }
 
     signal closeRequested
@@ -75,33 +71,24 @@ Item {
 
     Item {
         id: panelMask
-                anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
+        anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
         anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
         anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
         anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
         
-        anchors.topMargin: -20
-        anchors.bottomMargin: -20
-        anchors.leftMargin: -20
-        anchors.rightMargin: -20
-        width: root.expanded ? 640 : 140
-        height: root.expanded ? 590 : 80
+        anchors.topMargin: root.expanded ? -20 : 0
+        anchors.bottomMargin: root.expanded ? -20 : 0
+        anchors.leftMargin: root.expanded ? -20 : 0
+        anchors.rightMargin: root.expanded ? -20 : 0
+        width: root.expanded ? 640 : 0
+        height: root.expanded ? 590 : 0
     }
 
     Primitives.SquircleMask {
         id: panel
         property bool isBackgroundActive: root.expanded || (MorphState.openCount === 0 && MorphState.activeItem === panel && panel.width > 105)
-        layer.enabled: true
-        layer.samples: 32
-        layer.effect: MultiEffect {
-            shadowEnabled: !root.gameMode && panel.isBackgroundActive
-            shadowBlur: 1.0
-            shadowColor: Qt.rgba(0, 0, 0, 0.25)
-            shadowVerticalOffset: 4
-            shadowHorizontalOffset: 0
-        }
         anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
@@ -121,11 +108,6 @@ Item {
 
         opacity: isBackgroundActive || innerUI.opacity > 0 ? 1.0 : 0.0
         visible: opacity > 0
-
-        Behavior on topLeftRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on topRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on bottomLeftRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on bottomRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
 
         Behavior on width {
             enabled: !root.gameMode
@@ -158,8 +140,19 @@ Item {
                 NumberAnimation {
                     duration: Vars.animationDuration
                     easing.type: Easing.BezierSpline
-                    easing.bezierCurve: root.expanded ? Vars.customEmphasizedDecelerate : Vars.customEmphasizedAccelerate
+                    easing.bezierCurve: Vars.getFadeCurve(root.expanded)
                 }
+            }
+
+            // Shown while a wallpaper is being applied and the colours are generated from it
+            Primitives.LoadingIndicator {
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: Vars.spacingSmall
+                width: 44
+                height: 44
+                running: matugenProc.running
+                z: 10
             }
 
             Loader {
@@ -330,7 +323,18 @@ Item {
         });
 
         // Run matugen via the Process component
-        var cmd = "matugen image '" + safePath + "' -m light -t " + matugenSchemeArg + " --source-color-index 0";
+        var mode = themeModeSettings.currentMode || "dark";
+        var cmd = "";
+        if (settings.matugenScheme === "scheme-auto" || settings.matugenScheme === "auto" || !settings.matugenScheme) {
+            // First run matugen immediately for instant feedback, then run auto_scheme_matugen to refine it in background
+            cmd = "matugen image '" + safePath + "' -m " + mode + " -t " + matugenSchemeArg + " --prefer saturation";
+            // We run auto_scheme_matugen.sh in detached process so it doesn't block UI and can update later
+            Quickshell.execDetached({
+                command: ["bash", "-c", "sleep 1.5; bash ~/Dotfiles/scripts/auto_scheme_matugen.sh '" + safePath + "' " + mode + "; bash ~/.config/color-schemes/set-theme.sh material-you " + mode + "; nohup bash ~/Dotfiles/scripts/reload.sh >/dev/null 2>&1 &"]
+            });
+        } else {
+            cmd = "matugen image '" + safePath + "' -m " + mode + " -t " + matugenSchemeArg + " --prefer saturation";
+        }
                   
         matugenProc.command = ["bash", "-c", cmd];
         matugenProc.running = true;
@@ -352,9 +356,10 @@ Item {
         }
         onExited: (code, status) => {
             if (code === 0) {
-                // Delay slightly to ensure matugen has fully flushed to disk, then reload Hyprland and Quickshell
+                // Delay slightly to ensure matugen has fully flushed to disk, then run set-theme and reload
+                var mode = themeModeSettings.currentMode || "dark";
                 Quickshell.execDetached({
-                    command: ['bash', '-c', 'sleep 0.5; nohup bash ~/Dotfiles/scripts/reload.sh >/dev/null 2>&1 &']
+                    command: ['bash', '-c', 'sleep 0.5; bash ~/.config/color-schemes/set-theme.sh material-you ' + mode + '; nohup bash ~/Dotfiles/scripts/reload.sh >/dev/null 2>&1 &']
                 });
             } else {
                 console.error("[USER ACTION] Matugen failed with exit code: " + code + ". Skipping color sync.");

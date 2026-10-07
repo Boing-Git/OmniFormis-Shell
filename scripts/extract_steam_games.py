@@ -11,6 +11,31 @@ def get_steam_games():
         os.path.expanduser("~/.var/app/com.valvesoftware.Steam/data/Steam")
     ]
     
+    # Extract additional library folders from libraryfolders.vdf
+    additional_roots = set()
+    for root in steam_roots:
+        vdf_path = os.path.join(root, "steamapps", "libraryfolders.vdf")
+        if os.path.isfile(vdf_path):
+            try:
+                with open(vdf_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    matches = re.findall(r'"path"\s+"([^"]+)"', content)
+                    for match in matches:
+                        additional_roots.add(match)
+            except Exception as e:
+                print(f"Error parsing {vdf_path}: {e}", file=sys.stderr)
+                
+    for r in additional_roots:
+        if r not in steam_roots:
+            steam_roots.append(r)
+            
+    # Gather all possible librarycache paths (banners are usually kept in main installation folders)
+    cache_dirs = []
+    for root in steam_roots:
+        cache_path = os.path.join(root, "appcache", "librarycache")
+        if os.path.isdir(cache_path):
+            cache_dirs.append(cache_path)
+    
     apps = []
     seen_ids = set()
     
@@ -41,7 +66,9 @@ def get_steam_games():
                                 
                             seen_ids.add(appid)
                             banner_path = ""
-                            if os.path.isdir(librarycache):
+                            for librarycache in cache_dirs:
+                                if banner_path:
+                                    break
                                 # Steam uses subdirectories named after the appid for caching now
                                 app_cache_dir = os.path.join(librarycache, appid)
                                 

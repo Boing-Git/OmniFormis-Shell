@@ -88,7 +88,7 @@ ColumnLayout {
                 border.width: 1
                 Behavior on border.color { ColorAnimation { duration: 250 } }
 
-                property string mIcon: moduleId === "wifi" ? availableDropArea.gridRoot.wifiIcon : moduleId === "bluetooth" ? availableDropArea.gridRoot.bluetoothIcon : moduleId === "audio" ? "\ue050" : moduleId === "display" ? "\ue30d" : moduleId === "peace" ? "\ue15c" : moduleId === "color" ? "palette" : moduleId === "wallpaper" ? "wallpaper" : moduleId === "overview" ? "grid_view" : moduleId === "game_mode" ? "sports_esports" : moduleId === "system_mode" ? (availableDropArea.gridRoot.systemModeIsDark ? "dark_mode" : "light_mode") : moduleId === "game_library" ? "videogame_asset" : ""
+                property string mIcon: moduleId === "wifi" ? availableDropArea.gridRoot.wifiIcon : moduleId === "bluetooth" ? availableDropArea.gridRoot.bluetoothIcon : moduleId === "audio" ? "\ue050" : moduleId === "display" ? "\ue30d" : moduleId === "peace" ? "\ue15c" : moduleId === "color" ? "palette" : moduleId === "wallpaper" ? "wallpaper" : moduleId === "overview" ? "grid_view" : moduleId === "game_mode" ? "sports_esports" : moduleId === "system_mode" ? (availableDropArea.gridRoot.systemModeIsDark ? "dark_mode" : "light_mode") : moduleId === "game_library" ? "videogame_asset" : moduleId === "disk" ? "hard_drive" : moduleId === "cheat_sheet" ? "keyboard" : ""
                 
                 QsText {
                     anchors.centerIn: parent
@@ -103,6 +103,7 @@ ColumnLayout {
                 }
 
                 Rectangle {
+                    antialiasing: true
                     anchors.fill: parent; radius: 16
                     color: availDragArea.drag.active ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.0) : (availDragArea.containsMouse ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.08) : Qt.rgba(0, 0, 0, 0.1))
                     Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customEmphasizedDecelerate } }

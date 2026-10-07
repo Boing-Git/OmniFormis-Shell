@@ -13,18 +13,9 @@ GridLayout {
     property real wsWidth: 100
     property real wsHeight: 100
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
 
     property var overviewPanel
+    property var rootContainer
 
     signal closeRequested
 
@@ -45,16 +36,16 @@ GridLayout {
 
         Item {
             id: wsContainer
-            readonly property int visualCol: index % (overviewContainer ? overviewContainer.gridColumns : 5)
-            readonly property int visualRow: Math.floor(index / (overviewContainer ? overviewContainer.gridColumns : 5))
+            readonly property int visualCol: index % (rootContainer ? rootContainer.gridColumns : 5)
+            readonly property int visualRow: Math.floor(index / (rootContainer ? rootContainer.gridColumns : 5))
             readonly property int wsId: {
-                if (!overviewContainer) return root.baseWorkspaceId + index;
-                if (!overviewContainer.isVertical) {
-                    let mappedRow = Vars.pillPosition === "Bottom" ? (overviewContainer.gridRows - 1 - visualRow) : visualRow;
-                    return root.baseWorkspaceId + (mappedRow * overviewContainer.gridColumns + visualCol);
+                if (!rootContainer) return root.baseWorkspaceId + index;
+                if (!rootContainer.isVertical) {
+                    let mappedRow = Vars.pillPosition === "Bottom" ? (rootContainer.gridRows - 1 - visualRow) : visualRow;
+                    return root.baseWorkspaceId + (mappedRow * rootContainer.gridColumns + visualCol);
                 }
-                let mappedCol = Vars.pillPosition === "Right" ? (overviewContainer.gridColumns - 1 - visualCol) : visualCol;
-                return root.baseWorkspaceId + (mappedCol * overviewContainer.gridRows + visualRow);
+                let mappedCol = Vars.pillPosition === "Right" ? (rootContainer.gridColumns - 1 - visualCol) : visualCol;
+                return root.baseWorkspaceId + (mappedCol * rootContainer.gridRows + visualRow);
             }
             readonly property bool isFocused: Hyprland.focusedWorkspace?.id === wsId
             property bool hoveredWhileDragging: false
@@ -69,9 +60,9 @@ GridLayout {
                 property real rInner: Vars.radiusSmall
 
                 topLeftRadius: (wsContainer.visualRow === 0 && wsContainer.visualCol === 0) ? rOuter : rInner
-                topRightRadius: (wsContainer.visualRow === 0 && wsContainer.visualCol === (overviewContainer ? overviewContainer.gridColumns : 5) - 1) ? rOuter : rInner
-                bottomLeftRadius: (wsContainer.visualRow === (overviewContainer ? overviewContainer.gridRows : 2) - 1 && wsContainer.visualCol === 0) ? rOuter : rInner
-                bottomRightRadius: (wsContainer.visualRow === (overviewContainer ? overviewContainer.gridRows : 2) - 1 && wsContainer.visualCol === (overviewContainer ? overviewContainer.gridColumns : 5) - 1) ? rOuter : rInner
+                topRightRadius: (wsContainer.visualRow === 0 && wsContainer.visualCol === (rootContainer ? rootContainer.gridColumns : 5) - 1) ? rOuter : rInner
+                bottomLeftRadius: (wsContainer.visualRow === (rootContainer ? rootContainer.gridRows : 2) - 1 && wsContainer.visualCol === 0) ? rOuter : rInner
+                bottomRightRadius: (wsContainer.visualRow === (rootContainer ? rootContainer.gridRows : 2) - 1 && wsContainer.visualCol === (rootContainer ? rootContainer.gridColumns : 5) - 1) ? rOuter : rInner
                 clip: true
 
                 color: wsContainer.hoveredWhileDragging ? (Vars.tColor(Theme.on_surface, Vars.componentOpacity)) : wsContainer.isFocused ? (Vars.tColorSelected(Theme.primary)) : (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity))

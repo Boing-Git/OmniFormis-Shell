@@ -15,7 +15,7 @@ fn parse_qml_theme(filepath: &str) -> (HashMap<String, String>, String, bool) {
         exit(1);
     });
 
-    let re = Regex::new(r#"readonly property color (\w+):\s*"([^"]+)""#).unwrap();
+    let re = Regex::new(r#"readonly property color (\w+):\s*["']([^"']+)["']"#).unwrap();
 
     for line in content.lines() {
         let line = line.trim();
@@ -60,25 +60,124 @@ fn parse_qml_theme(filepath: &str) -> (HashMap<String, String>, String, bool) {
     (c, name, found_from_comment)
 }
 
+fn hex_to_rgb(hex: &str) -> (f32, f32, f32) {
+    let hex = hex.trim_start_matches('#');
+    let r = u8::from_str_radix(&hex.get(0..2).unwrap_or("00"), 16).unwrap_or(0) as f32 / 255.0;
+    let g = u8::from_str_radix(&hex.get(2..4).unwrap_or("00"), 16).unwrap_or(0) as f32 / 255.0;
+    let b = u8::from_str_radix(&hex.get(4..6).unwrap_or("00"), 16).unwrap_or(0) as f32 / 255.0;
+    (r, g, b)
+}
+
+fn rgb_to_hsl(r: f32, g: f32, b: f32) -> (f32, f32, f32) {
+    let max = r.max(g).max(b);
+    let min = r.min(g).min(b);
+    let l = (max + min) / 2.0;
+
+    if max == min {
+        (0.0, 0.0, l)
+    } else {
+        let d = max - min;
+        let s = if l > 0.5 { d / (2.0 - max - min) } else { d / (max + min) };
+        let h = if max == r {
+            (g - b) / d + (if g < b { 6.0 } else { 0.0 })
+        } else if max == g {
+            (b - r) / d + 2.0
+        } else {
+            (r - g) / d + 4.0
+        };
+        (h / 6.0, s, l)
+    }
+}
+
+fn hue_to_rgb(p: f32, q: f32, mut t: f32) -> f32 {
+    if t < 0.0 { t += 1.0; }
+    if t > 1.0 { t -= 1.0; }
+    if t < 1.0/6.0 { return p + (q - p) * 6.0 * t; }
+    if t < 1.0/2.0 { return q; }
+    if t < 2.0/3.0 { return p + (q - p) * (2.0/3.0 - t) * 6.0; }
+    p
+}
+
+fn hsl_to_rgb(h: f32, s: f32, l: f32) -> (f32, f32, f32) {
+    if s == 0.0 {
+        (l, l, l)
+    } else {
+        let q = if l < 0.5 { l * (1.0 + s) } else { l + s - l * s };
+        let p = 2.0 * l - q;
+        let r = hue_to_rgb(p, q, h + 1.0/3.0);
+        let g = hue_to_rgb(p, q, h);
+        let b = hue_to_rgb(p, q, h - 1.0/3.0);
+        (r, g, b)
+    }
+}
+
+fn rgb_to_hex(r: f32, g: f32, b: f32) -> String {
+    format!("#{:02x}{:02x}{:02x}", (r * 255.0).round() as u8, (g * 255.0).round() as u8, (b * 255.0).round() as u8)
+}
+
+fn apply_filters(hex: &str, filters: &str, is_dark: bool) -> String {
+    if filters.trim().is_empty() {
+        return hex.to_string();
+    }
+    
+    let (r, g, b) = hex_to_rgb(hex);
+    let (h, mut s, mut l) = rgb_to_hsl(r, g, b);
+    
+    for filter in filters.split('|') {
+        let filter = filter.trim();
+        if filter.starts_with("saturate:") {
+            let parts: Vec<&str> = filter.split(',').collect();
+            let val_str = parts[0].trim_start_matches("saturate:").trim();
+            if let Ok(val) = val_str.parse::<f32>() {
+                s = (s + val / 100.0).clamp(0.0, 1.0);
+            }
+        } else if filter.starts_with("auto_lightness:") {
+            let val_str = filter.trim_start_matches("auto_lightness:").trim();
+            if let Ok(val) = val_str.parse::<f32>() {
+                if is_dark {
+                    l = (l - val / 100.0).clamp(0.0, 1.0);
+                } else {
+                    l = (l + val / 100.0).clamp(0.0, 1.0);
+                }
+            }
+        }
+    }
+    
+    let (nr, ng, nb) = hsl_to_rgb(h, s, l);
+    rgb_to_hex(nr, ng, nb)
+}
+
 fn process_template(
     mut template_content: String,
     light_map: &HashMap<String, String>,
     dark_map: &HashMap<String, String>,
     is_dark_mode: bool,
 ) -> String {
-    let pattern = Regex::new(r"\{\{\s*colors\.([a-zA-Z0-9_]+)\.(light|dark)\.hex[^\}]*\}\}").unwrap();
+    let pattern_hex = Regex::new(r"\{\{\s*colors\.([a-zA-Z0-9_]+)\.(light|dark)\.hex\b([^\}]*)\}\}").unwrap();
+    let pattern_stripped = Regex::new(r"\{\{\s*colors\.([a-zA-Z0-9_]+)\.(light|dark)\.hex_stripped([^\}]*)\}\}").unwrap();
     
-    template_content = pattern.replace_all(&template_content, |caps: &regex::Captures| {
+    template_content = pattern_hex.replace_all(&template_content, |caps: &regex::Captures| {
         let color_name = &caps[1];
         let mode = &caps[2];
+        let filter_str = &caps[3];
         let mapping = if mode == "light" { light_map } else { dark_map };
-        mapping.get(color_name).cloned().unwrap_or_else(|| "#000000".to_string())
+        let hex = mapping.get(color_name).cloned().unwrap_or_else(|| "#000000".to_string());
+        apply_filters(&hex, filter_str, is_dark_mode)
+    }).to_string();
+
+    template_content = pattern_stripped.replace_all(&template_content, |caps: &regex::Captures| {
+        let color_name = &caps[1];
+        let mode = &caps[2];
+        let filter_str = &caps[3];
+        let mapping = if mode == "light" { light_map } else { dark_map };
+        let hex = mapping.get(color_name).cloned().unwrap_or_else(|| "#000000".to_string());
+        apply_filters(&hex, filter_str, is_dark_mode).trim_start_matches('#').to_string()
     }).to_string();
 
     let img_pattern = Regex::new(r"\{\{\s*image\s*\}\}").unwrap();
     template_content = img_pattern.replace_all(&template_content, "/tmp/wallpaper.png").to_string();
 
-    let loop_pattern = Regex::new(r"(?s)<\*\s*for\s+name\s*,\s*value\s+in\s+colors\s*\*>(.*?)<\*\s*endfor\s*>").unwrap();
+    let loop_pattern = Regex::new(r"(?s)<\*\s*for\s+name\s*,\s*value\s+in\s+colors\s*\*>(.*?)<\*\s*endfor\s*\*>").unwrap();
     
     template_content = loop_pattern.replace_all(&template_content, |caps: &regex::Captures| {
         let inner_template = &caps[1];
@@ -94,14 +193,20 @@ fn process_template(
             light_map
         };
 
-        let val_stripped_re = Regex::new(r"\{\{\s*value\.(light|dark)\.hex_stripped[^\}]*\}\}").unwrap();
-        let val_hex_re = Regex::new(r"\{\{\s*value\.(light|dark)\.hex[^\}]*\}\}").unwrap();
+        let val_hex_re = Regex::new(r"\{\{\s*value\.(light|dark)\.hex\b([^\}]*)\}\}").unwrap();
+        let val_stripped_re = Regex::new(r"\{\{\s*value\.(light|dark)\.hex_stripped([^\}]*)\}\}").unwrap();
 
         for (color_name, hex_val) in map_to_use {
-            let hex_stripped = hex_val.trim_start_matches('#');
             let mut s = inner_template.replace("{{name}}", color_name);
-            s = val_stripped_re.replace_all(&s, hex_stripped).to_string();
-            s = val_hex_re.replace_all(&s, hex_val.as_str()).to_string();
+            
+            s = val_hex_re.replace_all(&s, |caps2: &regex::Captures| {
+                apply_filters(hex_val, &caps2[2], is_dark_mode)
+            }).to_string();
+
+            s = val_stripped_re.replace_all(&s, |caps2: &regex::Captures| {
+                apply_filters(hex_val, &caps2[2], is_dark_mode).trim_start_matches('#').to_string()
+            }).to_string();
+            
             result.push_str(&s);
         }
         result
@@ -110,9 +215,13 @@ fn process_template(
     template_content
 }
 
-pub fn generate(light_file: &str, dark_file: &str) {
+pub fn generate(light_file: &str, dark_file: Option<&str>) {
     let (light_map, light_name, light_has_comment) = parse_qml_theme(light_file);
-    let (dark_map, dark_name, dark_has_comment) = parse_qml_theme(dark_file);
+    let (dark_map, dark_name, dark_has_comment) = if let Some(d) = dark_file {
+        parse_qml_theme(d)
+    } else {
+        (light_map.clone(), light_name.clone(), light_has_comment)
+    };
 
     let theme_name = if light_has_comment {
         light_name.clone()
@@ -249,5 +358,36 @@ pub fn toggle() {
     let _ = Command::new(set_script)
         .arg(current_theme)
         .arg(new_mode)
+        .spawn();
+}
+
+pub fn set(name: &str, mode: Option<&str>) {
+    let mode_str = if let Some(m) = mode {
+        m.to_string()
+    } else {
+        let current_link = expand_tilde("~/.config/color-schemes/current/quickTheme.qml");
+        if current_link.exists() {
+            if let Ok(real_path) = std::fs::read_link(&current_link) {
+                let real_path_str = real_path.to_string_lossy();
+                let parts: Vec<&str> = real_path_str.split('/').collect();
+                if parts.len() >= 3 {
+                    parts[parts.len() - 2].to_string()
+                } else {
+                    "dark".to_string()
+                }
+            } else {
+                "dark".to_string()
+            }
+        } else {
+            "dark".to_string()
+        }
+    };
+
+    let set_script = expand_tilde("~/.config/color-schemes/set-theme.sh");
+
+    println!("Setting theme to {} ({})", name, mode_str);
+    let _ = Command::new(set_script)
+        .arg(name)
+        .arg(&mode_str)
         .spawn();
 }

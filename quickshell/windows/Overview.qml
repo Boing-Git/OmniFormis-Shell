@@ -16,28 +16,7 @@ Item {
     id: overviewContainer
     property bool visibleState: false
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
     signal closeRequested
-
-    Process {
-        id: gameModeChecker
-        command: ["bash", "-c", "grep -qi 'GameMode[ \t]*=[ \t]*true' ~/.config/hypr/modules/variables.lua && echo 'true' || echo 'false'"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                overviewContainer.gameMode = (this.text.trim() === 'true');
-            }
-        }
-    }
 
     property bool vimKeysEnabled: false
     Process {
@@ -229,7 +208,8 @@ Item {
                 id: panelBackground
                 property bool isBackgroundActive: overviewContainer.visibleState || (MorphState.openCount === 0 && MorphState.activeItem === panelBackground && panelBackground.width > 105)
                 layer.enabled: true
-                layer.samples: 32
+                layer.smooth: true
+                layer.samples: Vars.layerSamples
 
                 anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
                 anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
@@ -274,11 +254,6 @@ Item {
                 opacity: isBackgroundActive || expandedUI.opacity > 0 ? 1.0 : 0.0
                 // visible: opacity > 0 // Removed to preserve Behavior when hidden
                 
-                Behavior on topLeftRadius { enabled: !overviewContainer.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-                Behavior on topRightRadius { enabled: !overviewContainer.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-                Behavior on bottomLeftRadius { enabled: !overviewContainer.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-                Behavior on bottomRightRadius { enabled: !overviewContainer.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-
                 Behavior on width {
                     enabled: !overviewContainer.gameMode
                     NumberAnimation {
@@ -319,7 +294,7 @@ Item {
                         NumberAnimation {
                             duration: Vars.animationDuration
                             easing.type: Easing.BezierSpline
-                            easing.bezierCurve: overviewContainer.visibleState ? Vars.customEmphasizedDecelerate : Vars.customEmphasizedAccelerate
+                            easing.bezierCurve: Vars.getFadeCurve(overviewContainer.visibleState)
                         }
                     }
 
@@ -351,6 +326,7 @@ Item {
                             wsHeight: overviewPanel.wsHeight
                             gameMode: overviewContainer.gameMode
                             overviewPanel: overviewPanel
+                            rootContainer: overviewContainer
                             onCloseRequested: overviewContainer.closeRequested()
                         }
 
@@ -359,6 +335,7 @@ Item {
                             id: windowLayer
                             anchors.fill: parent
                             overviewPanel: overviewPanel
+                            rootContainer: overviewContainer
                             gameMode: overviewContainer ? overviewContainer.gameMode : false
                             onCloseRequested: overviewContainer.closeRequested()
                         }

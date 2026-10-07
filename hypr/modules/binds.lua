@@ -1,52 +1,16 @@
 local vars = require("modules.variables")
-local kvars = require("modules.keybinds_variables")
+local kb = require("modules.keybind_engine")
 require("modules.quickshellBinds")
 
--- Modifiers
-local MM = kvars.MM
-local QM = kvars.QM
-local TM = kvars.TM
+-- Every shortcut is a named entry in modules/keybinds.lua, resolved by the engine
+local bind = kb.bind
 
--- Keys and Programs
-local BrowserKey = kvars.BrowserKey
+-- Programs the shortcuts launch (see variables.lua)
 local Browser = vars.Browser
-local TermKey = kvars.TermKey
 local Term = vars.Term
-local EditorKey = kvars.EditorKey
 local Editor = vars.Editor
-local FilesKey = kvars.FilesKey
 local Files = vars.Files
 local SysInfo = vars.SysInfo
-local WallSwitch = kvars.WallSwitch
-local CloseKey = kvars.CloseKey
-local FloatKey = kvars.FloatKey
-local FullscreenKey = kvars.FullscreenKey
-local CenterWindowKey = kvars.CenterWindowKey
-local PinKey = kvars.PinKey
-local PipKey = kvars.PipKey
-local GroupToggleKey = kvars.GroupToggleKey
-local GroupTabKey = kvars.GroupTabKey
-local MusicWorkspaceKey = kvars.MusicWorkspaceKey
-local ScratchboardKey = kvars.ScratchboardKey
-local SysInfoWorkspaceKey = kvars.SysInfoWorkspaceKey
-local ColorPickerKey = kvars.ColorPickerKey
-local ScreenshotKey = kvars.ScreenshotKey
-local ShellRestartKey = kvars.ShellRestartKey
-local SuspendKey = kvars.SuspendKey
-local ZoomResetKey = kvars.ZoomResetKey
-local MediaPlayPauseKey = kvars.MediaPlayPauseKey
-local MediaNextKey = kvars.MediaNextKey
-local MediaPrevKey = kvars.MediaPrevKey
-local VolumeMuteKey = kvars.VolumeMuteKey
-
-----------------------------------
---- Used for directional inputs ---
-----------------------------------
-
-local left = kvars.left 
-local right = kvars.right
-local up = kvars.up
-local down = kvars.down
 
 -- Helper variables to track state
 local current_zoom = 1.0
@@ -79,130 +43,126 @@ end
 --------------------------------------------------------------------------------
 
 -- Media Controls
-hl.bind(MM .." + " .. QM .. " + " .. MediaPlayPauseKey, hl.dsp.exec_cmd("playerctl play-pause"))
-hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"))
-hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"))
-hl.bind(MM .. " + " .. QM .. " + " .. MediaNextKey, hl.dsp.exec_cmd("playerctl next"))
-hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"))
-hl.bind(MM .." + " .. QM .. " + " .. MediaPrevKey, hl.dsp.exec_cmd("playerctl previous"))
-hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"))
-hl.bind("XF86AudioStop", hl.dsp.exec_cmd("playerctl pause"))
+bind("MediaPlayPauseBind", hl.dsp.exec_cmd("playerctl play-pause"))
+bind("MediaPlayKeyBind", hl.dsp.exec_cmd("playerctl play-pause"))
+bind("MediaPauseKeyBind", hl.dsp.exec_cmd("playerctl play-pause"))
+bind("MediaNextBind", hl.dsp.exec_cmd("playerctl next"))
+bind("MediaNextKeyBind", hl.dsp.exec_cmd("playerctl next"))
+bind("MediaPrevBind", hl.dsp.exec_cmd("playerctl previous"))
+bind("MediaPrevKeyBind", hl.dsp.exec_cmd("playerctl previous"))
+bind("MediaStopKeyBind", hl.dsp.exec_cmd("playerctl pause"))
 
 -- Quickshell management (Kill, Launch, Reload)
-hl.bind(QM .." + " .. MM .. " + " .. TM .. " + " .. ShellRestartKey, hl.dsp.exec_cmd("omniformis kill"))
-hl.bind(QM .." + " .. MM .. " + " .. QM .. " + " .. ShellRestartKey, hl.dsp.exec_cmd("omniformis launch -d"))
-hl.bind(MM .. " + " .. TM .. " + " .. ShellRestartKey, hl.dsp.exec_cmd("omniformis reload"))
+bind("ShellKillBind", hl.dsp.exec_cmd("omniformis kill"))
+bind("ShellLaunchBind", hl.dsp.exec_cmd("omniformis launch -d"))
+bind("ShellReloadBind", hl.dsp.exec_cmd("omniformis reload"))
 
 --------------------------------------------------------------------------------
 -- ## Workspaces Loops (Programmatic & Scriptless)
 --------------------------------------------------------------------------------
 
 for i = 0, 9 do
-    local key = tostring(i)
+    local n = { n = tostring(i) }
     local ws = (i == 0) and 10 or i
-    
+
     -- Go to workspace #
-    hl.bind(MM .. " + " .. key, function() workspace_action("workspace", ws, false) end)
-    
+    bind("WorkspaceGoBind", function() workspace_action("workspace", ws, false) end, nil, n)
+
     -- Go to workspace group #
-    hl.bind(QM .. " + " .. MM .. " + " .. key, function() workspace_action("workspace", ws, true) end)
-    
+    bind("WorkspaceGoGroupBind", function() workspace_action("workspace", ws, true) end, nil, n)
+
     -- Move window to workspace #
-    hl.bind(MM .. " + " .. QM .. " + " .. key, function() workspace_action("movetoworkspace", ws, false) end)
-    
+    bind("WorkspaceMoveBind", function() workspace_action("movetoworkspace", ws, false) end, nil, n)
+
     -- Move window to workspace group #
-    hl.bind(QM .. " + " .. MM .. " + " .. QM .. " + " .. key, function() workspace_action("movetoworkspace", ws, true) end)
+    bind("WorkspaceMoveGroupBind", function() workspace_action("movetoworkspace", ws, true) end, nil, n)
 end
 
 -- Go to workspace -1/+1 directional navigation (Swapped to monitor-relative 'm' to stop boundary errors)
-hl.bind(MM .. " + mouse_down", hl.dsp.focus({ workspace = "m-1" }))
-hl.bind(MM .. " + mouse_up", hl.dsp.focus({ workspace = "m+1" }))
-hl.bind(MM .. " + Page_Up", hl.dsp.focus({ workspace = "m-1" }))
-hl.bind(MM .. " + Page_Down", hl.dsp.focus({ workspace = "m+1" }))
+bind("WorkspacePrevScrollBind", hl.dsp.focus({ workspace = "m-1" }))
+bind("WorkspaceNextScrollBind", hl.dsp.focus({ workspace = "m+1" }))
+bind("WorkspacePrevPageBind", hl.dsp.focus({ workspace = "m-1" }))
+bind("WorkspaceNextPageBind", hl.dsp.focus({ workspace = "m+1" }))
 
-hl.bind(MM .. " + Prior", hl.dsp.focus({ workspace = "m-1" }))
-hl.bind(MM .. " + Next", hl.dsp.focus({ workspace = "m+1" }))
+bind("WorkspacePrevPriorBind", hl.dsp.focus({ workspace = "m-1" }))
+bind("WorkspaceNextNextBind", hl.dsp.focus({ workspace = "m+1" }))
 
 -- Go to workspace group -1/+1
-hl.bind(QM .. " + " .. MM .. " + mouse_down", hl.dsp.focus({ workspace = "r-10" }))
-hl.bind(QM .. " + " .. MM .. " + mouse_up", hl.dsp.focus({ workspace = "r+10" }))
+bind("WorkspaceGroupPrevScrollBind", hl.dsp.focus({ workspace = "r-10" }))
+bind("WorkspaceGroupNextScrollBind", hl.dsp.focus({ workspace = "r+10" }))
 
 --------------------------------------------------------------------------------
 -- ## Move Window Utilities
 --------------------------------------------------------------------------------
 
-hl.bind(MM .. " + " .. QM .. " + Page_Up", hl.dsp.window.move({ workspace = "m-1" }))
-hl.bind(MM .. " + " .. QM .. " + Page_Down", hl.dsp.window.move({ workspace = "m+1" }))
-hl.bind(MM .. " + " .. QM .. " + mouse_down", hl.dsp.window.move({ workspace = "m-1" }))
-hl.bind(MM .. " + " .. QM .. " + mouse_up", hl.dsp.window.move({ workspace = "m+1" }))
-hl.bind(QM .. " + " .. MM .. " + " .. TM .. " + right", hl.dsp.window.move({ workspace = "m+1" }))
-hl.bind(QM .. " + " .. MM .. " + " .. TM .. " + left", hl.dsp.window.move({ workspace = "m-1" }))
+bind("MoveWindowPrevPageBind", hl.dsp.window.move({ workspace = "m-1" }))
+bind("MoveWindowNextPageBind", hl.dsp.window.move({ workspace = "m+1" }))
+bind("MoveWindowPrevScrollBind", hl.dsp.window.move({ workspace = "m-1" }))
+bind("MoveWindowNextScrollBind", hl.dsp.window.move({ workspace = "m+1" }))
+bind("MoveWindowNextBind", hl.dsp.window.move({ workspace = "m+1" }))
+bind("MoveWindowPrevBind", hl.dsp.window.move({ workspace = "m-1" }))
 
 -- Move window to/from special workspace
-hl.bind(QM .. " + " .. MM .. " + " .. TM .. " + up", hl.dsp.window.move({ workspace = "special:scratchboard" }))
-hl.bind(QM .. " + " .. MM .. " + " .. TM .. " + down", hl.dsp.window.move({ workspace = "+0" }))
-hl.bind(MM .. " + " .. QM .. " + " .. ScratchboardKey, hl.dsp.window.move({ workspace = "special:scratchboard" }))
-
--- Move the active window out of its current group
-hl.bind(MM .. " + " .. TM .. " + " .. GroupToggleKey, hl.dsp.window.move({ out_of_group = true, window = "active" }))
+bind("ScratchboardSendBind", hl.dsp.window.move({ workspace = "special:scratchboard" }))
+bind("ScratchboardReturnBind", hl.dsp.window.move({ workspace = "+0" }))
+bind("ScratchboardMoveBind", hl.dsp.window.move({ workspace = "special:scratchboard" }))
 
 --------------------------------------------------------------------------------
 -- ## Window Groups
 --------------------------------------------------------------------------------
 
-hl.bind(QM .. " + " .. GroupTabKey, hl.dsp.group.next())
-hl.bind(TM .. " + " .. QM .." + " .. GroupTabKey, hl.dsp.group.prev())
+bind("GroupNextBind", hl.dsp.group.next())
+bind("GroupPrevBind", hl.dsp.group.prev())
 for i = 0, 5 do
-    local key = tostring(i)
     -- Maps 0 to tab 5, otherwise matches the index number
     local ws = (i == 0) and 5 or i
-    
+
     -- Switch to a specific window inside the group by its index (1-based)
-    hl.bind(QM .. " + " .. key, hl.dsp.group.active({ index = ws }), { desc = "Jump to group tab " .. ws })
+    bind("GroupJumpBind", hl.dsp.group.active({ index = ws }), { desc = "Jump to group tab " .. ws }, { n = tostring(i) })
 end
 
 -- Replaced hyprctl string with native dispatch
-hl.bind(QM .. " + " .. TM .. " + " .. QM .. " + " .. GroupTabKey, function() 
-    hl.dispatch("changegroupactive", "b") 
+bind("GroupBackBind", function()
+    hl.dispatch("changegroupactive", "b")
 end)
-hl.bind(MM .. " + " .. GroupToggleKey, hl.dsp.group.toggle())
+bind("GroupToggleBind", hl.dsp.group.toggle())
 
 -- Move the active window out of its current group
-hl.bind(MM .. " + " .. TM .. " + " .. GroupToggleKey, hl.dsp.window.move({ out_of_group = true, window = "active" }))
+bind("GroupMoveOutBind", hl.dsp.window.move({ out_of_group = true, window = "active" }))
 
 --------------------------------------------------------------------------------
 -- ## Window Actions (Focus, Resize, Management)
 --------------------------------------------------------------------------------
 
 -- Mouse drag & window sizing gestures
-hl.bind(MM .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
-hl.bind(MM .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+bind("WindowDragBind", hl.dsp.window.drag(), { mouse = true })
+bind("WindowResizeBind", hl.dsp.window.resize(), { mouse = true })
 
 -- Alignment and Toggles
-hl.bind(QM .." + " .. MM .. " + " .. CenterWindowKey, hl.dsp.window.center())
+bind("WindowCenterBind", hl.dsp.window.center())
 
 -- Replaced hyprctl strings with native dispatch logic
-hl.bind(QM .. " + " .. MM .. " + " .. QM .. " + " .. CenterWindowKey, function()
+bind("WindowCenterResizeBind", function()
     hl.dispatch("resizeactive", "exact 55% 70%")
     hl.dispatch("centerwindow", "1")
 end)
 
-hl.bind(MM .. " + " .. PinKey, hl.dsp.window.pin())
-hl.bind(MM .. " + " .. TM .. " + " .. FullscreenKey, hl.dsp.window.fullscreen({mode = "fullscreen"}))
-hl.bind(MM .. " + " .. FullscreenKey, hl.dsp.window.fullscreen({mode = "maximized"}))
-hl.bind(MM .. " + " .. FloatKey, hl.dsp.window.float("active"))
-hl.bind(MM .. " + " .. CloseKey, hl.dsp.window.close("active"))
+bind("WindowPinBind", hl.dsp.window.pin())
+bind("WindowFullscreenBind", hl.dsp.window.fullscreen({mode = "fullscreen"}))
+bind("WindowMaximizeBind", hl.dsp.window.fullscreen({mode = "maximized"}))
+bind("WindowFloatBind", hl.dsp.window.float("active"))
+bind("WindowCloseBind", hl.dsp.window.close("active"))
 
 --------------------------------------------------------------------------------
 -- ## Special System Workspace Targets
 --------------------------------------------------------------------------------
 
-hl.bind(MM .. " + " .. MusicWorkspaceKey, hl.dsp.workspace.toggle_special("music"))
-hl.bind(MM .. " + " .. ScratchboardKey, hl.dsp.workspace.toggle_special("scratchboard"))
+bind("MusicWorkspaceBind", hl.dsp.workspace.toggle_special("music"))
+bind("ScratchboardBind", hl.dsp.workspace.toggle_special("scratchboard"))
 
 -- Toggle SysInfo workspace and launch the dynamic app via app2unit
 -- Removed hyprctl client check. Singleton logic should be handled by app2unit script.
-hl.bind(QM .. " + " .. TM .. " + " .. SysInfoWorkspaceKey, function()
+bind("SysInfoBind", function()
     hl.dispatch(hl.dsp.workspace.toggle_special("sysinfo"))
     hl.dispatch(hl.dsp.exec_cmd("app2unit -- " .. Term .. " -e " .. SysInfo))
 end)
@@ -211,49 +171,54 @@ end)
 -- ## Core Applications (Mapped dynamically to variables.lua options)
 --------------------------------------------------------------------------------
 
-hl.bind(MM .. " + " .. TermKey, hl.dsp.exec_cmd("app2unit -- " .. Term))
-hl.bind(MM .. " + " .. BrowserKey, hl.dsp.exec_cmd("app2unit -- " .. Browser))
-hl.bind(MM .. " + " .. EditorKey, hl.dsp.exec_cmd("app2unit -- " .. Editor))
-hl.bind(MM .. " + " .. FilesKey, hl.dsp.exec_cmd("app2unit -- " .. Files))
+bind("TermBind", hl.dsp.exec_cmd("app2unit -- " .. Term))
+bind("BrowserBind", hl.dsp.exec_cmd("app2unit -- " .. Browser))
+bind("EditorBind", hl.dsp.exec_cmd("app2unit -- " .. Editor))
+bind("FilesBind", hl.dsp.exec_cmd("app2unit -- " .. Files))
 
 --------------------------------------------------------------------------------
 -- ## Utilities
 --------------------------------------------------------------------------------
 
-hl.bind("Print", hl.dsp.exec_cmd("grim - | satty --filename -"))
-hl.bind(MM .. " + " .. TM .. " + " .. ScreenshotKey, hl.dsp.exec_cmd("bash -c 'geom=$(slurp) && sleep 0.1 && grim -g \"$geom\" - | satty --filename -'"))
-hl.bind(MM .. " + " .. TM .. " + " .. QM .. " + " .. ScreenshotKey, hl.dsp.exec_cmd("bash -c 'geom=$(slurp) && sleep 0.1 && grim -g \"$geom\" - | satty --filename -'"))
---[[ hl.bind(MM .. " + " .. QM .. " + R", hl.dsp.exec_cmd("caelestia record -s"))
-hl.bind(QM .. " + " .. TM .. " + R", hl.dsp.exec_cmd("caelestia record"))
-hl.bind(MM .. " + " .. TM .. " + " .. QM .. " + R", hl.dsp.exec_cmd("caelestia record -r")) ]]
-hl.bind(MM .. " + " .. TM .. " + " .. ColorPickerKey, hl.dsp.exec_cmd("hyprpicker -a"))
+bind("ScreenshotBind", hl.dsp.exec_cmd("grim - | satty --filename -"))
+bind("ScreenshotAreaBind", hl.dsp.exec_cmd("bash -c 'geom=$(slurp) && sleep 0.1 && grim -g \"$geom\" - | satty --filename -'"))
+bind("ScreenshotAreaAltBind", hl.dsp.exec_cmd("bash -c 'geom=$(slurp) && sleep 0.1 && grim -g \"$geom\" - | satty --filename -'"))
+bind("ColorPickerBind", hl.dsp.exec_cmd("hyprpicker -a"))
 
 -- OmniAction Context Menu (Triggers on currently copied file)
-hl.bind(MM .. " + O", hl.dsp.exec_cmd("'/run/media/boing/Games/pc backup/SideProjects/OmniMenu/omniaction_clip.sh'"))
+bind("OmniActionBind", hl.dsp.exec_cmd("'/run/media/boing/Games/pc backup/SideProjects/OmniMenu/omniaction_clip.sh'"))
 --------------------------------------------------------------------------------
 -- ## System Volume Inputs
 --------------------------------------------------------------------------------
 
-hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"))
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
-hl.bind(MM .. " + " .. TM .. " + " .. VolumeMuteKey, hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"))
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"))
+bind("MicMuteBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"))
+bind("VolumeMuteKeyBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
+bind("VolumeMuteBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
+bind("VolumeUpBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"))
+bind("VolumeDownBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"))
 
 --------------------------------------------------------------------------------
--- ## Display Brightness Inputs (DDC/CI)
+-- ## Display Brightness Inputs (laptop backlight, then DDC/CI)
 --------------------------------------------------------------------------------
 
-hl.bind(QM .. " + " .. "XF86AudioRaiseVolume", hl.dsp.exec_cmd("ddcutil setvcp 10 + 5"))
-hl.bind(QM .. " + " .. "XF86AudioLowerVolume", hl.dsp.exec_cmd("ddcutil setvcp 10 - 5"))
-hl.bind(QM .. " + mouse_up", hl.dsp.exec_cmd("ddcutil setvcp 10 + 5"))
-hl.bind(QM .. " + mouse_down", hl.dsp.exec_cmd("ddcutil setvcp 10 - 5"))
+-- A laptop panel has a kernel backlight, which brightnessctl drives through logind without
+-- root. Without one (a desktop), or without brightnessctl, it falls back to DDC/CI.
+local function brightness(sign)
+    return hl.dsp.exec_cmd("brightnessctl -q -c backlight set 5%" .. sign .. " || ddcutil setvcp 10 " .. sign .. " 5")
+end
+
+bind("BrightnessUpBind", brightness("+"))
+bind("BrightnessDownBind", brightness("-"))
+bind("BrightnessUpScrollBind", brightness("+"))
+bind("BrightnessDownScrollBind", brightness("-"))
+bind("BrightnessUpKeyBind", brightness("+"))
+bind("BrightnessDownKeyBind", brightness("-"))
 
 --------------------------------------------------------------------------------
 -- ## Power Management
 --------------------------------------------------------------------------------
 
-hl.bind(MM .. " + " .. TM .. " + " .. SuspendKey, hl.dsp.exec_cmd("systemctl suspend-then-hibernate"))
+bind("SuspendBind", hl.dsp.exec_cmd("systemctl suspend-then-hibernate"))
 
 --------------------------------------------------------------------------------
 --- ## Misc 
@@ -274,15 +239,26 @@ end
 --------------------------------------------------------------------------------
 
 -- FIXED: Combined modifiers and key into a single string format
-hl.bind(MM .. " + " .. TM .. " + " .. ZoomResetKey, function()
+bind("ZoomResetBind", function()
     set_zoom(1.0)
 end)
 
 -- FIXED: Combined modifier and mouse actions into single strings
-hl.bind(MM .. " + " .. TM .. " + mouse_down", function()
+bind("ZoomInBind", function()
     set_zoom(current_zoom + step)
 end)
 
-hl.bind(MM .. " + " .. TM .. " + mouse_up", function()
+bind("ZoomOutBind", function()
     set_zoom(current_zoom - step)
+end)
+
+--------------------------------------------------------------------------------
+-- ## Shortcut recording
+--------------------------------------------------------------------------------
+
+-- The settings app switches to this otherwise empty submap while it records a new shortcut, so
+-- Hyprland hands every key to the app instead of running the bind that is being replaced.
+-- The bind inside is an emergency exit that returns to the normal binds.
+hl.define_submap("omniformis_capture", function()
+    hl.bind("CTRL + ALT + SHIFT + SUPER + F12", hl.dsp.submap("reset"))
 end)

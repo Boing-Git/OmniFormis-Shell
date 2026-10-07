@@ -2,6 +2,7 @@
 ----  MISC  ----
 ----------------
 local vars = require("modules.variables")
+local hw = require("modules.hardware")
 
 hl.config({
   misc = {
@@ -20,9 +21,12 @@ hl.config({
     wp_cm_1_2 = true
   },
 
+  -- Colour management, auto HDR and the SDR copy kept for screensharing each cost an extra pass
+  -- per frame, which low-spec GPUs (and their 6-bit laptop panels) get nothing back for
   render = {
-    cm_auto_hdr = true,
+    cm_enabled = not hw.low_spec,
+    cm_auto_hdr = not hw.low_spec,
     use_shader_blur_blend = true,
-    keep_unmodified_copy = true
+    keep_unmodified_copy = not hw.low_spec
   }
 })

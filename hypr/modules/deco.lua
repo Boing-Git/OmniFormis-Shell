@@ -1,6 +1,7 @@
 -----------------------
 local Utils = require("utils")
 local vars = require("modules.variables")
+local hw = require("modules.hardware")
 local colors = Utils.colors
 
 local function isFramed()
@@ -35,26 +36,27 @@ hl.config({
 
         col = {
             active_border = { colors = { Utils.hex_to_rgba(colors.primary), Utils.hex_to_rgba(colors.tertiary) }, angle = 45 },
-            inactive_border = Utils.hex_to_rgba(colors.surface_variant, 0.5),
+            inactive_border = Utils.hex_to_rgba(colors.shadow, 1),
         },
     },
     decoration = {
         rounding       = (vars.GameMode or isFramed()) and 0 or vars.rounding,
         rounding_power = vars.rounding_power,
 
-        -- Change transparency of focused and unfocused windows
-        active_opacity   = vars.active_opacity,
-        inactive_opacity = vars.inactive_opacity,
+        -- Change transparency of focused and unfocused windows (opaque on low-spec hardware,
+        -- where blending every window over the ones behind it is the expensive part)
+        active_opacity   = hw.low_spec and 1.0 or vars.active_opacity,
+        inactive_opacity = hw.low_spec and 1.0 or vars.inactive_opacity,
 
         shadow = {
-            enabled      = (not vars.GameMode) and vars.shadow_enabled,
+            enabled      = (not vars.GameMode) and (not hw.low_spec) and vars.shadow_enabled,
             range        = vars.shadow_range,
             render_power = vars.shadow_render_power,
             color        = "rgba(000000e0)",
         }, -- ADDED COMMA
 
         blur = {
-            enabled   = (not vars.GameMode) and vars.blur_enabled,
+            enabled   = (not vars.GameMode) and (not hw.low_spec) and vars.blur_enabled,
             size      = vars.blur_size,
             passes    = vars.blur_passes,
             vibrancy  = vars.blur_vibrancy, 
@@ -79,7 +81,7 @@ hl.config({
             scrolling = true,           -- Cycle tabs using your mouse wheel over the tab bar
 
             -- Set the curve style for the group bar (2.0 is a circle)
-            gradient_rounding_power = 10,
+                gradient_rounding_power = 100,
                 
             -- Tab Colors (Format: rgba or hex strings)
             ["col.active"] = Utils.hex_to_rgba(Utils.colors.primary, 0.8),          -- Background of the focused tab

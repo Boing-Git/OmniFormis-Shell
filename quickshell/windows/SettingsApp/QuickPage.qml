@@ -91,22 +91,19 @@ Flickable {
     function syncMatugenAndTheme() {
         var wp = wallpaperSettings.currentWallpaper || "";
         var cleanWp = wp.replace(/^file:\/\//, "");
-        var scheme = wallpaperSettings.matugenScheme || "scheme-tonal-spot";
-        var matugenArg = (scheme === "scheme-auto" || scheme === "auto") ? "scheme-tonal-spot" : scheme;
+        var settings = wallpaperSettings;
+        var matugenSchemeArg = (settings.matugenScheme === "scheme-auto" || settings.matugenScheme === "auto") ? "scheme-tonal-spot" : (settings.matugenScheme || "scheme-tonal-spot");
+        
         var mode = themeModeSettings.currentMode || "dark";
-
+        var trans = wallpaperSettings.awwwTransitionType || "wipe";
+        var step = wallpaperSettings.awwwTransitionStep || "90";
+        var angle = wallpaperSettings.awwwTransitionAngle || "30";
+        
         var cmd = "";
         if (cleanWp !== "" && wallpaperSettings.automaticSync !== false) {
-            console.log("[USER ACTION] Running Matugen and system theme mode sync: " + cleanWp + " (" + matugenArg + ", " + mode + ")");
-            var trans = wallpaperSettings.awwwTransitionType || "wipe";
-            var step = wallpaperSettings.awwwTransitionStep || "90";
-            var angle = wallpaperSettings.awwwTransitionAngle || "30";
-            Quickshell.execDetached({ command: ["bash", "-c", "awww img '" + cleanWp + "' --transition-type " + trans + " --transition-angle " + angle + " --transition-step " + step] });
-            if (scheme === "scheme-auto" || scheme === "auto") {
-                cmd += "bash ~/Dotfiles/scripts/auto_scheme_matugen.sh '" + cleanWp + "' '" + mode + "'; ";
-            } else {
-                cmd += "matugen image '" + cleanWp + "' -m '" + mode + "' -t '" + matugenArg + "' --source-color-index 0; ";
-            }
+            cmd += "bash ~/Dotfiles/scripts/auto_scheme_matugen.sh '" + cleanWp + "' '" + mode + "'; ";
+        } else {
+            cmd += "matugen image '" + cleanWp + "' -m '" + mode + "' -t '" + matugenSchemeArg + "' --prefer saturation; ";
         }
         console.log("[USER ACTION] Running set-theme mode switch: " + mode);
         cmd += "bash ~/.config/color-schemes/set-theme.sh 'material-you' '" + mode + "'; ";
@@ -177,6 +174,7 @@ Flickable {
                 clockShowCenterDot: Vars.clockShowCenterDot,
                 panelStyle: Vars.panelStyle,
                 pillPosition: Vars.pillPosition,
+                clockPillMode: Vars.clockPillMode,
                 mediaPlayerShape: Vars.mediaPlayerShape,
                 mediaPlayerArtScale: Vars.mediaPlayerArtScale,
                 gameMode: Vars.gameMode,
@@ -256,9 +254,12 @@ Flickable {
             var angle2 = wallpaperSettings.awwwTransitionAngle || "30";
             Quickshell.execDetached({ command: ["bash", "-c", "awww img '" + cleanWp + "' --transition-type " + trans2 + " --transition-angle " + angle2 + " --transition-step " + step2] });
             if (scheme === "scheme-auto" || scheme === "auto") {
-                shellCmds += "bash ~/Dotfiles/scripts/auto_scheme_matugen.sh '" + cleanWp + "' '" + mode + "'; ";
+                shellCmds += "matugen image '" + cleanWp + "' -m '" + mode + "' -t 'scheme-tonal-spot' --prefer saturation; ";
+                Quickshell.execDetached({
+                    command: ["bash", "-c", "sleep 1.5; bash ~/Dotfiles/scripts/auto_scheme_matugen.sh '" + cleanWp + "' '" + mode + "'; bash ~/.config/color-schemes/set-theme.sh material-you " + mode + "; nohup bash ~/Dotfiles/scripts/reload.sh >/dev/null 2>&1 &"]
+                });
             } else {
-                shellCmds += "matugen image '" + cleanWp + "' -m '" + mode + "' -t '" + matugenArg + "' --source-color-index 0; ";
+                shellCmds += "matugen image '" + cleanWp + "' -m '" + mode + "' -t '" + matugenArg + "' --prefer saturation; ";
             }
         }
         shellCmds += "bash ~/.config/color-schemes/set-theme.sh 'material-you' '" + mode + "'; ";
@@ -429,7 +430,7 @@ Flickable {
                             mipmap: true
 
                             layer.enabled: true
-                            layer.samples: 32
+                            layer.samples: Vars.layerSamples
                             layer.smooth: true
                             layer.effect: MultiEffect {
                                 maskEnabled: true
@@ -441,11 +442,11 @@ Flickable {
 
                         Item {
                             id: topWpMask
+                            layer.enabled: true
+                            layer.smooth: true
+                            layer.samples: Vars.layerSamples
                             anchors.fill: parent
                             visible: false
-                            layer.enabled: true
-                            layer.samples: 32
-                            layer.smooth: true
                             Rectangle {
                                 anchors.fill: parent
                                 radius: 28
@@ -456,12 +457,12 @@ Flickable {
                         // Elegant fallback icon when wallpaper image is loading or empty
                         QsText {
                             anchors.centerIn: parent
-                            visible: wpPrevImg.status !== Image.Ready
-                            text: "\ue386" // wallpaper photo icon
+                            text: "\ue386"
                             font.family: "Material Symbols Outlined"
                             font.pixelSize: 42
                             color: Theme.on_surface_variant
                             opacity: 0.4
+                            visible: wpPrevImg.status !== Image.Ready
                         }
                     }
 
@@ -479,14 +480,6 @@ Flickable {
                         // Muted sage/accent tone matching Android 14 M3 FAB
                         color: fabHover.pressed ? Qt.darker(Theme.secondary_container, 1.15) : (fabHover.containsMouse ? Qt.tint(Theme.secondary_container, Qt.rgba(Theme.on_secondary_container.r, Theme.on_secondary_container.g, Theme.on_secondary_container.b, 0.12)) : Qt.rgba(Theme.secondary_container.r, Theme.secondary_container.g, Theme.secondary_container.b, 0.85))
                         
-                        layer.enabled: true
-                        layer.samples: 32
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowBlur: 1.2
-                            shadowColor: Qt.rgba(0, 0, 0, 0.35)
-                            shadowVerticalOffset: 4
-                        }
 
                         Behavior on color { ColorAnimation { duration: 150 } }
                         Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
@@ -498,9 +491,6 @@ Flickable {
                             font.family: "Material Symbols Outlined"
                             font.pixelSize: 24
                             color: Theme.on_secondary_container
-                            layer.enabled: true
-                            layer.samples: 32
-                            layer.smooth: true
                             scale: fabHover.pressed ? 0.92 : 1.0
                             Behavior on scale { NumberAnimation { duration: 150 } }
                         }
@@ -533,6 +523,7 @@ Flickable {
 
                         // Light Mode Button
                         Rectangle {
+                            antialiasing: true
                             Layout.fillWidth: true
                             Layout.preferredHeight: 82
                             property bool isSelected: themeModeSettings.currentMode === "light"
@@ -545,13 +536,10 @@ Flickable {
                             Behavior on bottomLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             Behavior on topRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             Behavior on bottomRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                            color: isSelected ? (Vars.tColorSelected(Theme.secondary_container)) : (lightHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
+                            color: isSelected ? (Vars.tColorSelected(Theme.primary_container)) : (lightHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
                             border.width: 0
 
                             Behavior on color { ColorAnimation { duration: 180 } }
-                            layer.enabled: true
-                            layer.samples: 32
-                            layer.smooth: true
                             scale: lightHover.pressed ? 1.08 : 1.0
                             Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
 
@@ -560,10 +548,10 @@ Flickable {
                                 spacing: 6
                                 QsText {
                                     Layout.alignment: Qt.AlignHCenter
-                                    text: "\ue518" // light_mode sun
+                                    text: "\ue518"
                                     font.family: parent.parent.isSelected ? filledIconFont.name : "Material Symbols Outlined"
                                     font.pixelSize: 24
-                                    color: parent.parent.isSelected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                    color: parent.parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
                                 }
                                 QsText {
                                     Layout.alignment: Qt.AlignHCenter
@@ -571,7 +559,7 @@ Flickable {
                                     font.family: Vars.fontFamily
                                     font.pixelSize: 13
                                     setWeight: parent.parent.isSelected ? 700 : 500
-                                    color: parent.parent.isSelected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                    color: parent.parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
                                 }
                             }
 
@@ -592,6 +580,7 @@ Flickable {
 
                         // Dark Mode Button
                         Rectangle {
+                            antialiasing: true
                             Layout.fillWidth: true
                             Layout.preferredHeight: 82
                             property bool isSelected: themeModeSettings.currentMode === "dark"
@@ -604,13 +593,10 @@ Flickable {
                             Behavior on bottomLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             Behavior on topRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             Behavior on bottomRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                            color: isSelected ? (Vars.tColorSelected(Theme.secondary_container)) : (darkHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
+                            color: isSelected ? (Vars.tColorSelected(Theme.primary_container)) : (darkHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
                             border.width: 0
 
                             Behavior on color { ColorAnimation { duration: 180 } }
-                            layer.enabled: true
-                            layer.samples: 32
-                            layer.smooth: true
                             scale: darkHover.pressed ? 1.08 : 1.0
                             Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
 
@@ -619,10 +605,10 @@ Flickable {
                                 spacing: 6
                                 QsText {
                                     Layout.alignment: Qt.AlignHCenter
-                                    text: "\ue51c" // dark_mode crescent moon
+                                    text: "\ue51c"
                                     font.family: parent.parent.isSelected ? filledIconFont.name : "Material Symbols Outlined"
                                     font.pixelSize: 24
-                                    color: parent.parent.isSelected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                    color: parent.parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
                                 }
                                 QsText {
                                     Layout.alignment: Qt.AlignHCenter
@@ -630,7 +616,7 @@ Flickable {
                                     font.family: Vars.fontFamily
                                     font.pixelSize: 13
                                     setWeight: parent.parent.isSelected ? 700 : 500
-                                    color: parent.parent.isSelected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                    color: parent.parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
                                 }
                             }
 
@@ -670,6 +656,7 @@ Flickable {
                                 { name: "Tonal Spot", scheme: "scheme-tonal-spot", icon: "adjust" }
                             ]
                             delegate: Rectangle {
+                                antialiasing: true
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 64
 
@@ -689,12 +676,9 @@ Flickable {
                                 Behavior on bottomLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                                 Behavior on bottomRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
 
-                                color: isSelected ? (Vars.tColorSelected(Theme.secondary_container)) : (schemeHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
+                                color: isSelected ? (Vars.tColorSelected(Theme.primary_container)) : (schemeHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
                                 border.width: 0
 
-                                layer.enabled: true
-                                layer.samples: 32
-                                layer.smooth: true
                                 scale: schemeHover.pressed ? 1.08 : 1.0
                                 Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
 
@@ -708,7 +692,7 @@ Flickable {
                                     text: modelData.icon
                                     font.family: parent.isSelected ? filledIconFont.name : "Material Symbols Outlined"
                                     font.pixelSize: 17
-                                    color: parent.isSelected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                    color: parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
                                 }
 
                                 // Text Bottom-Right
@@ -720,7 +704,7 @@ Flickable {
                                     font.family: Vars.fontFamily
                                     font.pixelSize: 11
                                     setWeight: parent.isSelected ? 700 : 500
-                                    color: parent.isSelected ? Theme.on_secondary_container : Theme.on_surface
+                                    color: parent.isSelected ? Theme.on_primary_container : Theme.on_surface
                                     elide: Text.ElideRight
                                     maximumLineCount: 1
                                 }
@@ -757,7 +741,7 @@ Flickable {
                     RowLayout {
                         spacing: 12
                         QsText {
-                            text: "palette" // palette icon
+                            text: "palette"
                             font.family: "Material Symbols Outlined"
                             font.pixelSize: 22
                             color: Theme.on_surface_variant
@@ -783,6 +767,7 @@ Flickable {
                                 { mode: "liquid", icon: "water_drop" }
                             ]
                             delegate: Rectangle {
+                                antialiasing: true
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 38
                                 property bool localOverride: false
@@ -795,12 +780,9 @@ Flickable {
                                 topRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
                                 bottomRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
 
-                                color: isSelected ? (Vars.tColorSelected(Theme.secondary_container)) : (styleModeHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
+                                color: isSelected ? (Vars.tColorSelected(Theme.primary_container)) : (styleModeHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
                                 border.width: 0
 
-                                layer.enabled: true
-                                layer.samples: 32
-                                layer.smooth: true
                                 scale: styleModeHover.pressed ? 1.08 : 1.0
                                 Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
 
@@ -815,7 +797,7 @@ Flickable {
                                     text: modelData.icon
                                     font.family: parent.isSelected ? filledIconFont.name : "Material Symbols Outlined"
                                     font.pixelSize: 20
-                                    color: parent.isSelected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                    color: parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
                                 }
 
                                 MouseArea {
@@ -830,17 +812,20 @@ Flickable {
                                         parent.localOverride = true;
                                         
                                         if (modelData.mode === "solid") {
-                                            Quickshell.execDetached({
-                                                command: ["bash", "-c", "$HOME/.local/bin/omniformis qs set '_translucent' 'false'; $HOME/.local/bin/omniformis qs set '_liquidGlass' 'false'; $HOME/.local/bin/omniformis hypr set 'liquidGlass' 'false'; $HOME/.local/bin/omniformis hypr set 'blur_enabled' 'false'; nohup bash -c 'sleep 0.25 && bash ~/Dotfiles/scripts/reload.sh' >/dev/null 2>&1 &"]
-                                            });
+                                            SettingsApply.set("qs", "_translucent", false);
+                                            SettingsApply.set("qs", "_liquidGlass", false);
+                                            SettingsApply.set("hypr", "liquidGlass", false);
+                                            SettingsApply.set("hypr", "blur_enabled", false);
                                         } else if (modelData.mode === "translucent") {
-                                            Quickshell.execDetached({
-                                                command: ["bash", "-c", "$HOME/.local/bin/omniformis qs set '_translucent' 'true'; $HOME/.local/bin/omniformis qs set '_liquidGlass' 'false'; $HOME/.local/bin/omniformis hypr set 'liquidGlass' 'false'; $HOME/.local/bin/omniformis hypr set 'blur_enabled' 'true'; nohup bash -c 'sleep 0.25 && bash ~/Dotfiles/scripts/reload.sh' >/dev/null 2>&1 &"]
-                                            });
+                                            SettingsApply.set("qs", "_translucent", true);
+                                            SettingsApply.set("qs", "_liquidGlass", false);
+                                            SettingsApply.set("hypr", "liquidGlass", false);
+                                            SettingsApply.set("hypr", "blur_enabled", true);
                                         } else if (modelData.mode === "liquid") {
-                                            Quickshell.execDetached({
-                                                command: ["bash", "-c", "$HOME/.local/bin/omniformis qs set '_liquidGlass' 'true'; $HOME/.local/bin/omniformis qs set '_translucent' 'false'; $HOME/.local/bin/omniformis hypr set 'liquidGlass' 'true'; $HOME/.local/bin/omniformis hypr set 'blur_enabled' 'false'; nohup bash -c 'sleep 0.25 && bash ~/Dotfiles/scripts/reload.sh' >/dev/null 2>&1 &"]
-                                            });
+                                            SettingsApply.set("qs", "_translucent", false);
+                                            SettingsApply.set("qs", "_liquidGlass", true);
+                                            SettingsApply.set("hypr", "liquidGlass", true);
+                                            SettingsApply.set("hypr", "blur_enabled", false);
                                         }
                                     }
                                 }
@@ -858,7 +843,7 @@ Flickable {
                     RowLayout {
                         spacing: 12
                         QsText {
-                            text: "\ue503" // switch_video icon
+                            text: "\ue503"
                             font.family: "Material Symbols Outlined"
                             font.pixelSize: 22
                             color: Theme.on_surface_variant
@@ -886,6 +871,7 @@ Flickable {
                                 { mode: "grow", label: "Grow" }
                             ]
                             delegate: Rectangle {
+                                antialiasing: true
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 38
                                 property bool isSelected: (wallpaperSettings.awwwTransitionType || "wipe") === modelData.mode
@@ -897,12 +883,9 @@ Flickable {
                                 topRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
                                 bottomRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
 
-                                color: isSelected ? (Vars.tColorSelected(Theme.secondary_container)) : (transHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
+                                color: isSelected ? (Vars.tColorSelected(Theme.primary_container)) : (transHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
                                 border.width: 0
 
-                                layer.enabled: true
-                                layer.samples: 32
-                                layer.smooth: true
                                 scale: transHover.pressed ? 1.08 : 1.0
                                 Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
 
@@ -918,7 +901,7 @@ Flickable {
                                     font.family: Vars.fontFamily
                                     font.pixelSize: 13
                                     setWeight: parent.isSelected ? 600 : 500
-                                    color: parent.isSelected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                    color: parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
                                 }
 
                                 MouseArea {
@@ -1000,6 +983,7 @@ Flickable {
                             { name: "Right", pos: "Right", icon: "\ue5cc" }
                         ]
                         delegate: Rectangle {
+                            antialiasing: true
                             Layout.fillWidth: true
                             Layout.preferredHeight: 38
                             property bool isSelected: (Vars.pillPosition || "Top") === modelData.pos
@@ -1011,12 +995,9 @@ Flickable {
                             topRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
                             bottomRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
 
-                            color: isSelected ? (Vars.tColorSelected(Theme.secondary_container)) : (posHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
+                            color: isSelected ? (Vars.tColorSelected(Theme.primary_container)) : (posHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
                             border.width: 0
 
-                            layer.enabled: true
-                            layer.samples: 32
-                            layer.smooth: true
                             scale: posHover.pressed ? 1.08 : 1.0
                             Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
 
@@ -1031,7 +1012,7 @@ Flickable {
                                 text: modelData.icon
                                 font.family: parent.isSelected ? filledIconFont.name : "Material Symbols Outlined"
                                 font.pixelSize: 20
-                                color: parent.isSelected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                color: parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
                             }
 
                             MouseArea {
@@ -1041,12 +1022,8 @@ Flickable {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                         console.log("Global Style Button Clicked: " + modelData.mode);
-                                    if (Vars.pillPosition !== modelData.pos) {
-                                        Vars.pillPosition = modelData.pos;
-                                        Quickshell.execDetached({
-                                            command: ["bash", "-c", "$HOME/.local/bin/omniformis qs set 'pillPosition' '" + Vars.pillPosition + "'; nohup bash ~/Dotfiles/scripts/reload.sh >/dev/null 2>&1 &"]
-                                        });
-                                    }
+                                    if (Vars.pillPosition !== modelData.pos)
+                                        SettingsApply.set("qs", "pillPosition", modelData.pos);
                                 }
                             }
                         }
@@ -1090,6 +1067,7 @@ Flickable {
                             { name: "Framed", style: "Framed", icon: "filter_frames" }
                         ]
                         delegate: Rectangle {
+                            antialiasing: true
                             Layout.fillWidth: true
                             Layout.preferredHeight: 38
                             property bool isSelected: (Vars.panelStyle || "Floating") === modelData.style
@@ -1101,12 +1079,9 @@ Flickable {
                             topRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
                             bottomRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
 
-                            color: isSelected ? (Vars.tColorSelected(Theme.secondary_container)) : (styleHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
+                            color: isSelected ? (Vars.tColorSelected(Theme.primary_container)) : (styleHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
                             border.width: 0
 
-                            layer.enabled: true
-                            layer.samples: 32
-                            layer.smooth: true
                             scale: styleHover.pressed ? 1.08 : 1.0
                             Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
 
@@ -1121,7 +1096,7 @@ Flickable {
                                 text: modelData.icon
                                 font.family: parent.isSelected ? filledIconFont.name : "Material Symbols Outlined"
                                 font.pixelSize: 20
-                                color: parent.isSelected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                color: parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
                             }
 
                             MouseArea {
@@ -1131,12 +1106,8 @@ Flickable {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                         console.log("Global Style Button Clicked: " + modelData.mode);
-                                    if (Vars.panelStyle !== modelData.style) {
-                                        Vars.panelStyle = modelData.style;
-                                        Quickshell.execDetached({
-                                            command: ["bash", "-c", "$HOME/.local/bin/omniformis qs set 'panelStyle' '" + Vars.panelStyle + "'; nohup bash ~/Dotfiles/scripts/reload.sh >/dev/null 2>&1 &"]
-                                        });
-                                    }
+                                    if (Vars.panelStyle !== modelData.style)
+                                        SettingsApply.set("qs", "panelStyle", modelData.style);
                                 }
                             }
                         }
@@ -1188,6 +1159,7 @@ Flickable {
                                 { name: "Contrasted", preset: "contrasted", icon: "\ue3b9" }
                             ]
                             delegate: Rectangle {
+                                antialiasing: true
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 38
                                 property bool isSelected: (Vars.liquidGlassPreset || "glass") === modelData.preset
@@ -1199,12 +1171,9 @@ Flickable {
                                 topRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
                                 bottomRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
 
-                                color: isSelected ? (Vars.tColorSelected(Theme.secondary_container)) : (presetHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
+                                color: isSelected ? (Vars.tColorSelected(Theme.primary_container)) : (presetHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
                                 border.width: 0
 
-                                layer.enabled: true
-                                layer.samples: 32
-                                layer.smooth: true
                                 scale: presetHover.pressed ? 1.08 : 1.0
                                 Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
 
@@ -1221,14 +1190,14 @@ Flickable {
                                         text: modelData.icon
                                         font.family: parent.parent.isSelected ? filledIconFont.name : "Material Symbols Outlined"
                                         font.pixelSize: 18
-                                        color: parent.parent.isSelected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                        color: parent.parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
                                     }
                                     QsText {
                                         text: modelData.name
                                         font.family: Vars.fontFamily
                                         font.pixelSize: 13
                                         font.weight: parent.parent.isSelected ? 700 : 500
-                                        color: parent.parent.isSelected ? Theme.on_secondary_container : Theme.on_surface_variant
+                                        color: parent.parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
                                     }
                                 }
 
@@ -1240,11 +1209,102 @@ Flickable {
                                     onClicked: {
                                         console.log("Global Style Button Clicked: " + modelData.mode);
                                         if (Vars.liquidGlassPreset !== modelData.preset) {
-                                            Vars.liquidGlassPreset = modelData.preset;
-                                            Quickshell.execDetached({
-                                                command: ["bash", "-c", "$HOME/.local/bin/omniformis qs set 'liquidGlassPreset' '" + Vars.liquidGlassPreset + "'; $HOME/.local/bin/omniformis hypr set 'liquidGlassPreset' '" + Vars.liquidGlassPreset + "'; nohup bash ~/Dotfiles/scripts/reload.sh >/dev/null 2>&1 &"]
-                                            });
+                                            SettingsApply.set("qs", "liquidGlassPreset", modelData.preset);
+                                            SettingsApply.set("hypr", "liquidGlassPreset", modelData.preset);
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Clock Pill Visibility Selection
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.alignment: Qt.AlignTop
+                    spacing: 10
+
+                    RowLayout {
+                        spacing: 12
+                        QsText {
+                            text: "\ue8f4"
+                            font.family: "Material Symbols Outlined"
+                            font.pixelSize: 22
+                            color: Theme.on_surface_variant
+                        }
+                        QsText {
+                            text: "Clock Pill Visibility"
+                            font.family: Vars.fontFamily
+                            font.pixelSize: 15
+                            font.weight: 500
+                            color: Theme.on_surface
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 3
+
+                        Repeater {
+                            id: clockModeRepeater
+                            model: [
+                                { name: "Always", mode: "Always Visible", icon: "\ue8f4" },
+                                { name: "Dodge", mode: "Dodge Windows", icon: "\ue5d2" },
+                                { name: "Auto Hide", mode: "Auto Hide", icon: "\ue8f5" }
+                            ]
+                            delegate: Rectangle {
+                                antialiasing: true
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 38
+                                property bool isSelected: (Vars.clockPillMode || "Always Visible") === modelData.mode
+                                property bool hasLeft: index > 0
+                                property bool hasRight: index < clockModeRepeater.count - 1
+
+                                topLeftRadius: isSelected ? 19 : (hasLeft ? 6 : 19)
+                                bottomLeftRadius: isSelected ? 19 : (hasLeft ? 6 : 19)
+                                topRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
+                                bottomRightRadius: isSelected ? 19 : (hasRight ? 6 : 19)
+
+                                color: isSelected ? (Vars.tColorSelected(Theme.primary_container)) : (modeHover.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
+                                border.width: 0
+
+                                scale: modeHover.pressed ? 1.08 : 1.0
+                                Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
+
+                                Behavior on topLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+                                Behavior on bottomLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+                                Behavior on topRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+                                Behavior on bottomRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+                                Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+
+                                RowLayout {
+                                    anchors.centerIn: parent
+                                    spacing: 4
+                                    QsText {
+                                        text: modelData.icon
+                                        font.family: parent.parent.isSelected ? filledIconFont.name : "Material Symbols Outlined"
+                                        font.pixelSize: 18
+                                        color: parent.parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
+                                    }
+                                    QsText {
+                                        text: modelData.name
+                                        font.family: Vars.fontFamily
+                                        font.pixelSize: 13
+                                        font.weight: parent.parent.isSelected ? 700 : 500
+                                        color: parent.parent.isSelected ? Theme.on_primary_container : Theme.on_surface_variant
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: modeHover
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (Vars.clockPillMode !== modelData.mode)
+                                            SettingsApply.set("qs", "clockPillMode", modelData.mode);
                                     }
                                 }
                             }
@@ -1333,9 +1393,6 @@ Flickable {
                         font.family: "Material Symbols Outlined"
                         font.pixelSize: 24
                         color: Theme.on_secondary_container
-                        layer.enabled: true
-                        layer.samples: 32
-                        layer.smooth: true
                         scale: createHover.pressed ? 1.08 : 1.0
                         Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
                     }
@@ -1375,29 +1432,61 @@ Flickable {
                     model: presetsModel
 
                     delegate: Item {
+                        id: delegateItem
                         width: Math.max(280, Math.floor((parent.width - 16) / 2))
                         height: Math.max(200, Math.floor(width * 0.56))
 
-                        // Card background with clean clipping and rounded corners
-                        Rectangle {
-                            id: cardBase
-                            anchors.fill: parent
-                            radius: 24
-                            antialiasing: true
-                            color: Vars.tColor(Theme.surface_container_low, Vars.componentOpacity)
-                            border.color: Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08)
-                            border.width: 1
-                            clip: true
+                        property bool isHovered: cardHoverArea.containsMouse || applyHover.containsMouse || delHover.containsMouse
 
-                            property var presetVars: {
-                                try { return JSON.parse(model.variablesJson || "{}"); } catch(e) { return {}; }
+                        Item {
+                            id: cardContainer
+                            anchors.fill: parent
+                            scale: delegateItem.isHovered ? 1.02 : 1.0
+                            Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutBack } }
+
+                            Rectangle {
+                                id: cardMask
+                                anchors.fill: parent
+                                radius: 18
+                                antialiasing: true
+                                color: "black"
+                                visible: false
                             }
-                            property bool wpMaskEnabled: presetVars.wallpaperMaskEnabled !== undefined ? presetVars.wallpaperMaskEnabled : true
-                            property string wpMaskShape: presetVars.wallpaperMaskShape || model.maskShape || "6SidedCookie"
-                            property real wpMaskScale: presetVars.wallpaperMaskScale !== undefined ? presetVars.wallpaperMaskScale : 0.7
-                            property string wpMaskColor: presetVars.wallpaperMaskColor || "transparent"
-                            property string panelPosition: presetVars.pillPosition || "Top"
-                            property string panelStyle: presetVars.panelStyle || "Floating"
+
+                            Item {
+                                id: maskedContent
+                                anchors.fill: parent
+                                layer.enabled: true
+                                layer.samples: Vars.layerSamples
+                                layer.smooth: true
+                                layer.effect: MultiEffect {
+                                    maskEnabled: true
+                                    maskSource: cardMask
+                                    maskThresholdMin: 0.5
+                                    maskSpreadAtMin: 1.0
+                                }
+
+                                // Card background
+                                Rectangle {
+                                    id: cardBase
+                                    anchors.fill: parent
+                                    radius: 18
+                                    antialiasing: true
+                                    color: Vars.tColor(Theme.surface_container_low, Vars.componentOpacity)
+                                    border.color: delegateItem.isHovered ? Theme.primary : Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08)
+                                    border.width: delegateItem.isHovered ? 2 : 1
+
+                                    Behavior on border.color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
+
+                                    property var presetVars: {
+                                        try { return JSON.parse(model.variablesJson || "{}"); } catch(e) { return {}; }
+                                    }
+                                    property bool wpMaskEnabled: presetVars.wallpaperMaskEnabled !== undefined ? presetVars.wallpaperMaskEnabled : true
+                                    property string wpMaskShape: presetVars.wallpaperMaskShape || model.maskShape || "6SidedCookie"
+                                    property real wpMaskScale: presetVars.wallpaperMaskScale !== undefined ? presetVars.wallpaperMaskScale : 0.7
+                                    property string wpMaskColor: presetVars.wallpaperMaskColor || "transparent"
+                                    property string panelPosition: presetVars.pillPosition || "Top"
+                                    property string panelStyle: presetVars.panelStyle || "Floating"
 
                             Rectangle {
                                 anchors.fill: parent
@@ -1423,21 +1512,24 @@ Flickable {
                                 antialiasing: true
                                 mipmap: true
                                 visible: false
+                                scale: delegateItem.isHovered ? 1.05 : 1.0
+                                Behavior on scale { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
                             }
 
                             Item {
                                 id: shapeMaskCanvas
+                                layer.enabled: true
+                                layer.smooth: true
+                                layer.samples: Vars.layerSamples
                                 anchors.fill: parent
                                 visible: false
-                                layer.enabled: true
-                                layer.samples: 32
-                                layer.smooth: true
 
                                 Image {
                                     anchors.centerIn: parent
                                     anchors.verticalCenterOffset: -12
                                     width: Math.min(cardBase.width, cardBase.height) * cardBase.wpMaskScale
                                     height: width
+                                    sourceSize: Qt.size(width, height)
                                     source: cardBase.wpMaskEnabled ? ("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + m3Shapes.getPath(cardBase.wpMaskShape) + "' fill='white'/></svg>") : ""
                                     smooth: true
                                     antialiasing: true
@@ -1447,7 +1539,7 @@ Flickable {
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: 24
+                                    radius: 18
                                     antialiasing: true
                                     color: "white"
                                     visible: !cardBase.wpMaskEnabled
@@ -1465,11 +1557,12 @@ Flickable {
 
                             // Bottom 1/4 Translucent Banner
                             Rectangle {
+                                antialiasing: true
                                 anchors.bottom: parent.bottom
                                 width: parent.width
                                 height: 56
-                                bottomLeftRadius: 24
-                                bottomRightRadius: 24
+                                bottomLeftRadius: 18
+                                bottomRightRadius: 18
                                 color: Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)
                                 
                                 Rectangle {
@@ -1526,6 +1619,7 @@ Flickable {
 
                                         // Apply Button (more round left, less round right)
                                         Rectangle {
+                                            antialiasing: true
                                             width: 80
                                             height: 36
                                             topLeftRadius: 18
@@ -1534,9 +1628,6 @@ Flickable {
                                             bottomRightRadius: 6
                                             color: applyHover.containsMouse ? Theme.primary : Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.2)
                                             Behavior on color { ColorAnimation { duration: 150 } }
-                                            layer.enabled: true
-                                            layer.samples: 32
-                                            layer.smooth: true
                                             scale: applyHover.pressed ? 1.08 : 1.0
                                             Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
 
@@ -1556,7 +1647,7 @@ Flickable {
                                                 hoverEnabled: true
                                                 cursorShape: Qt.PointingHandCursor
                                                 onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
+                                                    console.log("Apply Preset Button Clicked: " + model.presetId);
                                                     applyPreset(index);
                                                 }
                                             }
@@ -1564,6 +1655,7 @@ Flickable {
 
                                         // Delete Preset Button (less round left, more round right)
                                         Rectangle {
+                                            antialiasing: true
                                             width: 42
                                             height: 36
                                             topLeftRadius: 6
@@ -1572,9 +1664,6 @@ Flickable {
                                             bottomRightRadius: 18
                                             color: delHover.containsMouse ? Theme.error : Qt.rgba(Theme.error.r, Theme.error.g, Theme.error.b, 0.18)
                                             Behavior on color { ColorAnimation { duration: 150 } }
-                                            layer.enabled: true
-                                            layer.samples: 32
-                                            layer.smooth: true
                                             scale: delHover.pressed ? 1.08 : 1.0
                                             Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
 
@@ -1593,7 +1682,7 @@ Flickable {
                                                 hoverEnabled: true
                                                 cursorShape: Qt.PointingHandCursor
                                                 onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
+                                                    console.log("Delete Preset Button Clicked: " + model.presetId);
                                                     deletePreset(index);
                                                 }
                                             }
@@ -1601,21 +1690,25 @@ Flickable {
                                     }
                                 }
                             }
-                        }
+                        } // Ends cardBase
+                    } // Ends maskedContent
 
-                        // Clicking anywhere on top 3/4 applies the preset
-                        MouseArea {
-                            anchors.top: parent.top
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            height: parent.height - 56
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
-                                applyPreset(index);
-                            }
+                    // Clicking anywhere on top 3/4 applies the preset
+                    MouseArea {
+                        id: cardHoverArea
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        height: parent.height - 56
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            console.log("Preset Card Clicked: " + model.presetId);
+                            applyPreset(index);
                         }
                     }
+                } // Ends cardContainer
+            } // Ends delegateItem
                 }
             }
         }

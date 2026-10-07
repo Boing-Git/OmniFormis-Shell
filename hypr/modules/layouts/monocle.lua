@@ -1,12 +1,5 @@
-local vars = require("modules.keybinds_variables")
+local bind = require("modules.keybind_engine").bind
 
-local MM = vars.MM
-local SM = vars.SM
-local TM = vars.TM
-local left = vars.left 
-local right = vars.right
-local up = vars.up
-local down = vars.down
 
 hl.config({
     general = {
@@ -18,9 +11,9 @@ hl.config({
 -- ## Focus & Navigation (Monocle Style)
 --------------------------------------------------------------------------------
 -- Cycle to the next window
-hl.bind(SM .. " + Tab",hl.dsp.layout("cyclenext"))
-hl.bind(MM .. " + " .. right,hl.dsp.layout("cyclenext"))
+bind("MonocleNextTabBind", hl.dsp.layout("cyclenext"))
+bind("MonocleNextBind", hl.dsp.layout("cyclenext"))
 
 -- Cycle to the previous window
-hl.bind(SM .. " + " .. TM .. " + Tab",hl.dsp.layout("cycleprev"))
-hl.bind(MM .. " + " .. left,hl.dsp.layout("cycleprev"))
+bind("MonoclePrevTabBind", hl.dsp.layout("cycleprev"))
+bind("MonoclePrevBind", hl.dsp.layout("cycleprev"))

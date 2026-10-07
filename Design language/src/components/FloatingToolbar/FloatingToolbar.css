@@ -1,0 +1,77 @@
+@layer m3e.components {
+  .m3e-floating-toolbar {
+    background-color: var(--m3e-floating-toolbar-container-color);
+    border-radius: var(--m3e-comp-floating-toolbar-container-shape);
+    box-shadow: var(--m3e-sys-elevation-level0-shadow);
+    box-sizing: border-box;
+    color: var(--m3e-floating-toolbar-content-color);
+    display: inline-flex;
+    overflow: hidden;
+    padding: var(--m3e-comp-floating-toolbar-content-padding);
+    transition:
+      max-inline-size var(--m3e-sys-motion-expressive-fast-spatial-duration)
+        var(--m3e-sys-motion-expressive-fast-spatial-easing),
+      max-block-size var(--m3e-sys-motion-expressive-fast-spatial-duration)
+        var(--m3e-sys-motion-expressive-fast-spatial-easing),
+      padding var(--m3e-sys-motion-expressive-fast-spatial-duration)
+        var(--m3e-sys-motion-expressive-fast-spatial-easing),
+      opacity var(--m3e-sys-motion-expressive-fast-effects-duration)
+        var(--m3e-sys-motion-expressive-fast-effects-easing);
+  }
+
+  .m3e-floating-toolbar[data-m3e-variant="standard"] {
+    --m3e-floating-toolbar-container-color: var(--m3e-comp-floating-toolbar-standard-container-color);
+    --m3e-floating-toolbar-content-color: var(--m3e-comp-floating-toolbar-standard-content-color);
+  }
+
+  .m3e-floating-toolbar[data-m3e-variant="vibrant"] {
+    --m3e-floating-toolbar-container-color: var(--m3e-comp-floating-toolbar-vibrant-container-color);
+    --m3e-floating-toolbar-content-color: var(--m3e-comp-floating-toolbar-vibrant-content-color);
+  }
+
+  .m3e-floating-toolbar[data-m3e-orientation="horizontal"] {
+    block-size: var(--m3e-comp-floating-toolbar-container-height);
+    max-inline-size: 100vw;
+  }
+
+  .m3e-floating-toolbar[data-m3e-orientation="vertical"] {
+    inline-size: var(--m3e-comp-floating-toolbar-container-height);
+    max-block-size: 100vh;
+  }
+
+  .m3e-floating-toolbar[data-m3e-orientation="horizontal"][data-m3e-expanded="false"] {
+    max-inline-size: 0;
+    opacity: 0;
+    padding-inline: 0;
+  }
+
+  .m3e-floating-toolbar[data-m3e-orientation="vertical"][data-m3e-expanded="false"] {
+    max-block-size: 0;
+    opacity: 0;
+    padding-block: 0;
+  }
+
+  .m3e-floating-toolbar__content {
+    align-items: center;
+    display: flex;
+    gap: var(--m3e-comp-floating-toolbar-item-gap);
+    justify-content: center;
+  }
+
+  .m3e-floating-toolbar[data-m3e-orientation="vertical"] .m3e-floating-toolbar__content {
+    flex-direction: column;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .m3e-floating-toolbar {
+      transition: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .m3e-floating-toolbar {
+      border: 1px solid CanvasText;
+      forced-color-adjust: none;
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "m3e-site",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Documentation and showcase site for @language-lit/material3-expressive",
+  "scripts": {
+    "predev": "node ../scripts/link-self.mjs",
+    "dev": "next dev --port 3000",
+    "prebuild": "node ../scripts/link-self.mjs",
+    "build": "next build",
+    "preview": "npx serve out"
+  },
+  "dependencies": {
+    "@language-lit/material3-expressive": "file:..",
+    "marked": "^16.4.2",
+    "next": "16.2.10",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.0.0"
+  }
+}

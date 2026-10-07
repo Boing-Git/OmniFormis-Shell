@@ -93,6 +93,7 @@ ColumnLayout {
 
             // 1. LEFT TRACK (Colored fill — no icon, no dot for 0-to-+ sliders)
             Rectangle {
+                antialiasing: true
                 id: volLeftTrack
                 x: 0
                 y: 0
@@ -120,6 +121,7 @@ ColumnLayout {
 
             // 2. RIGHT TRACK (Inactive)
             Rectangle {
+                antialiasing: true
                 id: volRightTrack
                 x: parent.handlePos + sliders.handleWidth + sliders.gap
                 y: 0
@@ -194,6 +196,7 @@ ColumnLayout {
 
             // 1. LEFT TRACK (Colored fill — no icon, no dot for 0-to-+ sliders)
             Rectangle {
+                antialiasing: true
                 id: brightLeftTrack
                 x: 0
                 y: 0
@@ -221,6 +224,7 @@ ColumnLayout {
 
             // 2. RIGHT TRACK (Inactive)
             Rectangle {
+                antialiasing: true
                 id: brightRightTrack
                 x: parent.handlePos + sliders.handleWidth + sliders.gap
                 y: 0

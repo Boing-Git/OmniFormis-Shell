@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Material 3 Expressive">
+  <title>Material 3 Expressive</title>
+  <rect width="32" height="32" rx="8" fill="#21005d"/>
+  <rect x="4" y="4" width="12" height="12" rx="3" fill="#6750a4"/>
+  <rect x="16" y="4" width="12" height="12" rx="3" fill="#b69df8"/>
+  <rect x="4" y="16" width="12" height="12" rx="3" fill="#9a82db"/>
+  <rect x="16" y="16" width="12" height="12" rx="3" fill="#eaddff"/>
+</svg>

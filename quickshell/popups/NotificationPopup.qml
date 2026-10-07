@@ -15,16 +15,6 @@ Item {
     property bool expanded: false
     property var focusWindow: null
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
 
     // Expose panel for TopPills Wayland mask tracking
     property alias panel: panel
@@ -62,19 +52,19 @@ Item {
 
     Item {
         id: panelMask
-                anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
+        anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
         anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
         anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
         anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
         
-        anchors.topMargin: -20
-        anchors.bottomMargin: -20
-        anchors.leftMargin: -20
-        anchors.rightMargin: -20
-        width: root.expanded ? 420 : 140
-        height: root.expanded ? 440 : 80
+        anchors.topMargin: root.expanded ? -20 : 0
+        anchors.bottomMargin: root.expanded ? -20 : 0
+        anchors.leftMargin: root.expanded ? -20 : 0
+        anchors.rightMargin: root.expanded ? -20 : 0
+        width: root.expanded ? 420 : 0
+        height: root.expanded ? 440 : 0
     }
 
     // The visual panel that morphs from clock pill
@@ -82,7 +72,7 @@ Item {
         id: panel
         property bool isBackgroundActive: root.expanded || (MorphState.openCount === 0 && MorphState.activeItem === panel && panel.width > 105)
         layer.enabled: false
-        layer.samples: 32
+        layer.samples: Vars.layerSamples
         anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
@@ -108,38 +98,6 @@ Item {
         opacity: isBackgroundActive || innerUI.opacity > 0 ? 1.0 : 0.0
         // visible: opacity > 0 // Removed to preserve Behavior when hidden
 
-        Behavior on topLeftRadius {
-            enabled: !root.gameMode
-            NumberAnimation {
-                duration: Vars.animationDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Vars.customExpressiveSpatialSlow
-            }
-        }
-        Behavior on topRightRadius {
-            enabled: !root.gameMode
-            NumberAnimation {
-                duration: Vars.animationDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Vars.customExpressiveSpatialSlow
-            }
-        }
-        Behavior on bottomLeftRadius {
-            enabled: !root.gameMode
-            NumberAnimation {
-                duration: Vars.animationDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Vars.customExpressiveSpatialSlow
-            }
-        }
-        Behavior on bottomRightRadius {
-            enabled: !root.gameMode
-            NumberAnimation {
-                duration: Vars.animationDuration
-                easing.type: Easing.BezierSpline
-                easing.bezierCurve: Vars.customExpressiveSpatialSlow
-            }
-        }
         Behavior on width {
             enabled: !root.gameMode
             NumberAnimation {
@@ -160,6 +118,8 @@ Item {
         // EXPANDED UI
         Item {
             id: innerUI
+            // Content must never draw outside the morphing panel
+            clip: true
             anchors.fill: parent
             anchors.margins: 12
 

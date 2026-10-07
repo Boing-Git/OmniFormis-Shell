@@ -19,7 +19,7 @@ GridView {
 
     clip: true
     cellWidth: Math.floor(parent.width / 4)
-    cellHeight: cellWidth * 0.5625
+    cellHeight: cellWidth * 0.66
     boundsBehavior: Flickable.StopAtBounds
 
     focus: true
@@ -61,22 +61,37 @@ GridView {
         y: root.currentItem ? root.currentItem.y : 0
         width: root.cellWidth
         height: root.cellHeight
-        z: -1
+        z: 2
 
         Behavior on x { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
         Behavior on y { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
 
         Rectangle {
             anchors.fill: parent
-            anchors.margins: Vars.spacingSmall
-            radius: Vars.radiusMedium
+            anchors.margins: Vars.spacingSmall - 3
+            radius: Vars.radiusLarge + 3
             antialiasing: true
-            color: root.activeFocus ? Theme.primary_container : "transparent"
-            border.color: Theme.primary_container
-            border.width: root.activeFocus ? 2 : 0
-            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+            color: "transparent"
+            border.color: Theme.primary
+            border.width: root.activeFocus ? 3 : 0
             Behavior on border.width { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
         }
+    }
+
+    add: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customEmphasizedDecelerate }
+            NumberAnimation { property: "scale"; from: 0.9; to: 1; duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customEmphasizedDecelerate }
+        }
+    }
+    remove: Transition {
+        ParallelAnimation {
+            NumberAnimation { property: "opacity"; to: 0; duration: Vars.animationDuration * 0.6; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customEmphasizedAccelerate }
+            NumberAnimation { property: "scale"; to: 0.9; duration: Vars.animationDuration * 0.6; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customEmphasizedAccelerate }
+        }
+    }
+    displaced: Transition {
+        NumberAnimation { properties: "x,y"; duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow }
     }
 
     Keys.onEscapePressed: { root.escapePressed(); }
@@ -112,7 +127,7 @@ GridView {
     property bool vimKeysEnabled: false
     Process {
         id: vimKeysChecker
-        command: ["bash", "-c", "grep -qi 'vimkeys[ \t]*=[ \t]*true' /home/boing/Dotfiles/hypr/modules/variables.lua && echo 'true' || echo 'false'"]
+        command: ["bash", "-c", 'for f in "$HOME/Dotfiles/hypr/modules/variables.lua" "$HOME/.config/hypr/modules/variables.lua"; do [ -f "$f" ] && grep -qiE "vimkeys[[:space:]]*=[[:space:]]*true" "$f" && { echo true; exit; }; done; echo false']
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -121,25 +136,25 @@ GridView {
         }
     }
 
+    // Colemak-DH home-row navigation (matches the Hyprland binds): m = left, n = down, e = up, i = right
     Keys.onPressed: (event) => {
-        if (root.vimKeysEnabled) {
-            if (event.key === Qt.Key_H || event.key === Qt.Key_A) {
-                moveCurrentIndexLeft();
-                event.accepted = true;
-            } else if (event.key === Qt.Key_L || event.key === Qt.Key_F) {
-                moveCurrentIndexRight();
-                event.accepted = true;
-            } else if (event.key === Qt.Key_K || event.key === Qt.Key_D) {
-                if (currentIndex < 4) {
-                    if (searchInput) searchInput.forceActiveFocus();
-                } else {
-                    moveCurrentIndexUp();
-                }
-                event.accepted = true;
-            } else if (event.key === Qt.Key_J || event.key === Qt.Key_S) {
-                moveCurrentIndexDown();
-                event.accepted = true;
+        if (!root.vimKeysEnabled) return;
+        if (event.key === Qt.Key_M) {
+            moveCurrentIndexLeft();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_I) {
+            moveCurrentIndexRight();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_E) {
+            if (currentIndex < 4) {
+                if (searchInput) searchInput.forceActiveFocus();
+            } else {
+                moveCurrentIndexUp();
             }
+            event.accepted = true;
+        } else if (event.key === Qt.Key_N) {
+            moveCurrentIndexDown();
+            event.accepted = true;
         }
     }
 
@@ -152,56 +167,110 @@ GridView {
             root.themeSelected(themeName);
         }
 
-        property bool isCurrentFocus: delegateItem.GridView.isCurrentItem && root.activeFocus
-        
-        Rectangle {
+        readonly property bool isActive: root.currentTheme === themeName
+        readonly property color surfaceCol: Qt.color(themeSurface)
+        readonly property color onSurfaceCol: Qt.color(themeOnSurface)
+        readonly property color primaryCol: Qt.color(themePrimary)
+
+        Item {
+            id: tile
             anchors.fill: parent
             anchors.margins: Vars.spacingSmall
-            radius: Vars.radiusMedium
-            antialiasing: true
+            scale: tileMouseArea.pressed ? 0.96 : (tileMouseArea.containsMouse ? 1.03 : 1.0)
+            Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
 
-            color: root.currentTheme === themeName ? Qt.rgba(Qt.color(themePrimary).r, Qt.color(themePrimary).g, Qt.color(themePrimary).b, 0.12) : (tileMouseArea.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
-            border.color: themePrimary
-            border.width: (root.currentTheme === themeName) ? 2 : 0
-            clip: true
-
-            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-
-            ColumnLayout {
+            // The tile is painted with the scheme's own surface so it previews the real look
+            Rectangle {
+                id: card
                 anchors.fill: parent
-                anchors.margins: Vars.spacingSmall
-                spacing: Vars.spacingSmall
+                radius: Vars.radiusLarge
+                antialiasing: true
+                color: delegateItem.surfaceCol
+                border.width: delegateItem.isActive ? 3 : 1
+                border.color: delegateItem.isActive ? delegateItem.primaryCol : Qt.rgba(delegateItem.onSurfaceCol.r, delegateItem.onSurfaceCol.g, delegateItem.onSurfaceCol.b, 0.18)
+                Behavior on border.width { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+                Behavior on border.color { ColorAnimation { duration: Vars.animationDuration } }
 
-                Item {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.margins: isCurrentFocus ? 4 : 0
-                    clip: true
-                    
-                    Behavior on Layout.margins { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+                // Hover wash in the scheme's own text colour
+                Rectangle {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    antialiasing: true
+                    color: delegateItem.onSurfaceCol
+                    opacity: tileMouseArea.containsMouse ? 0.06 : 0.0
+                    Behavior on opacity { NumberAnimation { duration: Vars.animationDuration } }
+                }
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: Vars.spacingMedium
+                    spacing: Vars.spacingSmall
+
+                    // Colour swatches: primary, secondary, tertiary
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: -Math.round(parent.height * 0.14)
+
+                            Repeater {
+                                model: [themePrimary, themeSecondary, themeTertiary]
+                                delegate: Rectangle {
+                                    required property string modelData
+                                    required property int index
+                                    readonly property real d: Math.min(card.height * 0.42, card.width * 0.26) * (index === 0 ? 1.0 : 0.82)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: d
+                                    height: d
+                                    radius: d / 2
+                                    antialiasing: true
+                                    color: Qt.color(modelData)
+                                    z: 3 - index
+                                    // ring in the surface colour so overlapping swatches stay separated
+                                    border.width: 3
+                                    border.color: delegateItem.surfaceCol
+                                }
+                            }
+                        }
+                    }
 
                     QsText {
-                        anchors.centerIn: parent
-                        text: "palette"
-                        font.family: "Material Symbols Outlined"
-                        font.pixelSize: 48
-                        color: isCurrentFocus ? Theme.on_primary_container : themePrimary
-                        opacity: isCurrentFocus || root.currentTheme === themeName ? 1.0 : 0.6
+                        Layout.fillWidth: true
+                        text: themeName
+                        font.family: Vars.fontFamily
+                        color: delegateItem.onSurfaceCol
+                        font.pixelSize: 15
+                        setWeight: delegateItem.isActive ? Font.Bold : Font.Medium
+                        elide: Text.ElideRight
+                        horizontalAlignment: Text.AlignHCenter
                     }
                 }
 
-                QsText {
-                    Layout.fillWidth: true
-                    text: themeName
-                    font.family: Vars.fontFamily
-                    color: isCurrentFocus ? Theme.on_primary_container : themePrimary
-                    font.pixelSize: 16
-                    setWeight: root.currentTheme === themeName ? Font.Bold : Font.Normal
-                    elide: Text.ElideRight
-                    horizontalAlignment: Text.AlignHCenter
-                    opacity: isCurrentFocus || root.currentTheme === themeName ? 1.0 : 0.6
-                    
-                    Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+                // Active-scheme badge
+                Rectangle {
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.margins: Vars.spacingSmall
+                    width: 24
+                    height: 24
+                    radius: 12
+                    antialiasing: true
+                    color: delegateItem.primaryCol
+                    opacity: delegateItem.isActive ? 1.0 : 0.0
+                    scale: delegateItem.isActive ? 1.0 : 0.4
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: Vars.animationDuration } }
+                    Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
+
+                    QsText {
+                        anchors.centerIn: parent
+                        text: "check"
+                        font.family: "Material Symbols Outlined"
+                        font.pixelSize: 16
+                        color: delegateItem.surfaceCol
+                    }
                 }
             }
 
@@ -210,10 +279,10 @@ GridView {
                 anchors.fill: parent
                 hoverEnabled: true
                 preventStealing: false
+                cursorShape: Qt.PointingHandCursor
                 onClicked: {
                     root.currentIndex = index;
                     delegateItem.triggerSelection();
-                    root.escapePressed(); // To close after selection
                 }
             }
         }

@@ -1,0 +1,5 @@
+# direnv's own cache — regenerated locally, points into /nix/store on this machine
+.direnv/
+
+# Rust build output
+**/target/

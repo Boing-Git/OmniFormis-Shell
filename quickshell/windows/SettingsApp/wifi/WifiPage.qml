@@ -26,6 +26,14 @@ Item {
     property color pageOnColor: Theme.on_tertiary
     property string searchText: ""
 
+    // Scan while the page is on screen so the list is fresh, and stop when leaving it
+    function syncScanner() {
+        if (rootWifiPage.wifiDevice && Networking.wifiEnabled)
+            rootWifiPage.wifiDevice.scannerEnabled = rootWifiPage.visible;
+    }
+    onVisibleChanged: syncScanner()
+    onWifiDeviceChanged: syncScanner()
+
     M3Shapes { id: m3Shapes }
 
     property bool authOverlayVisible: false
@@ -37,7 +45,7 @@ Item {
     Process {
         id: nmcliPwdProcess
         property string targetSsid: ""
-        command: ["nmcli", "-s", "-g", "802-11-wireless-security.psk", "connection", "show", targetSsid]
+        command: ["nmcli", "-s", "-g", "802-11-wireless-security.psk", "connection", "show", "id", targetSsid]
         stdout: StdioCollector {
             onStreamFinished: {
                 rootWifiPage.selectedNetworkPassword = this.text.trim();
@@ -45,10 +53,17 @@ Item {
         }
     }
 
+    // Confirms the user's sudo password before a saved Wi-Fi password is revealed. The password is
+    // written to sudo's stdin so it never appears in a process's command line.
     Process {
         id: authProcess
         property string pwd: ""
-        command: ["bash", "-c", "echo '" + pwd.replace(/'/g, "'\\''") + "' | sudo -S true"]
+        command: ["sudo", "-S", "-k", "-p", "", "true"]
+        stdinEnabled: true
+        onStarted: {
+            write(pwd + "\n");
+            pwd = "";
+        }
         onExited: code => {
             if (code === 0) {
                 // Success!
@@ -82,8 +97,6 @@ Item {
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.leftMargin: Vars.spacingLarge
-            Layout.rightMargin: Vars.spacingLarge
             spacing: 12
 
             Item {
@@ -123,6 +136,7 @@ Item {
             Layout.fillHeight: true
             contentHeight: wifiContent.implicitHeight
             clip: true
+            bottomMargin: 112
             // boundsBehavior: Flickable.StopAtBounds
             flickDeceleration: Vars.flickDeceleration
             maximumFlickVelocity: Vars.maximumFlickVelocity
@@ -140,9 +154,11 @@ Item {
                     Item {
                         id: wifiHeader
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 72
+                        Layout.preferredHeight: 80
 
-                        property color targetColor: wifiHeaderMouse.containsMouse ? Qt.tint((Vars.tColor(Theme.surface_container, Vars.componentOpacity)), Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08)) : (Vars.tColor(Theme.surface_container, Vars.componentOpacity))
+                        property color targetColor: wifiHeaderMouse.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity))
+                        scale: wifiHeaderMouse.pressed ? 1.08 : 1.0
+                        Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
                         Behavior on targetColor {
                             ColorAnimation {
                                 duration: Vars.animationDuration
@@ -151,19 +167,16 @@ Item {
 
                         Item {
                             anchors.fill: parent
-                            layer.enabled: true
-                            layer.samples: 32
                             opacity: parent.targetColor.a
                             Rectangle {
+                                antialiasing: true
                                 anchors.fill: parent
                                 color: Qt.rgba(parent.parent.targetColor.r, parent.parent.targetColor.g, parent.parent.targetColor.b, 1.0)
 
-                                property bool hasNetworks: rootWifiPage.wifiDevice && rootWifiPage.wifiDevice.networks.values.length > 0
-                                property bool firstNetworkConnected: hasNetworks && rootWifiPage.wifiDevice.networks.values[0].connected
-                                topLeftRadius: 16
-                                topRightRadius: 16
-                                bottomLeftRadius: Networking.wifiEnabled && hasNetworks ? (firstNetworkConnected ? 16 : 4) : 16
-                                bottomRightRadius: Networking.wifiEnabled && hasNetworks ? (firstNetworkConnected ? 16 : 4) : 16
+                                topLeftRadius: Vars.radiusLarge
+                                topRightRadius: Vars.radiusLarge
+                                bottomLeftRadius: Networking.wifiEnabled ? 4 : Vars.radiusLarge
+                                bottomRightRadius: Networking.wifiEnabled ? 4 : Vars.radiusLarge
                                 
                                 Behavior on bottomLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
                                 Behavior on bottomRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
@@ -176,13 +189,14 @@ Item {
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 20
-                            anchors.rightMargin: 20
+                            anchors.leftMargin: Vars.spacingLarge
+                            anchors.rightMargin: Vars.spacingLarge
                             QsText {
                                 text: rootWifiPage.pageTitle
                                 font.family: Vars.fontFamily
                                 font.pixelSize: 16
-                                setWeight: 500
+                                setWeight: Vars.fontWeight
+                                font.italic: Vars.fontItalic
                                 color: Theme.on_surface
                                 Layout.fillWidth: true
                             }
@@ -192,7 +206,7 @@ Item {
                                 height: 32
                                 radius: 16
                                 antialiasing: true
-                                color: Networking.wifiEnabled ? Theme.primary : Theme.surface_variant
+                                color: Networking.wifiEnabled ? Vars.tColorSelected(Theme.primary) : Vars.tColor(Theme.surface_variant, Vars.componentOpacity)
                                 border.color: wifiHeader.activeFocus ? Theme.on_surface : "transparent"
                                 border.width: wifiHeader.activeFocus ? 2 : 0
                                 Behavior on color {
@@ -222,7 +236,7 @@ Item {
                                         anchors.centerIn: parent
                                         font.family: "Material Symbols Outlined"
                                         font.pixelSize: 16
-                                        color: Networking.wifiEnabled ? (Vars.tColor(Theme.primary, 0.8)) : (Vars.tColor(Theme.surface_variant, Vars.componentOpacity))
+                                        color: Networking.wifiEnabled ? (Vars.tColorSelected(Theme.primary)) : (Vars.tColor(Theme.surface_variant, Vars.componentOpacity))
                                         text: Networking.wifiEnabled ? "\ue5ca" : "\ue5cd"
                                     }
                                 }
@@ -245,18 +259,16 @@ Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 120
                         visible: Networking.wifiEnabled && (!rootWifiPage.wifiDevice || rootWifiPage.wifiDevice.networks.values.length === 0)
-                        radius: 16
+                        radius: 4
                         antialiasing: true
-                        color: Vars.tColor(Theme.surface_container, Vars.componentOpacity)
+                        color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
 
                         ColumnLayout {
                             anchors.centerIn: parent
                             spacing: 8
-                            QsText {
-                                text: "\ue63e"
-                                font.family: "Material Symbols Outlined"
-                                font.pixelSize: 32
-                                color: Theme.on_surface_variant
+                            SettingsIcon {
+                                size: 56
+                                icon: "\ue63e"
                                 Layout.alignment: Qt.AlignHCenter
                             } // Wifi off icon
                             QsText {
@@ -281,10 +293,12 @@ Item {
                     Item {
                         id: scanCard
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 72
+                        Layout.preferredHeight: 80
                         visible: Networking.wifiEnabled
 
-                        property color targetColor: scanMouse.containsMouse ? Qt.tint((Vars.tColor(Theme.surface_container, Vars.componentOpacity)), Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08)) : (Vars.tColor(Theme.surface_container, Vars.componentOpacity))
+                        property color targetColor: scanMouse.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity))
+                        scale: scanMouse.pressed ? 1.08 : 1.0
+                        Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
                         Behavior on targetColor {
                             ColorAnimation {
                                 duration: Vars.animationDuration
@@ -293,18 +307,16 @@ Item {
 
                         Item {
                             anchors.fill: parent
-                            layer.enabled: true
-                            layer.samples: 32
                             opacity: parent.targetColor.a
                             Rectangle {
+                                antialiasing: true
                                 anchors.fill: parent
                                 color: Qt.rgba(parent.parent.targetColor.r, parent.parent.targetColor.g, parent.parent.targetColor.b, 1.0)
 
-                                property bool lastNetworkConnected: rootWifiPage.wifiDevice && rootWifiPage.wifiDevice.networks.values.length > 0 && rootWifiPage.wifiDevice.networks.values[rootWifiPage.wifiDevice.networks.values.length - 1].connected
-                                topLeftRadius: lastNetworkConnected ? 16 : 4
-                                topRightRadius: lastNetworkConnected ? 16 : 4
-                                bottomLeftRadius: 16
-                                bottomRightRadius: 16
+                                topLeftRadius: 4
+                                topRightRadius: 4
+                                bottomLeftRadius: Vars.radiusLarge
+                                bottomRightRadius: Vars.radiusLarge
                                 
                                 Behavior on topLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
                                 Behavior on topRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
@@ -323,14 +335,21 @@ Item {
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 20
-                            anchors.rightMargin: 20
+                            anchors.leftMargin: Vars.spacingLarge
+                            anchors.rightMargin: Vars.spacingLarge
                             spacing: 16
 
                             Item {
                                 width: 40
                                 height: 40
                                 Layout.alignment: Qt.AlignVCenter
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: width / 2
+                                    antialiasing: true
+                                    color: Theme.secondary
+                                }
 
                                 Item {
                                     id: scanLoadingIndicator
@@ -348,8 +367,8 @@ Item {
                                     anchors.centerIn: parent
                                     text: "\ue863"
                                     font.family: "Material Symbols Outlined"
-                                    font.pixelSize: 24
-                                    color: rootWifiPage.wifiDevice && rootWifiPage.wifiDevice.scannerEnabled ? Theme.on_surface_variant : Theme.on_surface
+                                    font.pixelSize: 22
+                                    color: Theme.on_secondary
                                     opacity: scanLoadingIndicator.running ? 0.0 : 1.0
                                     Behavior on opacity {
                                         NumberAnimation {
@@ -363,7 +382,8 @@ Item {
                                 text: (rootWifiPage.wifiDevice && rootWifiPage.wifiDevice.scannerEnabled) ? "Scanning..." : "Scan for Networks"
                                 font.family: Vars.fontFamily
                                 font.pixelSize: 16
-                                setWeight: 500
+                                setWeight: Vars.fontWeight
+                                font.italic: Vars.fontItalic
                                 color: Theme.on_surface
                                 Layout.fillWidth: true
                             }
@@ -433,7 +453,7 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: rootWifiPage.selectedNetworkForInfo = ""
+                        onClicked: { rootWifiPage.selectedNetworkForInfo = ""; rootWifiPage.selectedNetworkPassword = ""; }
                     }
                     Behavior on color {
                         ColorAnimation {
@@ -461,7 +481,7 @@ Item {
                 Layout.preferredHeight: 100
                 radius: 16
                 antialiasing: true
-                color: Vars.tColor(Theme.surface_container, Vars.componentOpacity)
+                color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
 
                 ColumnLayout {
                     anchors.centerIn: parent
@@ -613,7 +633,7 @@ Item {
                 Layout.preferredHeight: 180
                 radius: 16
                 antialiasing: true
-                color: Vars.tColor(Theme.surface_container, Vars.componentOpacity)
+                color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
 
                 ColumnLayout {
                     anchors.centerIn: parent

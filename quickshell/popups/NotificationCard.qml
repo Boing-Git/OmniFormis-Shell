@@ -15,10 +15,12 @@ Item {
     
     // We bind height to the card container's height so the list layout reacts properly
     width: parent ? parent.width : 360
-    height: rootCard.dismissing ? 0 : container.height
+    // Popups are sized by their morphing panel, so only list cards collapse / animate their height
+    height: (rootCard.dismissing && !isPopup) ? 0 : container.height
 
     // Animate height changes for smooth insertions/removals
     Behavior on height {
+        enabled: !isPopup
         NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard }
     }
 
@@ -75,9 +77,6 @@ Item {
     // Actual visual card
     Primitives.SquircleMask {
         id: container
-        layer.enabled: !isPopup
-        layer.samples: 32
-        layer.effect: MultiEffect { shadowEnabled: true; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.25); shadowVerticalOffset: 4; shadowHorizontalOffset: 0 }
         width: parent.width
         height: cardContent.implicitHeight + 24
         
@@ -101,11 +100,6 @@ Item {
         topRightRadius: isEffectivelyFirst ? Vars.radiusLarge : 4
         bottomLeftRadius: isEffectivelyLast ? Vars.radiusLarge : 4
         bottomRightRadius: isEffectivelyLast ? Vars.radiusLarge : 4
-        
-        Behavior on topLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-        Behavior on topRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-        Behavior on bottomLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-        Behavior on bottomRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
         
         color: isPopup ? (modelData.urgency === NotificationUrgency.Critical ? Theme.error : "transparent") : (modelData.urgency === NotificationUrgency.Critical ? Theme.error_container : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
         clip: true
@@ -189,9 +183,9 @@ Item {
                             rootCard.dismissing = true;
                             dismissTimer.start();
                         } else {
-                            if (typeof modelData.dismiss === "function") {
-                                modelData.dismiss();
-                            }
+                            // Same collapse-then-remove path as a swipe so the row animates out
+                            rootCard.dismissing = true;
+                            dismissTimer.start();
                         }
                     }
                 }
@@ -202,6 +196,8 @@ Item {
             id: dismissTimer
             interval: 250
             onTriggered: {
+                // Read the index first, dismissing removes the card and its properties with it
+                var index = listIndex;
                 if (isPopup) {
                     NotificationService.clearPopups();
                 } else {
@@ -209,7 +205,7 @@ Item {
                         modelData.dismiss();
                     }
                 }
-                rootCard.dragEnded(listIndex);
+                rootCard.dragEnded(index);
             }
         }
 

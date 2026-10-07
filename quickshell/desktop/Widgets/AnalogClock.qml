@@ -12,16 +12,6 @@ Item {
     height: 300
 
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
 
     property int hours: 0
     property int minutes: 0
@@ -33,43 +23,11 @@ Item {
     property bool currentShowTicks: Vars.clockShowTicks !== undefined ? Vars.clockShowTicks : true
     property bool currentShowCenterDot: Vars.clockShowCenterDot !== undefined ? Vars.clockShowCenterDot : true
     property int currentAnimDuration: Vars.animationDuration !== undefined ? Vars.animationDuration : 240
-    property bool currentTranslucent: (Vars._translucent && !Vars.gameMode) !== undefined ? (Vars._translucent && !Vars.gameMode) : false
+    property bool currentTranslucent: Vars.isTranslucent()
 
     property bool currentShowDate: Vars.clockShowDate !== undefined ? Vars.clockShowDate : true
     property string currentSecondHandStyle: Vars.clockSecondHandStyle !== undefined ? Vars.clockSecondHandStyle : "Orbiting Dot"
     property real currentHandThickness: Vars.clockHandThickness !== undefined ? Vars.clockHandThickness : 15
-
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            var shape = Vars.clockShape !== undefined ? Vars.clockShape : "Sunny";
-            if (root.currentClockShape !== shape)
-                root.currentClockShape = shape;
-            var ticks = Vars.clockShowTicks !== undefined ? Vars.clockShowTicks : true;
-            if (root.currentShowTicks !== ticks)
-                root.currentShowTicks = ticks;
-            var dot = Vars.clockShowCenterDot !== undefined ? Vars.clockShowCenterDot : true;
-            if (root.currentShowCenterDot !== dot)
-                root.currentShowCenterDot = dot;
-            var anim = Vars.animationDuration !== undefined ? Vars.animationDuration : 240;
-            if (root.currentAnimDuration !== anim)
-                root.currentAnimDuration = anim;
-            var trans = (Vars._translucent && !Vars.gameMode) !== undefined ? (Vars._translucent && !Vars.gameMode) : false;
-            if (root.currentTranslucent !== trans)
-                root.currentTranslucent = trans;
-            var showDate = Vars.clockShowDate !== undefined ? Vars.clockShowDate : true;
-            if (root.currentShowDate !== showDate)
-                root.currentShowDate = showDate;
-            var style = Vars.clockSecondHandStyle !== undefined ? Vars.clockSecondHandStyle : "Orbiting Dot";
-            if (root.currentSecondHandStyle !== style)
-                root.currentSecondHandStyle = style;
-            var thick = Vars.clockHandThickness !== undefined ? Vars.clockHandThickness : 15;
-            if (root.currentHandThickness !== thick)
-                root.currentHandThickness = thick;
-        }
-    }
 
     // Timer to update time
     Timer {
@@ -144,15 +102,6 @@ Item {
             clockFace.source = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + clockFace.currentPath + "' fill='" + clockFace.pathColor + "' fill-opacity='" + clockFace.pathOpacity + "' stroke='" + clockFace.outlineColor + "' stroke-width='1'/></svg>";
         }
 
-        layer.enabled: true
-        layer.samples: 32
-        layer.effect: MultiEffect {
-            shadowEnabled: !root.gameMode
-            shadowBlur: 1.0
-            shadowColor: Qt.rgba(0, 0, 0, 0.25)
-            shadowVerticalOffset: 4
-            shadowHorizontalOffset: 0
-        }
 
         // Inner dial to constrain contents within the shape bounds
         // Dial size adapts to the shape — more compact shapes get a tighter dial
@@ -341,7 +290,7 @@ Item {
                                 color: Theme.on_surface
                                 opacity: 1.0 // Fully opaque as requested
                                 layer.enabled: false // Disable layer to prevent pixelation when rotated
-                                layer.samples: 32
+                                layer.samples: Vars.layerSamples
                                 antialiasing: true
                                 
                                 // Push the characters outward from the center along the circumference

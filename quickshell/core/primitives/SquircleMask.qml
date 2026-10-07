@@ -15,6 +15,11 @@ Item {
 
     property var _points: []
 
+    Behavior on topLeftRadius { enabled: !Vars.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+    Behavior on topRightRadius { enabled: !Vars.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+    Behavior on bottomLeftRadius { enabled: !Vars.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+    Behavior on bottomRightRadius { enabled: !Vars.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+
     function updatePoints() {
         if (power <= 2.0 || width <= 0 || height <= 0) return;
         var w = width;
@@ -98,8 +103,6 @@ Item {
         visible: root.power <= 2.0
         antialiasing: true
         smooth: true
-        layer.enabled: true
-        layer.samples: 32
     }
     
 
@@ -110,7 +113,8 @@ Item {
         antialiasing: true
         smooth: true
         layer.enabled: true
-        layer.samples: 32
+        layer.smooth: true
+        layer.samples: Vars.layerSamples
         
         ShapePath {
             fillColor: root.color

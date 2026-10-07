@@ -11,3 +11,6 @@ TaskManagerPage 1.0 TaskManagerPage.qml
 WifiNetworkDelegate 1.0 wifi/WifiNetworkDelegate.qml
 BluetoothDeviceDelegate 1.0 bluetooth/BluetoothDeviceDelegate.qml
 BluetoothPairDelegate 1.0 bluetooth/BluetoothPairDelegate.qml
+SettingsIcon 1.0 SettingsIcon.qml
+KeybindsPage 1.0 KeybindsPage.qml
+KeybindRow 1.0 KeybindRow.qml

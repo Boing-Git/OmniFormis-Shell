@@ -17,22 +17,6 @@ PanelWindow {
     property int maskOffsetX: Vars.wallpaperMaskOffsetX !== undefined ? Vars.wallpaperMaskOffsetX : 0
     property int maskOffsetY: Vars.wallpaperMaskOffsetY !== undefined ? Vars.wallpaperMaskOffsetY : 0
 
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.desktopCalenderEnabled !== undefined && window.calenderEnabled !== Vars.desktopCalenderEnabled) window.calenderEnabled = Vars.desktopCalenderEnabled;
-            if (Vars.desktopCalenderAnchorEnabled !== undefined && window.anchorEnabled !== Vars.desktopCalenderAnchorEnabled) window.anchorEnabled = Vars.desktopCalenderAnchorEnabled;
-            if (Vars.desktopCalenderAnchorPoint !== undefined && window.anchorPoint !== Vars.desktopCalenderAnchorPoint) window.anchorPoint = Vars.desktopCalenderAnchorPoint;
-            if (Vars.desktopCalenderAnchorCurve !== undefined && window.anchorCurve !== Vars.desktopCalenderAnchorCurve) window.anchorCurve = Vars.desktopCalenderAnchorCurve;
-            if (Vars.wallpaperMaskShape !== undefined && window.maskShape !== Vars.wallpaperMaskShape) window.maskShape = Vars.wallpaperMaskShape;
-            if (Vars.wallpaperMaskScale !== undefined && window.maskScale !== Vars.wallpaperMaskScale) window.maskScale = Vars.wallpaperMaskScale;
-            if (Vars.wallpaperMaskOffsetX !== undefined && window.maskOffsetX !== Vars.wallpaperMaskOffsetX) window.maskOffsetX = Vars.wallpaperMaskOffsetX;
-            if (Vars.wallpaperMaskOffsetY !== undefined && window.maskOffsetY !== Vars.wallpaperMaskOffsetY) window.maskOffsetY = Vars.wallpaperMaskOffsetY;
-        }
-    }
-
     visible: window.calenderEnabled
 
     WlrLayershell.namespace: "quickshell"

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "browsers": [
+    { "name": "Chrome", "minimum": "120", "browserslist": "Chrome >= 120", "lightningCssTarget": [120, 0, 0] },
+    { "name": "Edge", "minimum": "120", "browserslist": "Edge >= 120", "lightningCssTarget": [120, 0, 0] },
+    { "name": "Firefox", "minimum": "121", "browserslist": "Firefox >= 121", "lightningCssTarget": [121, 0, 0] },
+    { "name": "Safari", "minimum": "17.2", "browserslist": "Safari >= 17.2", "lightningCssTarget": [17, 2, 0] },
+    { "name": "iOS", "minimum": "17.2", "browserslist": "iOS >= 17.2", "lightningCssTarget": [17, 2, 0] }
+  ]
+}

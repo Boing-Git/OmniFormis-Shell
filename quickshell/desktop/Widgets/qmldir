@@ -5,3 +5,5 @@ DesktopCalender 1.0 ./DesktopCalender.qml
 Calender 1.0 ./Calender.qml
 M3Shapes 1.0 ../M3Shapes.qml
 DesktopMediaPlayer 1.0 ./DesktopMediaPlayer.qml
+DesktopSystemVitals 1.0 ./DesktopSystemVitals.qml
+DesktopAudioVisualizer 1.0 ./DesktopAudioVisualizer.qml

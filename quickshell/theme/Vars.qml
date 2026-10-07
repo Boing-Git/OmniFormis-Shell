@@ -1,5 +1,7 @@
 pragma Singleton
 import QtQuick
+import Quickshell
+import Quickshell.Io
 import "variables.js" as RawVars
 
 QtObject {
@@ -62,6 +64,8 @@ QtObject {
     property bool mediaPlayerExpandOverlaps: RawVars.mediaPlayerExpandOverlaps !== undefined ? RawVars.mediaPlayerExpandOverlaps : false
     property string panelStyle: RawVars.panelStyle !== undefined ? RawVars.panelStyle : ""
     property string pillPosition: RawVars.pillPosition !== undefined ? RawVars.pillPosition : ""
+    property string liquidGlassPreset: RawVars.liquidGlassPreset !== undefined ? RawVars.liquidGlassPreset : "apple"
+    property string clockPillMode: RawVars.clockPillMode !== undefined ? RawVars.clockPillMode : "Always Visible"
     property bool gameMode: RawVars.gameMode !== undefined ? RawVars.gameMode : false
     property bool desktopClockEnabled: RawVars.desktopClockEnabled !== undefined ? RawVars.desktopClockEnabled : false
     property bool desktopClockAnchorEnabled: RawVars.desktopClockAnchorEnabled !== undefined ? RawVars.desktopClockAnchorEnabled : false
@@ -76,6 +80,29 @@ QtObject {
     property string desktopMediaPlayerAnchorPoint: RawVars.desktopMediaPlayerAnchorPoint !== undefined ? RawVars.desktopMediaPlayerAnchorPoint : ""
     property real desktopMediaPlayerAnchorCurve: RawVars.desktopMediaPlayerAnchorCurve !== undefined ? RawVars.desktopMediaPlayerAnchorCurve : 0
     property bool desktopMediaPlayerAnchorExpandFix: RawVars.desktopMediaPlayerAnchorExpandFix !== undefined ? RawVars.desktopMediaPlayerAnchorExpandFix : false
+    property bool desktopSystemVitalsEnabled: RawVars.desktopSystemVitalsEnabled !== undefined ? RawVars.desktopSystemVitalsEnabled : false
+    property bool desktopSystemVitalsAnchorEnabled: RawVars.desktopSystemVitalsAnchorEnabled !== undefined ? RawVars.desktopSystemVitalsAnchorEnabled : false
+    property string desktopSystemVitalsAnchorPoint: RawVars.desktopSystemVitalsAnchorPoint !== undefined ? RawVars.desktopSystemVitalsAnchorPoint : ""
+    property real desktopSystemVitalsAnchorCurve: RawVars.desktopSystemVitalsAnchorCurve !== undefined ? RawVars.desktopSystemVitalsAnchorCurve : 0
+    property bool desktopSystemVitalsBackgroundEnabled: RawVars.desktopSystemVitalsBackgroundEnabled !== undefined ? RawVars.desktopSystemVitalsBackgroundEnabled : true
+    property bool desktopAudioVisualizerEnabled: RawVars.desktopAudioVisualizerEnabled !== undefined ? RawVars.desktopAudioVisualizerEnabled : false
+    property bool desktopAudioVisualizerAnchorEnabled: RawVars.desktopAudioVisualizerAnchorEnabled !== undefined ? RawVars.desktopAudioVisualizerAnchorEnabled : false
+    property string desktopAudioVisualizerAnchorPoint: RawVars.desktopAudioVisualizerAnchorPoint !== undefined ? RawVars.desktopAudioVisualizerAnchorPoint : ""
+    property real desktopAudioVisualizerAnchorCurve: RawVars.desktopAudioVisualizerAnchorCurve !== undefined ? RawVars.desktopAudioVisualizerAnchorCurve : 0
+    property int desktopAudioVisualizerBars: RawVars.desktopAudioVisualizerBars !== undefined ? RawVars.desktopAudioVisualizerBars : 24
+    property bool desktopAudioVisualizerBackgroundEnabled: RawVars.desktopAudioVisualizerBackgroundEnabled !== undefined ? RawVars.desktopAudioVisualizerBackgroundEnabled : true
+    property string desktopAudioVisualizerShape: RawVars.desktopAudioVisualizerShape !== undefined ? RawVars.desktopAudioVisualizerShape : "Sunny"
+    property string desktopAudioVisualizerShapeMode: RawVars.desktopAudioVisualizerShapeMode !== undefined ? RawVars.desktopAudioVisualizerShapeMode : "Single"
+    property string desktopAudioVisualizerColorMode: RawVars.desktopAudioVisualizerColorMode !== undefined ? RawVars.desktopAudioVisualizerColorMode : "Theme"
+    property string desktopAudioVisualizerColor: RawVars.desktopAudioVisualizerColor !== undefined ? RawVars.desktopAudioVisualizerColor : "primary"
+    property string desktopAudioVisualizerGradientStart: RawVars.desktopAudioVisualizerGradientStart !== undefined ? RawVars.desktopAudioVisualizerGradientStart : "primary"
+    property string desktopAudioVisualizerGradientEnd: RawVars.desktopAudioVisualizerGradientEnd !== undefined ? RawVars.desktopAudioVisualizerGradientEnd : "tertiary"
+    property string desktopAudioVisualizerLayout: RawVars.desktopAudioVisualizerLayout !== undefined ? RawVars.desktopAudioVisualizerLayout : "Circular"
+    property string desktopAudioVisualizerPositionShape: RawVars.desktopAudioVisualizerPositionShape !== undefined ? RawVars.desktopAudioVisualizerPositionShape : "Circle"
+    property real desktopAudioVisualizerShapeSize: RawVars.desktopAudioVisualizerShapeSize !== undefined ? RawVars.desktopAudioVisualizerShapeSize : 26
+    property real desktopAudioVisualizerSpacing: RawVars.desktopAudioVisualizerSpacing !== undefined ? RawVars.desktopAudioVisualizerSpacing : 8
+    property real desktopAudioVisualizerRadius: RawVars.desktopAudioVisualizerRadius !== undefined ? RawVars.desktopAudioVisualizerRadius : 42
+    property string desktopAudioVisualizerPresets: RawVars.desktopAudioVisualizerPresets !== undefined ? RawVars.desktopAudioVisualizerPresets : "[]"
     property real historyUpdated: RawVars.historyUpdated !== undefined ? RawVars.historyUpdated : 0
     property var m3Standard: RawVars.m3Standard
     property var m3StandardDecelerate: RawVars.m3StandardDecelerate
@@ -91,6 +118,19 @@ QtObject {
     property var customEmphasizedAccelerate: RawVars.customEmphasizedAccelerate
     property var customExpressiveSpatialFast: RawVars.customExpressiveSpatialFast
     property var customExpressiveSpatialSlow: RawVars.customExpressiveSpatialSlow
+
+    // Low-spec mode, decided by Hyprland (hypr/modules/hardware.lua) from its LowSpec variable:
+    // opaque panels, no wallpaper mask or audio visualizer, and less multisampling on layers
+    property bool lowSpec: false
+    // 4x is the most that every GPU able to run Hyprland (GLES 3.0) is guaranteed to support
+    property int layerSamples: lowSpec ? 4 : 32
+    property FileView _lowSpecState: FileView {
+        path: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/omniformis-low-spec"
+        watchChanges: true
+        printErrors: false
+        onFileChanged: reload()
+        onLoaded: root.lowSpec = text().trim() === "1"
+    }
 
     function update() {
         if (root.radiusAmount !== RawVars.radiusAmount) root.radiusAmount = RawVars.radiusAmount;
@@ -146,6 +186,8 @@ QtObject {
         if (root.mediaPlayerExpandOverlaps !== RawVars.mediaPlayerExpandOverlaps) root.mediaPlayerExpandOverlaps = RawVars.mediaPlayerExpandOverlaps;
         if (root.panelStyle !== RawVars.panelStyle) root.panelStyle = RawVars.panelStyle;
         if (root.pillPosition !== RawVars.pillPosition) root.pillPosition = RawVars.pillPosition;
+        if (root.liquidGlassPreset !== RawVars.liquidGlassPreset) root.liquidGlassPreset = RawVars.liquidGlassPreset;
+        if (root.clockPillMode !== RawVars.clockPillMode) root.clockPillMode = RawVars.clockPillMode;
         if (root.gameMode !== RawVars.gameMode) root.gameMode = RawVars.gameMode;
         if (root.desktopClockEnabled !== RawVars.desktopClockEnabled) root.desktopClockEnabled = RawVars.desktopClockEnabled;
         if (root.desktopClockAnchorEnabled !== RawVars.desktopClockAnchorEnabled) root.desktopClockAnchorEnabled = RawVars.desktopClockAnchorEnabled;
@@ -160,15 +202,39 @@ QtObject {
         if (root.desktopMediaPlayerAnchorPoint !== RawVars.desktopMediaPlayerAnchorPoint) root.desktopMediaPlayerAnchorPoint = RawVars.desktopMediaPlayerAnchorPoint;
         if (root.desktopMediaPlayerAnchorCurve !== RawVars.desktopMediaPlayerAnchorCurve) root.desktopMediaPlayerAnchorCurve = RawVars.desktopMediaPlayerAnchorCurve;
         if (root.desktopMediaPlayerAnchorExpandFix !== RawVars.desktopMediaPlayerAnchorExpandFix) root.desktopMediaPlayerAnchorExpandFix = RawVars.desktopMediaPlayerAnchorExpandFix;
+        if (root.desktopSystemVitalsEnabled !== RawVars.desktopSystemVitalsEnabled) root.desktopSystemVitalsEnabled = RawVars.desktopSystemVitalsEnabled;
+        if (root.desktopSystemVitalsAnchorEnabled !== RawVars.desktopSystemVitalsAnchorEnabled) root.desktopSystemVitalsAnchorEnabled = RawVars.desktopSystemVitalsAnchorEnabled;
+        if (root.desktopSystemVitalsAnchorPoint !== RawVars.desktopSystemVitalsAnchorPoint) root.desktopSystemVitalsAnchorPoint = RawVars.desktopSystemVitalsAnchorPoint;
+        if (root.desktopSystemVitalsAnchorCurve !== RawVars.desktopSystemVitalsAnchorCurve) root.desktopSystemVitalsAnchorCurve = RawVars.desktopSystemVitalsAnchorCurve;
+        if (root.desktopSystemVitalsBackgroundEnabled !== RawVars.desktopSystemVitalsBackgroundEnabled) root.desktopSystemVitalsBackgroundEnabled = RawVars.desktopSystemVitalsBackgroundEnabled;
+        if (root.desktopAudioVisualizerEnabled !== RawVars.desktopAudioVisualizerEnabled) root.desktopAudioVisualizerEnabled = RawVars.desktopAudioVisualizerEnabled;
+        if (root.desktopAudioVisualizerAnchorEnabled !== RawVars.desktopAudioVisualizerAnchorEnabled) root.desktopAudioVisualizerAnchorEnabled = RawVars.desktopAudioVisualizerAnchorEnabled;
+        if (root.desktopAudioVisualizerAnchorPoint !== RawVars.desktopAudioVisualizerAnchorPoint) root.desktopAudioVisualizerAnchorPoint = RawVars.desktopAudioVisualizerAnchorPoint;
+        if (root.desktopAudioVisualizerAnchorCurve !== RawVars.desktopAudioVisualizerAnchorCurve) root.desktopAudioVisualizerAnchorCurve = RawVars.desktopAudioVisualizerAnchorCurve;
+        if (root.desktopAudioVisualizerBars !== RawVars.desktopAudioVisualizerBars) root.desktopAudioVisualizerBars = RawVars.desktopAudioVisualizerBars;
+        if (root.desktopAudioVisualizerBackgroundEnabled !== RawVars.desktopAudioVisualizerBackgroundEnabled) root.desktopAudioVisualizerBackgroundEnabled = RawVars.desktopAudioVisualizerBackgroundEnabled;
+        if (root.desktopAudioVisualizerShape !== RawVars.desktopAudioVisualizerShape) root.desktopAudioVisualizerShape = RawVars.desktopAudioVisualizerShape;
+        if (root.desktopAudioVisualizerShapeMode !== RawVars.desktopAudioVisualizerShapeMode) root.desktopAudioVisualizerShapeMode = RawVars.desktopAudioVisualizerShapeMode;
+        if (root.desktopAudioVisualizerColorMode !== RawVars.desktopAudioVisualizerColorMode) root.desktopAudioVisualizerColorMode = RawVars.desktopAudioVisualizerColorMode;
+        if (root.desktopAudioVisualizerColor !== RawVars.desktopAudioVisualizerColor) root.desktopAudioVisualizerColor = RawVars.desktopAudioVisualizerColor;
+        if (root.desktopAudioVisualizerGradientStart !== RawVars.desktopAudioVisualizerGradientStart) root.desktopAudioVisualizerGradientStart = RawVars.desktopAudioVisualizerGradientStart;
+        if (root.desktopAudioVisualizerGradientEnd !== RawVars.desktopAudioVisualizerGradientEnd) root.desktopAudioVisualizerGradientEnd = RawVars.desktopAudioVisualizerGradientEnd;
+        if (root.desktopAudioVisualizerLayout !== RawVars.desktopAudioVisualizerLayout) root.desktopAudioVisualizerLayout = RawVars.desktopAudioVisualizerLayout;
+        if (root.desktopAudioVisualizerPositionShape !== RawVars.desktopAudioVisualizerPositionShape) root.desktopAudioVisualizerPositionShape = RawVars.desktopAudioVisualizerPositionShape;
+        if (root.desktopAudioVisualizerShapeSize !== RawVars.desktopAudioVisualizerShapeSize) root.desktopAudioVisualizerShapeSize = RawVars.desktopAudioVisualizerShapeSize;
+        if (root.desktopAudioVisualizerSpacing !== RawVars.desktopAudioVisualizerSpacing) root.desktopAudioVisualizerSpacing = RawVars.desktopAudioVisualizerSpacing;
+        if (root.desktopAudioVisualizerRadius !== RawVars.desktopAudioVisualizerRadius) root.desktopAudioVisualizerRadius = RawVars.desktopAudioVisualizerRadius;
+        if (root.desktopAudioVisualizerPresets !== RawVars.desktopAudioVisualizerPresets) root.desktopAudioVisualizerPresets = RawVars.desktopAudioVisualizerPresets;
         if (root.historyUpdated !== RawVars.historyUpdated) root.historyUpdated = RawVars.historyUpdated;
     }
 
 
-    property Timer _updater: Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: root.update()
+    // RawVars only changes through setLive(), which sets the property too, and through the
+    // notification history, which reports back through historyChanged. One sync at startup
+    // is enough.
+    Component.onCompleted: {
+        RawVars.historyChanged = function() { root.historyUpdated = RawVars.historyUpdated; };
+        root.update();
     }
 
     function getTopLeftRadius(style, pos, isGame, defRad) { return RawVars.getTopLeftRadius(style, pos, isGame, defRad); }
@@ -177,10 +243,23 @@ QtObject {
     function getBottomRightRadius(style, pos, isGame, defRad) { return RawVars.getBottomRightRadius(style, pos, isGame, defRad); }
     function fuzzyMatch(pattern, str) { return RawVars.fuzzyMatch(pattern, str); }
     function fuzzyMatchScore(pattern, str) { return RawVars.fuzzyMatchScore(pattern, str); }
-    function isTranslucent() { return RawVars.isTranslucent(); }
-    function tColor(baseColor, alpha) { return RawVars.tColor(baseColor, alpha); }
-    function tColorActive(isActive, baseColor, alpha) { return RawVars.tColorActive(isActive, baseColor, alpha); }
-    function tColorSelected(baseColor, alpha) { return RawVars.tColorSelected(baseColor, alpha); }
+    // These read Vars' own properties instead of RawVars, so bindings that call them update when
+    // translucency, game mode or low-spec mode changes
+    function isTranslucent() { return root._translucent && !root.gameMode && !root.lowSpec; }
+    function tColor(baseColor, alpha) {
+        if (!root.isTranslucent()) return baseColor;
+        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, alpha);
+    }
+    function tColorActive(isActive, baseColor, alpha) {
+        if (!isActive) return "transparent";
+        return root.tColor(baseColor, alpha);
+    }
+    function tColorSelected(baseColor, alpha) {
+        if (!root.isTranslucent()) return baseColor;
+        var targetAlpha = (alpha !== undefined && alpha !== null) ? alpha : 0.90;
+        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, targetAlpha);
+    }
+    function getFadeCurve(isOpen) { return RawVars.getFadeCurve(isOpen); }
     
     function setLive(key, val) {
         RawVars[key] = val;

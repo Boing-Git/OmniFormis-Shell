@@ -17,16 +17,6 @@ Item {
     property bool expanded: false
     property var focusWindow: null
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
     property alias panel: panel
     property alias panelMask: panelMask
 
@@ -105,26 +95,26 @@ Item {
 
     Item {
         id: panelMask
-                anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
+        anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
         anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
         anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
         anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
         
-        anchors.topMargin: -20
-        anchors.bottomMargin: -20
-        anchors.leftMargin: -20
-        anchors.rightMargin: -20
-        width: root.expanded ? 440 : 140
-        height: root.expanded ? 490 : 80
+        anchors.topMargin: root.expanded ? -20 : 0
+        anchors.bottomMargin: root.expanded ? -20 : 0
+        anchors.leftMargin: root.expanded ? -20 : 0
+        anchors.rightMargin: root.expanded ? -20 : 0
+        width: root.expanded ? 440 : 0
+        height: root.expanded ? 490 : 0
     }
 
     Primitives.SquircleMask {
         id: panel
         property bool isBackgroundActive: root.expanded || (MorphState.openCount === 0 && MorphState.activeItem === panel && panel.width > 105)
         layer.enabled: false
-        layer.samples: 32
+        layer.samples: Vars.layerSamples
         anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
@@ -151,12 +141,14 @@ Item {
 
         Item {
             id: innerUI
+            // Content must never draw outside the morphing panel
+            clip: true
             anchors.fill: parent
             anchors.margins: Vars.spacingLarge
             
             opacity: root.expanded ? 1.0 : 0.0
             visible: root.expanded || opacity > 0
-            Behavior on opacity { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: root.expanded ? Vars.customEmphasizedDecelerate : Vars.customEmphasizedAccelerate } }
+            Behavior on opacity { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.getFadeCurve(root.expanded) } }
 
             ColumnLayout {
                 id: mainLayout
@@ -168,6 +160,7 @@ Item {
                     spacing: Vars.spacingMedium
                     
                     Rectangle {
+                        antialiasing: true
                         width: 40; height: 40; radius: Vars.radiusMedium
                         color: backHover.pressed ? Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.12) : (backHover.containsMouse ? Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.08) : "transparent")
                         QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Theme.on_primary; text: "\ue5cd" }

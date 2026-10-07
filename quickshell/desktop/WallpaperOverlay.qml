@@ -22,37 +22,6 @@ PanelWindow {
     property real currentMaskOffsetX: Vars.wallpaperMaskOffsetX !== undefined ? Vars.wallpaperMaskOffsetX : 0
     property real currentMaskOffsetY: Vars.wallpaperMaskOffsetY !== undefined ? Vars.wallpaperMaskOffsetY : 0
 
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            var shape = Vars.wallpaperMaskShape !== undefined ? Vars.wallpaperMaskShape : "Circle";
-            if (root.currentMaskShape !== shape)
-                root.currentMaskShape = shape;
-
-            var scale = Vars.wallpaperMaskScale !== undefined ? Vars.wallpaperMaskScale : 0.7;
-            if (root.currentMaskScale !== scale)
-                root.currentMaskScale = scale;
-
-            var clr = Vars.wallpaperMaskColor !== undefined ? Vars.wallpaperMaskColor : "transparent";
-            if (root.currentMaskColor !== clr)
-                root.currentMaskColor = clr;
-
-            var enabled = Vars.wallpaperMaskEnabled !== undefined ? Vars.wallpaperMaskEnabled : true;
-            if (root.currentMaskEnabled !== enabled)
-                root.currentMaskEnabled = enabled;
-
-            var offsetX = Vars.wallpaperMaskOffsetX !== undefined ? Vars.wallpaperMaskOffsetX : 0;
-            if (root.currentMaskOffsetX !== offsetX)
-                root.currentMaskOffsetX = offsetX;
-
-            var offsetY = Vars.wallpaperMaskOffsetY !== undefined ? Vars.wallpaperMaskOffsetY : 0;
-            if (root.currentMaskOffsetY !== offsetY)
-                root.currentMaskOffsetY = offsetY;
-        }
-    }
-
     exclusionMode: ExclusionMode.Ignore
 
     anchors {
@@ -64,6 +33,10 @@ PanelWindow {
 
     color: "transparent"
     Behavior on color { ColorAnimation { duration: 500; easing.type: Easing.InOutQuad } }
+
+    // Low-spec mode drops the mask entirely: a fullscreen surface to blend every frame, and its
+    // shape rasterised at up to 4096px in several layers, is too much for an old iGPU and 4 GB
+    visible: !Vars.lowSpec
 
     Settings {
         id: wpSettings
@@ -102,7 +75,7 @@ PanelWindow {
         Image {
             id: wallpaperImage
             anchors.fill: parent
-            source: root.currentWallpaper
+            source: Vars.lowSpec ? "" : root.currentWallpaper
             fillMode: Image.PreserveAspectCrop
             smooth: true
             antialiasing: true
@@ -182,7 +155,7 @@ PanelWindow {
             id: maskContainer
             anchors.fill: parent
             layer.enabled: true
-            layer.samples: 32
+            layer.samples: Vars.layerSamples
             layer.smooth: true
             visible: false
 
@@ -209,7 +182,7 @@ PanelWindow {
                         mipmap: true
                         asynchronous: true
                         property string path: m3.getPath(maskBounds.previousPathName)
-                        source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='white'/></svg>"
+                        source: Vars.lowSpec ? "" : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='white'/></svg>"
                         opacity: 1.0 - maskBounds.morphProgress
                         rotation: maskBounds.shapeRotation
                     }
@@ -222,7 +195,7 @@ PanelWindow {
                         mipmap: true
                         asynchronous: true
                         property string path: m3.getPath(maskBounds.currentPathName)
-                        source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='white'/></svg>"
+                        source: Vars.lowSpec ? "" : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='white'/></svg>"
                         opacity: maskBounds.morphProgress
                     }
                 }
@@ -233,7 +206,8 @@ PanelWindow {
             id: bgRect
             anchors.fill: parent
             layer.enabled: true
-            layer.samples: 32
+            layer.smooth: true
+            layer.samples: Vars.layerSamples
             visible: false
             antialiasing: true
             color: {
@@ -286,7 +260,8 @@ PanelWindow {
             id: shadowStrokeContainer
             anchors.fill: parent
             layer.enabled: true
-            layer.samples: 32
+            layer.smooth: true
+            layer.samples: Vars.layerSamples
             visible: false
 
             Item {
@@ -312,7 +287,7 @@ PanelWindow {
                         mipmap: true
                         asynchronous: true
                         property string path: m3.getPath(maskBounds.previousPathName)
-                        source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M -50 -50 L 150 -50 L 150 150 L -50 150 Z " + path + "' fill='white' fill-rule='evenodd'/></svg>"
+                        source: Vars.lowSpec ? "" : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M -50 -50 L 150 -50 L 150 150 L -50 150 Z " + path + "' fill='white' fill-rule='evenodd'/></svg>"
                         opacity: 1.0 - maskBounds.morphProgress
                         rotation: maskBounds.shapeRotation
                     }
@@ -325,7 +300,7 @@ PanelWindow {
                         mipmap: true
                         asynchronous: true
                         property string path: m3.getPath(maskBounds.currentPathName)
-                        source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M -50 -50 L 150 -50 L 150 150 L -50 150 Z " + path + "' fill='white' fill-rule='evenodd'/></svg>"
+                        source: Vars.lowSpec ? "" : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M -50 -50 L 150 -50 L 150 150 L -50 150 Z " + path + "' fill='white' fill-rule='evenodd'/></svg>"
                         opacity: maskBounds.morphProgress
                     }
                 }
@@ -337,7 +312,7 @@ PanelWindow {
             id: maskContainer2
             anchors.fill: parent
             layer.enabled: true
-            layer.samples: 32
+            layer.samples: Vars.layerSamples
             layer.smooth: true
             visible: false
 
@@ -364,7 +339,7 @@ PanelWindow {
                         mipmap: true
                         asynchronous: true
                         property string path: m3.getPath(maskBounds.previousPathName)
-                        source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='white'/></svg>"
+                        source: Vars.lowSpec ? "" : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='white'/></svg>"
                         opacity: 1.0
                         rotation: maskBounds.shapeRotation
                     }
@@ -377,7 +352,7 @@ PanelWindow {
                         mipmap: true
                         asynchronous: true
                         property string path: m3.getPath(maskBounds.currentPathName)
-                        source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='white'/></svg>"
+                        source: Vars.lowSpec ? "" : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='white'/></svg>"
                         opacity: 1.0
                     }
                 }
@@ -435,7 +410,8 @@ PanelWindow {
             id: borderStrokeContainer
             anchors.fill: parent
             layer.enabled: true
-            layer.samples: 32
+            layer.smooth: true
+            layer.samples: Vars.layerSamples
             visible: false
 
             Item {
@@ -461,7 +437,7 @@ PanelWindow {
                         mipmap: true
                         asynchronous: true
                         property string path: m3.getPath(maskBounds.previousPathName)
-                        source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='none' stroke='white' stroke-width='2'/></svg>"
+                        source: Vars.lowSpec ? "" : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='none' stroke='white' stroke-width='2'/></svg>"
                         opacity: 1.0 - maskBounds.morphProgress
                         rotation: maskBounds.shapeRotation
                     }
@@ -474,7 +450,7 @@ PanelWindow {
                         mipmap: true
                         asynchronous: true
                         property string path: m3.getPath(maskBounds.currentPathName)
-                        source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='none' stroke='white' stroke-width='2'/></svg>"
+                        source: Vars.lowSpec ? "" : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='none' stroke='white' stroke-width='2'/></svg>"
                         opacity: maskBounds.morphProgress
                     }
                 }

@@ -283,32 +283,5 @@ else
     exit 1
 fi
 
-echo "Configuring Brightness Keybinds based on hardware..."
-HAS_LAPTOP=false
-HAS_EXTERNAL=false
-
-if ls /sys/class/backlight/* 1> /dev/null 2>&1; then
-    HAS_LAPTOP=true
-fi
-
-if command -v ddcutil >/dev/null 2>&1 && sudo ddcutil detect 1> /dev/null 2>&1; then
-    HAS_EXTERNAL=true
-fi
-
-BINDS_FILE=~/.config/hypr/modules/binds.lua
-if [ -f "$BINDS_FILE" ]; then
-    if [ "$HAS_LAPTOP" = true ] && [ "$HAS_EXTERNAL" = true ]; then
-        echo "Detected both laptop screen and external monitor. Splitting brightness shortcuts."
-        sed -i 's|hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("ddcutil setvcp 10 + 5"))|hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl set +5%"))|' "$BINDS_FILE"
-        sed -i 's|hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("ddcutil setvcp 10 - 5"))|hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%-"))|' "$BINDS_FILE"
-    elif [ "$HAS_LAPTOP" = true ]; then
-        echo "Detected only laptop screen. Using brightnessctl for all shortcuts."
-        sed -i 's|hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("ddcutil setvcp 10 + 5"))|hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl set +5%"))|' "$BINDS_FILE"
-        sed -i 's|hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("ddcutil setvcp 10 - 5"))|hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%-"))|' "$BINDS_FILE"
-        sed -i 's|hl.bind(SM .. " + mouse_up", hl.dsp.exec_cmd("ddcutil setvcp 10 + 5"))|hl.bind(SM .. " + mouse_up", hl.dsp.exec_cmd("brightnessctl set +5%"))|' "$BINDS_FILE"
-        sed -i 's|hl.bind(SM .. " + mouse_down", hl.dsp.exec_cmd("ddcutil setvcp 10 - 5"))|hl.bind(SM .. " + mouse_down", hl.dsp.exec_cmd("brightnessctl set 5%-"))|' "$BINDS_FILE"
-    else
-        echo "Detected only external monitor (or no backlight). Using ddcutil for all shortcuts."
-    fi
-fi
-
+# The brightness shortcuts choose the laptop backlight (brightnessctl) or DDC/CI (ddcutil) each
+# time they run (hypr/modules/binds.lua), so there's nothing to configure per machine here.

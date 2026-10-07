@@ -8,6 +8,7 @@ import Quickshell.Networking
 import "../../.."
 import "../../../theme"
 import "../../../core/primitives" as Primitives
+import ".."
 
 Item {
     id: wifiDelegate
@@ -16,7 +17,8 @@ Item {
     Layout.fillWidth: true
 
     property bool isPasswordMode: false
-    Layout.preferredHeight: 72
+    onIsPasswordModeChanged: { if (!isPasswordMode) wifiPwdInput.text = ""; }
+    Layout.preferredHeight: 80
     Behavior on Layout.preferredHeight {
         NumberAnimation {
             duration: Vars.animationDuration
@@ -29,47 +31,63 @@ Item {
     property bool showForget: false
 
     property color targetColor: modelData.connected ? (Vars.tColorSelected(Theme.primary_container)) : (isSelected ? (Vars.tColorSelected(Theme.primary_container, 0.75)) : (wifiMouse.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity))))
+    scale: wifiMouse.pressed ? 1.08 : 1.0
+    Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
     Behavior on targetColor {
         ColorAnimation {
             duration: Vars.animationDuration
         }
     }
 
-    Process {
-        id: nmcliConnectProcess
-        command: []
-        onExited: code => {
-            console.log("[WifiNetworkDelegate] nmcli connect finished with code:", code);
-            if (code === 0 && modelData && typeof modelData.connect === "function") {
-                try { modelData.connect(); } catch (e) {}
-            }
+    // Set when the last connection attempt failed, cleared on the next attempt
+    property bool connectFailed: false
+    readonly property bool isOpenNetwork: modelData.security === WifiSecurityType.Open
+
+    Connections {
+        target: modelData
+        function onConnectionFailed(reason) {
+            wifiDelegate.connectFailed = true;
+            // A bad or missing password: let the user type it again
+            if (reason === ConnectionFailReason.NoSecrets || reason === ConnectionFailReason.WifiAuthTimeout || reason === ConnectionFailReason.WifiClientFailed)
+                wifiDelegate.isPasswordMode = true;
+        }
+        function onConnectedChanged() {
+            if (modelData.connected)
+                wifiDelegate.connectFailed = false;
         }
     }
 
+    // Known and open networks connect straight away, new secured ones ask for a password first
+    function connectNetwork() {
+        wifiDelegate.connectFailed = false;
+        if (modelData.known || wifiDelegate.isOpenNetwork)
+            modelData.connect();
+        else
+            wifiDelegate.isPasswordMode = true;
+    }
+
+    // The password goes straight to NetworkManager through Quickshell instead of being passed to
+    // nmcli on the command line, where any process could read it.
     function submitPassword() {
-        console.log("[WifiPage] Submitting password for:", modelData.name, "| Pwd length:", wifiPwdInput.text.length);
-        try {
-            if (wifiPwdInput.text.length > 0) {
-                nmcliConnectProcess.command = ["nmcli", "device", "wifi", "connect", modelData.name, "password", wifiPwdInput.text];
-                nmcliConnectProcess.running = true;
-                console.log("[WifiPage] nmcli connect command started for secured network.");
-            } else {
-                nmcliConnectProcess.command = ["nmcli", "device", "wifi", "connect", modelData.name];
-                nmcliConnectProcess.running = true;
-                console.log("[WifiPage] nmcli connect command started for known network.");
-            }
-        } catch (e) {
-            console.error("[WifiPage] Error invoking connect:", e);
+        var pwd = wifiPwdInput.text;
+        wifiDelegate.connectFailed = false;
+        if (pwd.length > 0) {
+            modelData.connectWithPsk(pwd);
+        } else if (modelData.known || wifiDelegate.isOpenNetwork) {
+            modelData.connect();
+        } else {
+            wifiPwdInput.forceActiveFocus();
+            return;
         }
+        wifiPwdInput.text = "";
         wifiDelegate.isPasswordMode = false;
     }
 
     Item {
         anchors.fill: parent
-        layer.enabled: true
-        layer.samples: 32
         opacity: parent.targetColor.a
         Rectangle {
+            antialiasing: true
             anchors.fill: parent
             color: Qt.rgba(parent.parent.targetColor.r, parent.parent.targetColor.g, parent.parent.targetColor.b, 1.0)
             
@@ -78,13 +96,11 @@ Item {
             property real baseRadius: Vars.radiusLarge
             property real edgeRadius: 4
             
-            property bool networkAboveConnected: index > 0 && rootPage.wifiDevice && rootPage.wifiDevice.networks.values && rootPage.wifiDevice.networks.values[index - 1].connected
-            property bool networkBelowConnected: index < (rootPage.wifiDevice && rootPage.wifiDevice.networks.values ? rootPage.wifiDevice.networks.values.length - 1 : 0) && rootPage.wifiDevice.networks.values[index + 1].connected
             
-            topLeftRadius: parent.parent.isSelected ? height / 2 : (networkAboveConnected ? baseRadius : edgeRadius)
-            topRightRadius: parent.parent.isSelected ? height / 2 : (networkAboveConnected ? baseRadius : edgeRadius)
-            bottomLeftRadius: parent.parent.isSelected ? height / 2 : (networkBelowConnected ? baseRadius : edgeRadius)
-            bottomRightRadius: parent.parent.isSelected ? height / 2 : (networkBelowConnected ? baseRadius : edgeRadius)
+            topLeftRadius: parent.parent.isSelected ? height / 2 : edgeRadius
+            topRightRadius: parent.parent.isSelected ? height / 2 : edgeRadius
+            bottomLeftRadius: parent.parent.isSelected ? height / 2 : edgeRadius
+            bottomRightRadius: parent.parent.isSelected ? height / 2 : edgeRadius
 
             Behavior on topLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
             Behavior on topRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
@@ -109,30 +125,20 @@ Item {
             RowLayout {
                 z: 1
                 anchors.fill: parent
-                anchors.leftMargin: 20
-                anchors.rightMargin: 20
+                anchors.leftMargin: Vars.spacingLarge
+                anchors.rightMargin: Vars.spacingLarge
                 spacing: 16
 
-                FontLoader {
-                    id: filledIconFont
-                    source: "../../../theme/assets/MaterialSymbolsRounded-Filled.ttf"
-                }
-
-                Item {
-                    width: 40
-                    height: 40
+                SettingsIcon {
+                    size: 40
                     Layout.alignment: Qt.AlignVCenter
-                    QsText {
-                        anchors.centerIn: parent
-                        font.family: modelData.connected ? filledIconFont.name : "Material Symbols Outlined"
-                        font.pixelSize: 24
-                        color: modelData.connected ? Theme.primary : Theme.on_surface_variant
-                        text: {
-                            if (modelData.signalStrength === undefined)
-                                return "\ue63e";
-                            let tier = Math.min(Math.floor(modelData.signalStrength / 25), 3);
-                            return ["\ue1ba", "\uebe4", "\uebd6", "\uebe1"][tier] || "\ue63e";
-                        }
+                    selected: wifiDelegate.isSelected
+                    filled: modelData.connected
+                    icon: {
+                        if (modelData.signalStrength === undefined)
+                            return "\ue63e";
+                        let tier = Math.min(Math.floor(modelData.signalStrength / 25), 3);
+                        return ["\ue1ba", "\uebe4", "\uebd6", "\uebe1"][tier] || "\ue63e";
                     }
                 }
 
@@ -148,11 +154,21 @@ Item {
                     }
 
                     QsText {
-                        text: modelData.connected ? "Connected" : "Available"
+                        text: {
+                            if (wifiDelegate.connectFailed)
+                                return "Couldn't connect";
+                            if (modelData.state === ConnectionState.Connecting)
+                                return "Connecting…";
+                            if (modelData.state === ConnectionState.Disconnecting)
+                                return "Disconnecting…";
+                            if (modelData.connected)
+                                return "Connected";
+                            return modelData.known ? "Saved" : "Available";
+                        }
                         font.family: Vars.fontFamily
                         font.pixelSize: 11
                         setWeight: 500
-                        color: modelData.connected ? Theme.on_primary_container : Theme.on_surface_variant
+                        color: wifiDelegate.connectFailed ? Theme.error : (modelData.connected ? Theme.on_primary_container : Theme.on_surface_variant)
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignLeft
                     }
@@ -180,7 +196,7 @@ Item {
                         radius: 16
                         antialiasing: true
                         color: infoHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent"
-                        visible: (modelData.saved || modelData.known || modelData.connected) && !m3LoadingIndicator.running
+                        visible: (modelData.known || modelData.connected) && !m3LoadingIndicator.running
                         QsText {
                             anchors.centerIn: parent
                             font.family: "Material Symbols Outlined"
@@ -209,36 +225,10 @@ Item {
                     if (mouse.button === Qt.RightButton) {
                         wifiDelegate.showForget = true;
                     } else {
-                        if (modelData.connected) {
-                            console.log("[WifiPage] Disconnecting from:", modelData.name);
+                        if (modelData.connected)
                             modelData.disconnect();
-                        } else {
-                            if (modelData.saved || modelData.known || modelData.security === "none" || modelData.security === 0) {
-                                console.log("[WifiPage] Connecting to known/saved network:", modelData.name);
-
-                                // Dump live data from the network model
-                                let details = [];
-                                for (let prop in modelData) {
-                                    try {
-                                        if (typeof modelData[prop] !== "function" && typeof modelData[prop] !== "object") {
-                                            details.push(prop + "=" + modelData[prop]);
-                                        }
-                                    } catch (err) {}
-                                }
-                                console.log("[WifiPage] Network live data:", details.join(" | "));
-
-                                try {
-                                    nmcliConnectProcess.command = ["nmcli", "device", "wifi", "connect", modelData.name];
-                                    nmcliConnectProcess.running = true;
-                                    console.log("[WifiPage] nmcli connect command started for known network via click.");
-                                } catch (e) {
-                                    console.error("[WifiPage] Error connecting to known network:", e);
-                                }
-                            } else {
-                                console.log("[WifiPage] Opening password entry for new network:", modelData.name);
-                                wifiDelegate.isPasswordMode = true;
-                            }
-                        }
+                        else
+                            wifiDelegate.connectNetwork();
                     }
                 }
             }
@@ -257,8 +247,8 @@ Item {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 20
-                anchors.rightMargin: 20
+                anchors.leftMargin: Vars.spacingLarge
+                anchors.rightMargin: Vars.spacingLarge
                 spacing: 4
 
                 Item {
@@ -267,6 +257,7 @@ Item {
                     Layout.alignment: Qt.AlignVCenter
 
                     Rectangle {
+                        antialiasing: true
                         anchors.fill: parent
                         color: "transparent"
                         border.color: wifiPwdInput.activeFocus ? Theme.primary : Theme.outline
@@ -366,6 +357,7 @@ Item {
                 }
 
                 Rectangle {
+                    antialiasing: true
                     Layout.preferredWidth: connectBtnTxt.implicitWidth + 32
                     Layout.preferredHeight: 48
                     Layout.alignment: Qt.AlignVCenter
@@ -450,6 +442,7 @@ Item {
 
     // Forget Overlay
     Rectangle {
+        antialiasing: true
         anchors.fill: parent
         color: Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)
         visible: wifiDelegate.showForget
@@ -466,13 +459,11 @@ Item {
         property real baseRadius: Vars.radiusLarge
         property real edgeRadius: 4
         
-        property bool networkAboveConnected: index > 0 && rootPage.wifiDevice && rootPage.wifiDevice.networks.values && rootPage.wifiDevice.networks.values[index - 1].connected
-        property bool networkBelowConnected: index < (rootPage.wifiDevice && rootPage.wifiDevice.networks.values ? rootPage.wifiDevice.networks.values.length - 1 : 0) && rootPage.wifiDevice.networks.values[index + 1].connected
         
-        topLeftRadius: wifiDelegate.isSelected ? height / 2 : (networkAboveConnected ? baseRadius : edgeRadius)
-        topRightRadius: wifiDelegate.isSelected ? height / 2 : (networkAboveConnected ? baseRadius : edgeRadius)
-        bottomLeftRadius: wifiDelegate.isSelected ? height / 2 : (networkBelowConnected ? baseRadius : edgeRadius)
-        bottomRightRadius: wifiDelegate.isSelected ? height / 2 : (networkBelowConnected ? baseRadius : edgeRadius)
+        topLeftRadius: wifiDelegate.isSelected ? height / 2 : edgeRadius
+        topRightRadius: wifiDelegate.isSelected ? height / 2 : edgeRadius
+        bottomLeftRadius: wifiDelegate.isSelected ? height / 2 : edgeRadius
+        bottomRightRadius: wifiDelegate.isSelected ? height / 2 : edgeRadius
 
         Behavior on topLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
         Behavior on topRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }

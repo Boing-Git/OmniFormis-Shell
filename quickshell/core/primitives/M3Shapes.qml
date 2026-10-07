@@ -39,12 +39,18 @@ QtObject {
         "Heart": "M73.97 12.40C68.27 12.40 63.19 15.08 59.86 19.26L50.00 30.13V30.10L40.14 19.23C36.81 15.04 31.73 12.37 26.03 12.37C16.01 12.37 7.89 20.62 7.89 30.80C7.89 39.75 15.36 46.44 20.77 52.86C26.16 59.26 31.54 65.66 36.93 72.06L49.02 86.43C49.35 86.82 49.67 87.21 50.00 87.60V87.63C50.33 87.24 50.65 86.85 50.98 86.47C55.01 81.68 59.04 76.89 63.07 72.10C68.46 65.70 73.85 59.30 79.23 52.90C84.64 46.48 92.11 39.79 92.11 30.84C92.11 20.66 83.99 12.40 73.97 12.40Z",
     }
 
+    // Every shape name, in the order they're defined above — for anything that wants to cycle
+    // through "all shapes" rather than a single chosen one.
+    readonly property var allShapeNames: Object.keys(m3AbstractPaths)
+
     function getPath(shapeName) {
         return m3AbstractPaths[shapeName] || m3AbstractPaths["Circle"];
     }
 
-    function getShapePeaks(shapeName) {
-        var pathStr = getPath(shapeName);
+    // Walks an abstract path's M/L/C/H/V commands and returns a dense set of points along its
+    // outline (bezier curves subdivided into `steps` segments each) — the shared groundwork both
+    // getShapePeaks (find the spikes) and getOutlinePoints (sample evenly by angle) build on.
+    function samplePath(pathStr, steps) {
         var tokens = pathStr.match(/[A-Za-z]|[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?/g);
         if (!tokens) return [];
         var pts = [];
@@ -60,8 +66,8 @@ QtObject {
                 var cx1 = parseFloat(tokens[i+1]), cy1 = parseFloat(tokens[i+2]);
                 var cx2 = parseFloat(tokens[i+3]), cy2 = parseFloat(tokens[i+4]);
                 var cx3 = parseFloat(tokens[i+5]), cy3 = parseFloat(tokens[i+6]);
-                for (var t = 1; t <= 10; t++) {
-                    var T = t / 10.0;
+                for (var t = 1; t <= steps; t++) {
+                    var T = t / steps;
                     var nx = Math.pow(1-T, 3) * x + 3*Math.pow(1-T, 2)*T * cx1 + 3*(1-T)*Math.pow(T, 2) * cx2 + Math.pow(T, 3) * cx3;
                     var ny = Math.pow(1-T, 3) * y + 3*Math.pow(1-T, 2)*T * cy1 + 3*(1-T)*Math.pow(T, 2) * cy2 + Math.pow(T, 3) * cy3;
                     pts.push({x: nx, y: ny});
@@ -82,6 +88,11 @@ QtObject {
                 i += 1;
             }
         }
+        return pts;
+    }
+
+    function getShapePeaks(shapeName) {
+        var pts = samplePath(getPath(shapeName), 10);
         var dists = pts.map(function(p) { return Math.hypot(p.x - 50, p.y - 50); });
         var peaks = [];
         var n = dists.length;
@@ -93,5 +104,33 @@ QtObject {
             }
         }
         return peaks;
+    }
+
+    // `count` points spread evenly by angle around a shape's own silhouette (its center taken as
+    // (50,50) in the 0-100 viewBox) rather than a plain circle — each point is the outline sample
+    // nearest that angle, so callers can arrange things along any M3 shape's actual contour
+    // (a spiky "Burst" traces its spikes, a "Heart" traces its lobes, "Circle" is a perfect ring).
+    function getOutlinePoints(shapeName, count) {
+        if (count <= 0) return [];
+        var pts = samplePath(getPath(shapeName), 20);
+        if (pts.length === 0) return [];
+        var withAngle = pts.map(function(p) {
+            var ang = Math.atan2(p.x - 50, -(p.y - 50)) * 180 / Math.PI;
+            if (ang < 0) ang += 360;
+            return { x: p.x, y: p.y, angle: ang };
+        });
+        var result = [];
+        for (var k = 0; k < count; k++) {
+            var target = (k / count) * 360;
+            var best = withAngle[0];
+            var bestDiff = 360;
+            for (var j = 0; j < withAngle.length; j++) {
+                var diff = Math.abs(withAngle[j].angle - target);
+                if (diff > 180) diff = 360 - diff;
+                if (diff < bestDiff) { bestDiff = diff; best = withAngle[j]; }
+            }
+            result.push({ x: best.x, y: best.y });
+        }
+        return result;
     }
 }

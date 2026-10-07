@@ -18,16 +18,6 @@ Rectangle {
     color: Theme.surface
     anchors.centerIn: parent
 
-    layer.enabled: true
-    layer.samples: 32
-    layer.effect: MultiEffect {
-        shadowEnabled: true
-        shadowOpacity: 0.15
-        shadowBlur: 1.0
-        shadowHorizontalOffset: 0
-        shadowVerticalOffset: 4
-        shadowColor: Theme.shadow
-    }
 
     // ── State ──────────────────────────────────────────────
     property var users: ["boing", "surinder"]
@@ -321,6 +311,7 @@ Rectangle {
 
                 // Submit arrow
                 Rectangle {
+                    antialiasing: true
                     width: 36; height: 36; radius: 18
                     color: passwordInput.text.length > 0 ? root.accentPrimary : Theme.surface_container_high
                     Behavior on color { ColorAnimation { duration: Vars.animationDuration } }
@@ -366,6 +357,7 @@ Rectangle {
 
             // Suspend (Water drop)
             Rectangle {
+                antialiasing: true
                 width: 48; height: 48; radius: 24
                 color: suspendMouse.containsMouse ? root.surfaceDim : "transparent"
                 Behavior on color { ColorAnimation { duration: Vars.animationDuration } }
@@ -388,6 +380,7 @@ Rectangle {
 
             // Reboot (Gear)
             Rectangle {
+                antialiasing: true
                 width: 48; height: 48; radius: 24
                 color: rebootMouse.containsMouse ? root.surfaceDim : "transparent"
                 Behavior on color { ColorAnimation { duration: Vars.animationDuration } }
@@ -410,6 +403,7 @@ Rectangle {
 
             // Power
             Rectangle {
+                antialiasing: true
                 width: 48; height: 48; radius: 24
                 color: powerMouse.containsMouse ? root.surfaceDim : "transparent"
                 Behavior on color { ColorAnimation { duration: Vars.animationDuration } }
@@ -477,6 +471,7 @@ Rectangle {
             spacing: 12
 
             Rectangle {
+                antialiasing: true
                 width: 36; height: 36; radius: 18
                 color: root.surfaceDim
 

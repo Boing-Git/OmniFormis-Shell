@@ -21,68 +21,164 @@ Item {
         category: "SettingsApp"
         property int sidebarWidth: 280
     }
-    
+
     Layout.preferredWidth: 100
     Layout.preferredHeight: 40
-    
+
     property bool expanded: false
     property bool forceHidePill: false
     property var focusWindow: null
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
     property var allVars: []
     property alias panel: panel
     property alias panelMask: panelMask
-    
+
     property bool isFloatingInstance: false
     signal detachToggled(bool isFloating)
-    
+
     property string currentSection: "quick"
     property string globalSearchText: globalSearchBar.text
-    
+
     // Extracted navigation properties mapped from the sidebar
     readonly property var baseNavItems: [
         // Presets & Quick Settings
-        { id: "quick", name: "Quick & Presets", subtitle: "Presets, wallpaper, panel style & position", icon: "\ue41d", section: "Presets & Customization", hue: 0.80, shape: "Puffy" },
+        {
+            id: "quick",
+            name: "Quick & Presets",
+            subtitle: "Presets, wallpaper, panel style & position",
+            icon: "\ue41d",
+            section: "Presets & Customization",
+            hue: 0.80,
+            shape: "Puffy"
+        },
 
         // Connections
-        { id: "wifi", name: "Wi-Fi", subtitle: "Wi-Fi, ethernet", icon: root.wifiIcon, section: "Connections", hue: 0.60, shape: "Puffy" },
-        { id: "bluetooth", name: "Connected devices", subtitle: "Bluetooth, devices, pairing", icon: root.bluetoothIcon, section: "Connections", hue: 0.65, shape: "Puffy" },
-        
+        {
+            id: "wifi",
+            name: "Wi-Fi",
+            subtitle: "Wi-Fi, ethernet",
+            icon: root.wifiIcon,
+            section: "Connections",
+            hue: 0.60,
+            shape: "Puffy"
+        },
+        {
+            id: "bluetooth",
+            name: "Connected devices",
+            subtitle: "Bluetooth, devices, pairing",
+            icon: root.bluetoothIcon,
+            section: "Connections",
+            hue: 0.65,
+            shape: "Puffy"
+        },
+
         // System & Input
-        { id: "General", name: "System & Apps", subtitle: "Default apps, environment, gaming", icon: "\ue8b8", section: "System & Input", hue: 0.70, shape: "Puffy" },
-        { id: "Input", name: "Input Devices", subtitle: "Keyboard layout, mouse, gestures", icon: "\ue312", section: "System & Input", hue: 0.75, shape: "Puffy" },
-        { id: "Keybinds", name: "Shortcuts & Modifiers", subtitle: "System shortcuts, hotkeys, modifiers", icon: "\ue31c", section: "System & Input", hue: 0.80, shape: "Puffy" },
+        {
+            id: "General",
+            name: "System & Apps",
+            subtitle: "Default apps, environment, gaming",
+            icon: "\ue8b8",
+            section: "System & Input",
+            hue: 0.70,
+            shape: "Puffy"
+        },
+        {
+            id: "Input",
+            name: "Input Devices",
+            subtitle: "Keyboard layout, mouse, gestures",
+            icon: "\ue312",
+            section: "System & Input",
+            hue: 0.75,
+            shape: "Puffy"
+        },
+        {
+            id: "Keybinds",
+            name: "Shortcuts & Modifiers",
+            subtitle: "System shortcuts, hotkeys, modifiers",
+            icon: "\ue31c",
+            section: "System & Input",
+            hue: 0.80,
+            shape: "Puffy"
+        },
 
         // Desktop & Windows
-        { id: "Desktop", name: "Desktop & Widgets", subtitle: "Wallpaper mask, clock, calendar, overview", icon: "\ue871", section: "Desktop & Windows", hue: 0.85, shape: "Puffy" },
-        { id: "Layout", name: "Window Gaps & Layout", subtitle: "Window gaps, border size, spacing, padding", icon: "\ue8f1", section: "Desktop & Windows", hue: 0.90, shape: "Puffy" },
+        {
+            id: "Desktop",
+            name: "Desktop & Widgets",
+            subtitle: "Wallpaper mask, clock, calendar, overview",
+            icon: "\ue871",
+            section: "Desktop & Windows",
+            hue: 0.85,
+            shape: "Puffy"
+        },
+        {
+            id: "Layout",
+            name: "Window Gaps & Layout",
+            subtitle: "Window gaps, border size, spacing, padding",
+            icon: "\ue8f1",
+            section: "Desktop & Windows",
+            hue: 0.90,
+            shape: "Puffy"
+        },
 
         // Appearance & Animations
-        { id: "Theme", name: "Visuals & Effects", subtitle: "Rounding, opacity, blur, shadow, font family", icon: "\ue3b7", section: "Appearance & Animations", hue: 0.95, shape: "Puffy" },
-        { id: "Animations", name: "Animation & Physics", subtitle: "Animation style, durations, scroll physics", icon: "\ue410", section: "Appearance & Animations", hue: 0.00, shape: "Puffy" },
-        { id: "bezier", name: "Curve Editor", subtitle: "Interactive custom bezier creator", icon: "\ue71c", section: "Appearance & Animations", hue: 0.06, shape: "Puffy" },
-        
+        {
+            id: "Theme",
+            name: "Visuals & Effects",
+            subtitle: "Rounding, opacity, blur, shadow, font family",
+            icon: "\ue3b7",
+            section: "Appearance & Animations",
+            hue: 0.95,
+            shape: "Puffy"
+        },
+        {
+            id: "Animations",
+            name: "Animation & Physics",
+            subtitle: "Animation style, durations, scroll physics",
+            icon: "\ue410",
+            section: "Appearance & Animations",
+            hue: 0.00,
+            shape: "Puffy"
+        },
+        {
+            id: "bezier",
+            name: "Curve Editor",
+            subtitle: "Interactive custom bezier creator",
+            icon: "\ue71c",
+            section: "Appearance & Animations",
+            hue: 0.06,
+            shape: "Puffy"
+        },
+
         // System Monitor & Info
-        { id: "taskmanager", name: "Task Manager", subtitle: "System resources, processes", icon: "\ue85c", section: "System Info", hue: 0.12, shape: "Puffy" },
-        { id: "about", name: "About", subtitle: "Omniformis Shell info", icon: "\ue88e", section: "System Info", hue: 0.18, shape: "Puffy" }
+        {
+            id: "taskmanager",
+            name: "Task Manager",
+            subtitle: "System resources, processes",
+            icon: "\ue85c",
+            section: "System Info",
+            hue: 0.12,
+            shape: "Puffy"
+        },
+        {
+            id: "about",
+            name: "About",
+            subtitle: "Omniformis Shell info",
+            icon: "\ue88e",
+            section: "System Info",
+            hue: 0.18,
+            shape: "Puffy"
+        }
     ]
 
     function navMatchesSearch(navItem, searchText) {
-        if (!searchText) return true;
+        if (!searchText)
+            return true;
         var terms = searchText.toLowerCase().trim().replace(/-/g, "").split(/\s+/);
-        if (terms.length === 0 || terms[0] === "") return true;
+        if (terms.length === 0 || terms[0] === "")
+            return true;
 
-        var searchableText = navItem.name + " " + navItem.subtitle + " " + navItem.id;
+        var searchableText = navItem.name + " " + navItem.subtitle + " " + navItem.id + " " + (navItem.section || "");
 
         var unifiedCategories = ["General", "Input", "Keybinds", "Desktop", "Layout", "Theme", "Animations"];
         if (unifiedCategories.includes(navItem.id)) {
@@ -91,28 +187,33 @@ Item {
                 for (var i = 0; i < vars.length; i++) {
                     var v = vars[i];
                     if (v.category === navItem.id) {
-                        if (v.key) searchableText += " " + v.key;
-                        if (v.title) searchableText += " " + v.title;
-                        if (v.help) searchableText += " " + v.help;
+                        if (v.key)
+                            searchableText += " " + v.key;
+                        if (v.title)
+                            searchableText += " " + v.title;
+                        if (v.help)
+                            searchableText += " " + v.help;
+                        if (v.source)
+                            searchableText += " " + v.source;
                     }
                 }
             }
         }
-        
+
         searchableText = searchableText.toLowerCase().replace(/-/g, "");
         for (var t = 0; t < terms.length; t++) {
             if (!searchableText.includes(terms[t])) {
                 return false;
             }
         }
-        
+
         return true;
     }
 
     function filterNavItems(searchText) {
         var filtered = [];
         var currentSectionGroups = {};
-        
+
         // First pass: collect matching items
         for (var i = 0; i < baseNavItems.length; i++) {
             var item = baseNavItems[i];
@@ -120,7 +221,7 @@ Item {
                 filtered.push(Object.assign({}, item));
             }
         }
-        
+
         // Second pass: compute isFirst and isLast by section
         for (var j = 0; j < filtered.length; j++) {
             var cur = filtered[j];
@@ -130,7 +231,7 @@ Item {
             }
             currentSectionGroups[sec].push(cur);
         }
-        
+
         for (var s in currentSectionGroups) {
             var group = currentSectionGroups[s];
             for (var k = 0; k < group.length; k++) {
@@ -138,7 +239,7 @@ Item {
                 group[k].isLast = (k === group.length - 1);
             }
         }
-        
+
         return filtered;
     }
 
@@ -155,35 +256,39 @@ Item {
         return colors[currentNavIndex % 3];
     }
 
-    signal openWallpaperSwitcherRequested()
-    
+    signal openWallpaperSwitcherRequested
+
     // Wi-Fi
     property var wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi)
     property var activeNet: wifiDevice ? wifiDevice.networks.values.find(n => n.connected) : null
     property var wifiSignal: activeNet ? activeNet.signalStrength : 0
 
     readonly property string wifiIcon: {
-        if (!Networking.wifiEnabled) return "\ue1da"; 
-        if (!activeNet) return "\uf067"; 
+        if (!Networking.wifiEnabled)
+            return "\ue1da";
+        if (!activeNet)
+            return "\uf067";
         let tier = Math.min(Math.floor(wifiSignal / 25), 3);
         let icons = ["\ue1ba", "\uebe4", "\uebd6", "\uebe1"];
         return icons[tier];
     }
-    
+
     // Bluetooth
     property var adapter: Bluetooth.defaultAdapter
     property bool adapterState: adapter ? adapter.enabled : false
     property var connectDevice: adapter ? adapter.devices.values.find(d => d.connected) : null
 
     readonly property string bluetoothIcon: {
-        if (!adapterState) return "\ue1a9"; 
-        if (!connectDevice) return "\ue1a7"; 
-        return "\ue1a8"; 
+        if (!adapterState)
+            return "\ue1a9";
+        if (!connectDevice)
+            return "\ue1a7";
+        return "\ue1a8";
     }
-    
+
     opacity: forceHidePill ? 0.0 : 1.0
     visible: opacity > 0
-    signal closeRequested()
+    signal closeRequested
     onExpandedChanged: {
         if (expanded) {
             MorphState.notifyOpened(root.isFloatingInstance ? root.width : 1440, root.isFloatingInstance ? root.height : 740, panel.targetRad, panel);
@@ -193,67 +298,82 @@ Item {
         }
     }
 
-
-    
     Item {
         id: panelMask
-                anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
+        anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
         anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
         anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
         anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
-        
-        anchors.topMargin: -20
-        anchors.bottomMargin: -20
-        anchors.leftMargin: -20
-        anchors.rightMargin: -20
-        width: root.expanded ? 740 : 140
-        height: root.expanded ? 540 : 80
+
+        anchors.topMargin: root.expanded ? -20 : 0
+        anchors.bottomMargin: root.expanded ? -20 : 0
+        anchors.leftMargin: root.expanded ? -20 : 0
+        anchors.rightMargin: root.expanded ? -20 : 0
+        width: root.expanded ? 740 : 0
+        height: root.expanded ? 540 : 0
     }
-    
+
     Primitives.SquircleMask {
         id: panel
         property bool isBackgroundActive: root.expanded || (MorphState.openCount === 0 && MorphState.activeItem === panel && panel.width > 105)
         layer.enabled: false
-        layer.samples: 32
+        layer.samples: Vars.layerSamples
         anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top" || root.isFloatingInstance) ? parent.top : undefined
         anchors.bottom: (!root.isFloatingInstance && Vars.pillPosition === "Bottom") ? parent.bottom : undefined
         anchors.left: (!root.isFloatingInstance && Vars.pillPosition === "Left") ? parent.left : undefined
         anchors.right: (!root.isFloatingInstance && Vars.pillPosition === "Right") ? parent.right : undefined
         anchors.horizontalCenter: (!root.isFloatingInstance && (Vars.pillPosition !== "Left" && Vars.pillPosition !== "Right")) ? parent.horizontalCenter : undefined
         anchors.verticalCenter: (!root.isFloatingInstance && (Vars.pillPosition === "Left" || Vars.pillPosition === "Right")) ? parent.verticalCenter : undefined
-        
+
         width: root.expanded ? (root.isFloatingInstance ? root.width : 1440) : (MorphState.anyExpanded ? MorphState.targetWidth : 100)
         height: root.expanded ? (root.isFloatingInstance ? root.height : 740) : (MorphState.anyExpanded ? MorphState.targetHeight : 40)
-        
+
         color: Vars.tColorActive(isBackgroundActive, Theme.surface_container_low, Vars.panelOpacity)
-        property real targetRad: root.expanded ? Vars.radiusExtraLarge : (MorphState.anyExpanded ? MorphState.targetRadius : height / 2)
-        topLeftRadius: root.isFloatingInstance ? Vars.radiusExtraLarge : Vars.getTopLeftRadius(Vars.panelStyle, Vars.pillPosition, false, targetRad)
-        topRightRadius: root.isFloatingInstance ? Vars.radiusExtraLarge : Vars.getTopRightRadius(Vars.panelStyle, Vars.pillPosition, false, targetRad)
-        bottomLeftRadius: root.isFloatingInstance ? Vars.radiusExtraLarge : Vars.getBottomLeftRadius(Vars.panelStyle, Vars.pillPosition, false, targetRad)
-        bottomRightRadius: root.isFloatingInstance ? Vars.radiusExtraLarge : Vars.getBottomRightRadius(Vars.panelStyle, Vars.pillPosition, false, targetRad)
-        
+        property real targetRad: (root.expanded || root.isFloatingInstance) ? Vars.radiusExtraLarge : (MorphState.anyExpanded ? MorphState.targetRadius : height / 2)
+        topLeftRadius: Vars.getTopLeftRadius(Vars.panelStyle, Vars.pillPosition, root.isFloatingInstance, targetRad)
+        topRightRadius: Vars.getTopRightRadius(Vars.panelStyle, Vars.pillPosition, root.isFloatingInstance, targetRad)
+        bottomLeftRadius: Vars.getBottomLeftRadius(Vars.panelStyle, Vars.pillPosition, root.isFloatingInstance, targetRad)
+        bottomRightRadius: Vars.getBottomRightRadius(Vars.panelStyle, Vars.pillPosition, root.isFloatingInstance, targetRad)
+
         opacity: isBackgroundActive || innerUI.opacity > 0 ? 1.0 : 0.0
         // visible: opacity > 0 // Removed to preserve Behavior when hidden
 
-        Behavior on topLeftRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on topRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on bottomLeftRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on bottomRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on width { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
-        Behavior on height { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+        Behavior on width {
+            enabled: !root.gameMode
+            NumberAnimation {
+                duration: Vars.animationDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Vars.customExpressiveSpatialSlow
+            }
+        }
+        Behavior on height {
+            enabled: !root.gameMode
+            NumberAnimation {
+                duration: Vars.animationDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: Vars.customExpressiveSpatialSlow
+            }
+        }
 
         Item {
             id: innerUI
             anchors.centerIn: parent
             width: Math.max(1, parent.width - Vars.spacingLarge * 2)
             height: Math.max(1, parent.height - Vars.spacingLarge * 2)
-            
+
             opacity: root.expanded ? 1.0 : 0.0
             visible: root.expanded || opacity > 0
             clip: true
-            Behavior on opacity { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: root.expanded ? Vars.customEmphasizedDecelerate : Vars.customEmphasizedAccelerate } }
+            Behavior on opacity {
+                enabled: !root.gameMode
+                NumberAnimation {
+                    duration: Vars.animationDuration
+                    easing.type: Easing.BezierSpline
+                    easing.bezierCurve: Vars.getFadeCurve(root.expanded)
+                }
+            }
 
             property alias sidebarWidth: settings.sidebarWidth
 
@@ -284,52 +404,137 @@ Item {
                                 showIcon: true
                                 iconText: "search"
                                 defaultHeight: 48
-                                defaultColor: globalSearchBar.isActiveFocus ? Vars.tColor(Theme.primary_container, Vars.componentOpacity) : Vars.tColor(Theme.surface_container, Vars.componentOpacity)
-                                
-                                containerPadding: Vars.spacingLarge
-                                outerTopLeftRadius: panel.topLeftRadius
-                                outerBottomLeftRadius: panel.bottomLeftRadius
-                                topRightRadius: 4
-                                bottomRightRadius: 4
+                                defaultColor: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
+                                activeColor: Vars.tColorSelected(Theme.primary)
+                                defaultTextColor: Theme.on_surface_variant
+                                activeTextColor: Theme.on_primary
+                                defaultPlaceholderColor: Theme.on_surface_variant
+                                activePlaceholderColor: Qt.rgba(Theme.on_primary.r, Theme.on_primary.g, Theme.on_primary.b, 0.7)
+                                borderWidth: 0
+                                fontWeight: Font.Bold
+
+                                topLeftRadius: Math.max(0, panel.topLeftRadius - Vars.spacingLarge)
+                                // Nothing touches the row from below, so its lower outer corner is fully rounded
+                                bottomLeftRadius: Vars.radiusLarge
+                                property real innerRadius: globalSearchBar.isActiveFocus ? 20 : 4
+                                Behavior on innerRadius {
+                                    NumberAnimation {
+                                        duration: Vars.animationDuration
+                                        easing.type: Easing.BezierSpline
+                                        easing.bezierCurve: Vars.customStandard
+                                    }
+                                }
+                                topRightRadius: innerRadius
+                                bottomRightRadius: innerRadius
                             }
 
-                            // Detach Button (Floating)
+                            // Detach Button
                             Rectangle {
-                                width: 48; height: 48
-                                color: detachHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (detachHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : Vars.tColor(Theme.surface_container, Vars.componentOpacity))
-                                
-                                topLeftRadius: 4
-                                bottomLeftRadius: 4
-                                topRightRadius: 4
-                                bottomRightRadius: 4
+                                antialiasing: true
+                                width: 48
+                                height: 48
+                                color: detachHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (detachHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : Vars.tColor(Theme.surface_container_high, Vars.componentOpacity))
 
-                                QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Theme.on_surface; text: root.isFloatingInstance ? "\ue5ce" : "\ue89b" }
-                                MouseArea {
-                                    id: detachHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor;
-                                    onClicked: { root.expanded = false; root.detachToggled(!root.isFloatingInstance); }
+                                property real rHover: detachHover.containsMouse ? 20 : 4
+                                Behavior on rHover {
+                                    NumberAnimation {
+                                        duration: Vars.animationDuration
+                                        easing.type: Easing.BezierSpline
+                                        easing.bezierCurve: Vars.customStandard
+                                    }
                                 }
-                                Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+                                topLeftRadius: rHover
+                                bottomLeftRadius: rHover
+                                topRightRadius: rHover
+                                bottomRightRadius: rHover
+
+                                QsText {
+                                    anchors.centerIn: parent
+                                    font.family: "Material Symbols Outlined"
+                                    font.pixelSize: 20
+                                    color: detachHover.containsMouse ? Theme.on_surface : Theme.on_surface_variant
+                                    text: root.isFloatingInstance ? "\ue5ce" : "\ue89b"
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: Vars.animationDuration
+                                            easing.type: Easing.BezierSpline
+                                            easing.bezierCurve: Vars.customStandard
+                                        }
+                                    }
+                                }
+                                MouseArea {
+                                    id: detachHover
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.expanded = false;
+                                        root.detachToggled(!root.isFloatingInstance);
+                                    }
+                                }
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Vars.animationDuration
+                                        easing.type: Easing.BezierSpline
+                                        easing.bezierCurve: Vars.customStandard
+                                    }
+                                }
                             }
 
                             // Close Button
                             Rectangle {
-                                width: 48; height: 48
-                                color: backHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (backHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : Vars.tColor(Theme.surface_container, Vars.componentOpacity))
-                                
-                                topLeftRadius: 4
-                                bottomLeftRadius: 4
-                                property real r2Right: Math.max(0, panel.topRightRadius - Vars.spacingLarge)
-                                property real r2BottomRight: Math.max(0, panel.bottomRightRadius - Vars.spacingLarge)
-                                topRightRadius: r2Right
-                                bottomRightRadius: r2BottomRight
+                                antialiasing: true
+                                width: 48
+                                height: 48
+                                color: backHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (backHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : Vars.tColor(Theme.surface_container_high, Vars.componentOpacity))
 
-                                QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Theme.on_surface; text: "\ue5cd" }
-                                MouseArea { id: backHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.expanded = false }
-                                Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+                                property real rHover: backHover.containsMouse ? 20 : 4
+                                Behavior on rHover {
+                                    NumberAnimation {
+                                        duration: Vars.animationDuration
+                                        easing.type: Easing.BezierSpline
+                                        easing.bezierCurve: Vars.customStandard
+                                    }
+                                }
+                                topLeftRadius: rHover
+                                bottomLeftRadius: rHover
+                                topRightRadius: Math.max(0, panel.topRightRadius - Vars.spacingLarge)
+                                bottomRightRadius: Vars.radiusLarge
+
+                                QsText {
+                                    anchors.centerIn: parent
+                                    font.family: "Material Symbols Outlined"
+                                    font.pixelSize: 20
+                                    color: backHover.containsMouse ? Theme.on_surface : Theme.on_surface_variant
+                                    text: "\ue5cd"
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: Vars.animationDuration
+                                            easing.type: Easing.BezierSpline
+                                            easing.bezierCurve: Vars.customStandard
+                                        }
+                                    }
+                                }
+                                MouseArea {
+                                    id: backHover
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.expanded = false
+                                }
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: Vars.animationDuration
+                                        easing.type: Easing.BezierSpline
+                                        easing.bezierCurve: Vars.customStandard
+                                    }
+                                }
                             }
                         }
 
-                        Item { Layout.preferredHeight: Vars.spacingSmall }
+                        Item {
+                            Layout.preferredHeight: Vars.spacingSmall
+                        }
 
                         Flickable {
                             Layout.fillWidth: true
@@ -345,7 +550,7 @@ Item {
                                 navItems: root.navItems
                                 onCurrentSectionChanged: {
                                     if (root.currentSection !== currentSection) {
-                                        root.currentSection = currentSection
+                                        root.currentSection = currentSection;
                                     }
                                 }
                             }
@@ -363,7 +568,11 @@ Item {
                         width: 2
                         height: parent.height
                         color: dividerArea.pressed ? Theme.primary : (dividerArea.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.4) : Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.2))
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 150
+                            }
+                        }
                     }
 
                     MouseArea {
@@ -373,8 +582,11 @@ Item {
                         cursorShape: Qt.SizeHorCursor
                         property real pressX: 0
                         property int pressWidth: 0
-                        onPressed: (mouse) => { pressX = mapToItem(innerUI, mouse.x, 0).x; pressWidth = innerUI.sidebarWidth; }
-                        onPositionChanged: (mouse) => {
+                        onPressed: mouse => {
+                            pressX = mapToItem(innerUI, mouse.x, 0).x;
+                            pressWidth = innerUI.sidebarWidth;
+                        }
+                        onPositionChanged: mouse => {
                             if (pressed) {
                                 var dx = mapToItem(innerUI, mouse.x, 0).x - pressX;
                                 innerUI.sidebarWidth = Math.min(600, Math.max(200, pressWidth + dx));
@@ -388,12 +600,20 @@ Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     currentIndex: {
-                        if (root.currentSection === "quick") return 0;
-                        if (root.currentSection === "bezier") return 2;
-                        if (root.currentSection === "wifi") return 3;
-                        if (root.currentSection === "bluetooth") return 4;
-                        if (root.currentSection === "about") return 5;
-                        if (root.currentSection === "taskmanager") return 6;
+                        if (root.currentSection === "quick")
+                            return 0;
+                        if (root.currentSection === "bezier")
+                            return 2;
+                        if (root.currentSection === "wifi")
+                            return 3;
+                        if (root.currentSection === "bluetooth")
+                            return 4;
+                        if (root.currentSection === "about")
+                            return 5;
+                        if (root.currentSection === "taskmanager")
+                            return 6;
+                        if (root.currentSection === "Keybinds")
+                            return 7;
                         return 1;
                     }
 
@@ -406,7 +626,9 @@ Item {
                         pageShape: root.currentNavItem ? root.currentNavItem.shape : "Circle"
                         pageColor: root.currentNavColor
                         pageOnColor: root.currentNavOnColor
-                        onOpenWallpaperSwitcher: { root.openWallpaperSwitcherRequested(); }
+                        onOpenWallpaperSwitcher: {
+                            root.openWallpaperSwitcherRequested();
+                        }
                     }
 
                     UnifiedSettingsPage {
@@ -432,7 +654,9 @@ Item {
                         pageColor: root.currentNavColor
                         pageOnColor: root.currentNavOnColor
                         searchText: root.globalSearchText
-                        onSettingsChanged: { unifiedPage.loadSettings(); }
+                        onSettingsChanged: {
+                            unifiedPage.loadSettings();
+                        }
                     }
 
                     WifiPage {
@@ -476,6 +700,18 @@ Item {
 
                     TaskManagerPage {
                         id: taskManagerPage
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        pageTitle: root.currentNavItem ? root.currentNavItem.name : ""
+                        pageIcon: root.currentNavItem ? root.currentNavItem.icon : ""
+                        pageShape: root.currentNavItem ? root.currentNavItem.shape : "Circle"
+                        pageColor: root.currentNavColor
+                        pageOnColor: root.currentNavOnColor
+                        searchText: root.globalSearchText
+                    }
+
+                    KeybindsPage {
+                        id: keybindsPage
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         pageTitle: root.currentNavItem ? root.currentNavItem.name : ""

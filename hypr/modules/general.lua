@@ -1,6 +1,7 @@
 package.path = package.path .. ";../scheme/?.lua"
 local Utils = require("utils")
 local vars = require("modules.variables")
+local hw = require("modules.hardware")
 
 hl.config({
     general = {
@@ -11,6 +12,8 @@ hl.config({
         allow_tearing = vars.allow_tearing,
     },
     cursor = {
-        no_hardware_cursors = true,
+        -- Software cursors work around NVIDIA; everywhere else a hardware cursor saves
+        -- repainting the screen on every mouse move
+        no_hardware_cursors = hw.nvidia,
     }
 })

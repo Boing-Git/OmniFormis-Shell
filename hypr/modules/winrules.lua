@@ -3,6 +3,7 @@
 --------------------------------
 
 local vars = require("modules.variables")
+local hw = require("modules.hardware")
 local windowOpacity = vars.windowOpacity or "0.9"
 local singleWindowGapsOut = vars.GameMode and "0" or (vars.singleWindowGapsOut or "10")
 
@@ -21,17 +22,28 @@ end
 -- ## Global Window Rules
 --------------------------------------------------------------------------------
 
-hl.window_rule({
-    name = "global-opacity",
-    match = { fullscreen = false },
-    opacity = windowOpacity .. " override"
-})
+-- Low-spec hardware keeps windows opaque, blending each one over what's behind it is costly
+if not hw.low_spec then
+    hl.window_rule({
+        name = "global-opacity",
+        match = { fullscreen = false },
+        opacity = windowOpacity .. " override"
+    })
+end
 
 hl.window_rule({
     name = "native-opaque-apps",
     match = { class = "^(foot|equibop|imv|swappy)$" },
     opaque = true
 })
+
+if not hw.low_spec then
+    hl.window_rule({
+        name = "wezterm-lazygit-opacity",
+        match = { class = "^(wezterm|org\\.wezfurlong\\.wezterm)$", title = ".*lazygit.*" },
+        opacity = "0.95 0.95"
+    })
+end
 
 
 
@@ -217,9 +229,10 @@ hl.window_rule({
     float = true
 })
 
+-- UPDATED: Added hl2_linux to match TF2 natively
 hl.window_rule({
     name = "games-tearing",
-    match = { class = "^(steam_app_(default|[0-9]+)|gamescope)$" },
+    match = { class = "^(steam_app_(default|[0-9]+)|gamescope|hl2_linux)$" },
     opaque = true,
     immediate = true,
     idle_inhibit = "always"
@@ -240,21 +253,8 @@ hl.window_rule({
 hl.window_rule({
     name = "fusion360",
     match = { class = "fusion360\\.exe", title = "^(Fusion360|Marking Menu)$" },
-    no_blur = true -- FIXED: Changed from noblur to no_blur
+    no_blur = true
 })
-
---------------------------------------------------------------------------------
--- ## Xwayland Popups
---------------------------------------------------------------------------------
-
-hl.window_rule({
-    name = "xwayland-popups",
-    match = { xwayland = true, title = "^win[0-9]+$" },
-    no_dim = true,
-    no_shadow = true,
-    rounding = 10
-})
-
 --------------------------------------------------------------------------------
 -- ## Workspace Rules
 --------------------------------------------------------------------------------

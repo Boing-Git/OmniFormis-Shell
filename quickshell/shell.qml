@@ -156,6 +156,12 @@ ShellRoot {
         onPressed: callOnAllPills("toggleClipboard")
     }
 
+    GlobalShortcut {
+        name: "cheat_sheet"
+        description: "Toggle Keybind Cheat Sheet"
+        onPressed: callOnAllPills("toggleCheatSheet")
+    }
+
     Variants {
         model: root.appInitialized ? Quickshell.screens : []
         delegate: Component {
@@ -223,9 +229,40 @@ ShellRoot {
         }
     }
 
+    Variants {
+        model: root.appInitialized ? Quickshell.screens : []
+        delegate: Component {
+            DesktopSystemVitals {
+                required property var modelData
+                screen: modelData
+            }
+        }
+    }
+
+    Variants {
+        model: root.appInitialized ? Quickshell.screens : []
+        delegate: Component {
+            DesktopAudioVisualizer {
+                required property var modelData
+                screen: modelData
+            }
+        }
+    }
+
     // Launcher is now inside TopPills.qml
     NotificationDaemon {
         id: notifDaemon
+    }
+
+    // ClockStrut reserves exclusive screen space when Clock Pill is set to Always Visible
+    Variants {
+        model: root.appInitialized ? Quickshell.screens : []
+        delegate: Component {
+            ClockStrut {
+                required property var modelData
+                screen: modelData
+            }
+        }
     }
 
     Instantiator {

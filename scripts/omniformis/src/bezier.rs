@@ -1,4 +1,4 @@
-use crate::utils::expand_tilde;
+use crate::utils::{die, emit, expand_tilde, with_lock, write_atomic};
 use crate::qs::{load_variables, parse_all, update_var, save_variables};
 use crate::hypr::{read_file, write_file};
 use regex::Regex;
@@ -11,12 +11,40 @@ fn get_presets_file() -> std::path::PathBuf {
     expand_tilde("~/.config/quickshell/bezier_presets.json")
 }
 
+/// Preset names become file names, so only allow characters that cannot escape the directory.
+fn validate_name(name: &str) {
+    let ok = !name.is_empty()
+        && name.len() <= 64
+        && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-');
+    if !ok {
+        die(&format!(
+            "invalid preset name '{}': use letters, digits, '-' and '_' only",
+            name
+        ));
+    }
+}
+
+fn apply_preset(preset: &HashMap<String, String>) {
+    with_lock("qs-variables", || {
+        let mut content = load_variables();
+        for (k, v) in preset {
+            match update_var(&content, k, v) {
+                Ok(updated) => content = updated,
+                Err(e) => eprintln!("Warning: skipped {}: {}", k, e),
+            }
+        }
+        save_variables(&content);
+    });
+}
+
 pub fn save(name: &str, payload: Option<String>) {
+    validate_name(name);
     let variables = if let Some(p) = payload {
-        serde_json::from_str::<HashMap<String, String>>(&p).unwrap_or_default()
+        serde_json::from_str::<HashMap<String, String>>(&p)
+            .unwrap_or_else(|e| die(&format!("--payload must be a JSON object of strings: {}", e)))
     } else {
         let content = load_variables();
-        parse_all(&content)
+        parse_all(&content).into_iter().collect()
     };
 
     let mut preset = HashMap::new();
@@ -46,9 +74,13 @@ pub fn save(name: &str, payload: Option<String>) {
     presets.insert(name.to_string(), preset.clone());
 
     if let Some(parent) = presets_file.parent() {
-        fs::create_dir_all(parent).unwrap();
+        if let Err(e) = fs::create_dir_all(parent) {
+            die(&format!("cannot create {}: {}", parent.display(), e));
+        }
     }
-    fs::write(&presets_file, serde_json::to_string_pretty(&presets).unwrap()).unwrap();
+    if let Err(e) = write_atomic(&presets_file, &serde_json::to_string_pretty(&presets).unwrap()) {
+        die(&format!("cannot write {}: {}", presets_file.display(), e));
+    }
 
     let lua_file = expand_tilde(format!("~/.config/hypr/modules/animations/{}.lua", name));
     let get_p = |k: &str, d: &str| -> String {
@@ -88,7 +120,12 @@ hl.config({{
         get_p("customExpressiveSpatialSlow", "0.39, 1.29, 0.35, 0.98")
     );
 
-    fs::write(&lua_file, lua_content).unwrap();
+    if let Some(parent) = lua_file.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    if let Err(e) = write_atomic(&lua_file, &lua_content) {
+        die(&format!("cannot write {}: {}", lua_file.display(), e));
+    }
 
     let var_content = read_file();
     let re = Regex::new(r"(?m)(--.*AnimateStyle.*\n\s*AnimateStyle\s*=\s*.*?,\s*--\s*)(.*?)\n").unwrap();
@@ -102,17 +139,13 @@ hl.config({{
             let joined = enums.join(", ");
             let repl = format!("{}{}\n", prefix, joined);
             let new_content = re.replace(&var_content, repl).to_string();
-            write_file(&new_content);
+            with_lock("hypr-variables", || write_file(&new_content));
         }
     }
 
-    let mut qs_content = load_variables();
-    for (k, v) in &preset {
-        qs_content = update_var(&qs_content, k, v);
-    }
-    save_variables(&qs_content);
+    apply_preset(&preset);
 
-    println!("Saved bezier preset and generated Animation Style '{}'", name);
+    emit(&format!("Saved bezier preset and generated Animation Style '{}'", name));
 }
 
 pub fn load(name: &str) {
@@ -122,19 +155,16 @@ pub fn load(name: &str) {
         exit(1);
     }
 
-    let content = fs::read_to_string(&presets_file).unwrap();
+    let content = fs::read_to_string(&presets_file)
+        .unwrap_or_else(|e| die(&format!("cannot read {}: {}", presets_file.display(), e)));
     let presets: HashMap<String, HashMap<String, String>> = serde_json::from_str(&content).unwrap_or_else(|_| {
         eprintln!("Error reading presets file.");
         exit(1);
     });
 
     if let Some(preset) = presets.get(name) {
-        let mut content = load_variables();
-        for (k, v) in preset {
-            content = update_var(&content, k, v);
-        }
-        save_variables(&content);
-        println!("Loaded bezier preset '{}'. (You may need to reload Quickshell)", name);
+        apply_preset(preset);
+        emit(&format!("Loaded bezier preset '{}'. (You may need to reload Quickshell)", name));
     } else {
         eprintln!("Preset '{}' not found.", name);
         exit(1);

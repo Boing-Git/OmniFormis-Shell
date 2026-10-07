@@ -53,7 +53,7 @@ while true; do
 
     echo "[qs-watchdog] Starting Quickshell at ${HZ_ROUND}Hz (Tick: ${TICK}ms, VRR: Enabled)..."
 
-    quickshell > /tmp/quickshell.log 2>&1 &
+    quickshell -p /home/boing/Dotfiles/quickshell > /tmp/quickshell.log 2>&1 &
     QS_PID=$!
 
     # Wait for it to exit

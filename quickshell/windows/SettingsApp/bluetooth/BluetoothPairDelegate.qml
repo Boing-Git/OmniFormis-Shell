@@ -8,17 +8,20 @@ import Quickshell.Bluetooth
 import "../../.."
 import "../../../theme"
 import "../../../core/primitives" as Primitives
+import ".."
 
 Item {
     id: btPairDelegate
     property var rootPage
 
-    Layout.fillWidth: true; Layout.preferredHeight: visible ? 72 : 0
+    Layout.fillWidth: true; Layout.preferredHeight: visible ? 80 : 0
     property bool isSelected: modelData.connected
     property bool showForget: false
     visible: !(modelData.paired || modelData.connected)
     
-    property color targetColor: isSelected ? (Vars.tColorSelected(Theme.secondary_container)) : (btPairItemMouse.containsMouse ? Qt.tint((Vars.tColor(Theme.surface_container, Vars.componentOpacity)), Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08)) : (Vars.tColor(Theme.surface_container, Vars.componentOpacity)))
+    property color targetColor: isSelected ? (Vars.tColorSelected(Theme.primary_container)) : (btPairItemMouse.containsMouse ? (Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)))
+    scale: btPairItemMouse.pressed ? 1.08 : 1.0
+    Behavior on scale { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutBack } }
     Behavior on targetColor { ColorAnimation { duration: Vars.animationDuration } }
     
     property bool hasDeviceBelow: {
@@ -32,10 +35,9 @@ Item {
     
     Item {
         anchors.fill: parent
-        layer.enabled: true
-        layer.samples: 32
         opacity: parent.targetColor.a
         Rectangle {
+            antialiasing: true
             anchors.fill: parent
             color: Qt.rgba(parent.parent.targetColor.r, parent.parent.targetColor.g, parent.parent.targetColor.b, 1.0)
             
@@ -55,12 +57,12 @@ Item {
     }
     
     RowLayout {
-        anchors.fill: parent; anchors.leftMargin: 20; anchors.rightMargin: 20; spacing: 16
-        QsText { text: "\ue1a7"; font.family: "Material Symbols Outlined"; font.pixelSize: 24; color: Theme.on_surface_variant }
+        anchors.fill: parent; anchors.leftMargin: Vars.spacingLarge; anchors.rightMargin: Vars.spacingLarge; spacing: 16
+        SettingsIcon { size: 40; icon: "\ue1a7"; Layout.alignment: Qt.AlignVCenter; selected: btPairDelegate.isSelected }
         ColumnLayout {
             Layout.alignment: Qt.AlignVCenter; spacing: 0; Layout.fillWidth: true
             QsText { text: modelData.name ? modelData.name : "Unknown Device"; font.family: Vars.fontFamily; font.pixelSize: 16; color: Theme.on_surface; Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft }
-            QsText { text: "Available to pair"; font.family: Vars.fontFamily; font.pixelSize: 11; setWeight: 500; color: Theme.on_surface_variant; visible: text !== ""; Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft }
+            QsText { text: modelData.pairing ? "Pairing…" : "Available to pair"; font.family: Vars.fontFamily; font.pixelSize: 11; setWeight: 500; color: Theme.on_surface_variant; visible: text !== ""; Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft }
         }
         Item {
             width: 40; height: 40
@@ -77,7 +79,7 @@ Item {
             Primitives.LoadingIndicator {
                 id: btPairLoadingIndicator
                 anchors.fill: parent
-                running: parent.isChangingState || (modelData.connecting !== undefined ? modelData.connecting : false) || (modelData.stateChanging !== undefined ? modelData.stateChanging : false)
+                running: parent.isChangingState || modelData.pairing || modelData.state === BluetoothDeviceState.Connecting
             }
         }
     }
@@ -90,6 +92,13 @@ Item {
             if (mouse.button === Qt.RightButton) {
                 btPairDelegate.showForget = true;
             } else {
+                // Clicking a device that is mid-pairing cancels it
+                if (modelData.pairing) {
+                    modelData.cancelPair();
+                    btPairLoadingIndicator.parent.isChangingState = false;
+                    stateTimeoutTimer.stop();
+                    return;
+                }
                 if (btPairLoadingIndicator.running) return;
                 btPairLoadingIndicator.parent.isChangingState = true;
                 stateTimeoutTimer.restart();
@@ -121,10 +130,18 @@ Item {
             btPairLoadingIndicator.parent.isChangingState = false;
             stateTimeoutTimer.stop();
         }
+        // Pairing failed or was rejected: stop the spinner instead of waiting for the timeout
+        function onPairingChanged() {
+            if (!modelData.pairing && !modelData.paired) {
+                btPairLoadingIndicator.parent.isChangingState = false;
+                stateTimeoutTimer.stop();
+            }
+        }
     }
     
     // Forget Overlay
     Rectangle {
+        antialiasing: true
         anchors.fill: parent
         
         property real baseRadius: Vars.radiusLarge
@@ -151,12 +168,14 @@ Item {
                 font.family: Vars.fontFamily; font.pixelSize: 16; color: Theme.on_surface; Layout.fillWidth: true; elide: Text.ElideRight
             }
             Rectangle {
+                antialiasing: true
                 width: 80; height: 32; radius: 16; color: "transparent"
                 border.color: Theme.outline; border.width: 1
                 QsText { anchors.centerIn: parent; text: "Cancel"; color: Theme.on_surface; font.family: Vars.fontFamily; font.pixelSize: 14 }
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: btPairDelegate.showForget = false }
             }
             Rectangle {
+                antialiasing: true
                 width: 80; height: 32; radius: 16; color: Theme.error ? Theme.error : "#ffb4ab"
                 QsText { anchors.centerIn: parent; text: "Forget"; color: Theme.on_error ? Theme.on_error : "#690005"; font.family: Vars.fontFamily; font.pixelSize: 14; setWeight: 500 }
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { if (modelData.forget) modelData.forget(); btPairDelegate.showForget = false; } }

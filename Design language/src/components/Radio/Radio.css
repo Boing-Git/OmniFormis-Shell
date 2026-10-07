@@ -1,0 +1,190 @@
+@layer m3e.components {
+  .m3e-radio {
+    --m3e-radio-icon-color: var(--m3e-comp-radio-unselected-icon-color);
+    --m3e-radio-state-layer-color: var(--m3e-comp-radio-unselected-state-layer-color);
+    --m3e-radio-dot-scale: 0;
+
+    align-items: center;
+    block-size: var(--m3e-comp-radio-minimum-interactive-target);
+    display: inline-flex;
+    inline-size: var(--m3e-comp-radio-minimum-interactive-target);
+    justify-content: center;
+    position: relative;
+    vertical-align: middle;
+  }
+
+  .m3e-radio__input {
+    appearance: none;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    padding: 0;
+    position: absolute;
+    z-index: 1;
+  }
+
+  .m3e-radio__input:disabled {
+    cursor: default;
+  }
+
+  .m3e-radio__container {
+    block-size: var(--m3e-comp-radio-container-size);
+    border-radius: 50%;
+    /* An inset ring keeps the sourced 20px circle exact, matching the
+       Checkbox box technique. */
+    box-shadow: inset 0 0 0 var(--m3e-comp-radio-outline-width)
+      var(--m3e-radio-icon-color);
+    box-sizing: border-box;
+    display: block;
+    flex: none;
+    inline-size: var(--m3e-comp-radio-container-size);
+    position: relative;
+    transition: box-shadow var(--m3e-sys-motion-expressive-default-effects-duration)
+      var(--m3e-sys-motion-expressive-default-effects-easing);
+  }
+
+  .m3e-radio__container::before {
+    background: var(--m3e-radio-state-layer-color);
+    block-size: var(--m3e-comp-radio-state-layer-size);
+    border-radius: 50%;
+    content: "";
+    inline-size: var(--m3e-comp-radio-state-layer-size);
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    translate: -50% -50%;
+    transition: opacity var(--m3e-sys-motion-expressive-fast-effects-duration)
+      var(--m3e-sys-motion-expressive-fast-effects-easing);
+  }
+
+  .m3e-radio__dot {
+    background-color: var(--m3e-radio-icon-color);
+    block-size: var(--m3e-comp-radio-dot-size);
+    border-radius: 50%;
+    inline-size: var(--m3e-comp-radio-dot-size);
+    inset: 0;
+    margin: auto;
+    position: absolute;
+    transform: scale(var(--m3e-radio-dot-scale));
+    /* The source animates the dot's radius unconditionally, independent of
+       the enabled/disabled color-snap guard below. */
+    transition:
+      transform var(--m3e-sys-motion-expressive-fast-spatial-duration)
+        var(--m3e-sys-motion-expressive-fast-spatial-easing),
+      background-color var(--m3e-sys-motion-expressive-default-effects-duration)
+        var(--m3e-sys-motion-expressive-default-effects-easing);
+  }
+
+  /* Checkedness is read from the input's own `:checked` pseudo-class, not
+     from a React-rendered `data-m3e-state` attribute. A native radio can
+     become unchecked as a side effect of a sibling in the same `name` group
+     being checked, and the browser fires no event on this element when that
+     happens, so any attribute driven by this component's own React state
+     would go stale for that sibling. `:checked` always reflects the true DOM
+     property, independent of which element last re-rendered. */
+  .m3e-radio__input:checked ~ .m3e-radio__container {
+    --m3e-radio-icon-color: var(--m3e-comp-radio-selected-icon-color);
+    --m3e-radio-state-layer-color: var(--m3e-comp-radio-selected-state-layer-color);
+    --m3e-radio-dot-scale: 1;
+  }
+
+  .m3e-radio__input:disabled ~ .m3e-radio__container {
+    --m3e-radio-icon-color: color-mix(
+      in srgb,
+      var(--m3e-comp-radio-disabled-unselected-icon-color)
+        calc(var(--m3e-comp-radio-disabled-unselected-icon-opacity) * 100%),
+      transparent
+    );
+  }
+
+  .m3e-radio__input:checked:disabled ~ .m3e-radio__container {
+    --m3e-radio-icon-color: color-mix(
+      in srgb,
+      var(--m3e-comp-radio-disabled-selected-icon-color)
+        calc(var(--m3e-comp-radio-disabled-selected-icon-opacity) * 100%),
+      transparent
+    );
+  }
+
+  /* The pinned source reads disabled colors through `rememberUpdatedState`
+     instead of `animateColorAsState`, snapping them immediately. The dot's
+     scale keeps animating regardless. */
+  .m3e-radio__input:disabled ~ .m3e-radio__container {
+    transition: none;
+  }
+
+  .m3e-radio__input:disabled ~ .m3e-radio__container .m3e-radio__dot {
+    transition: transform var(--m3e-sys-motion-expressive-fast-spatial-duration)
+      var(--m3e-sys-motion-expressive-fast-spatial-easing);
+  }
+
+  @media (hover: hover) {
+    .m3e-radio__input:hover:not(:disabled) ~ .m3e-radio__container::before {
+      opacity: var(--m3e-sys-state-hover);
+    }
+  }
+
+  .m3e-radio__input:focus-visible ~ .m3e-radio__container {
+    outline-color: var(--m3e-comp-radio-focus-ring-color);
+    outline-offset: var(--m3e-comp-radio-focus-ring-offset);
+    outline-style: solid;
+    outline-width: var(--m3e-comp-radio-focus-ring-width);
+  }
+
+  .m3e-radio__input:focus-visible ~ .m3e-radio__container::before {
+    opacity: var(--m3e-sys-state-focus);
+  }
+
+  .m3e-radio__input:active:not(:disabled) ~ .m3e-radio__container::before {
+    opacity: var(--m3e-sys-state-pressed);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .m3e-radio__container,
+    .m3e-radio__dot {
+      transition: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .m3e-radio__container {
+      box-shadow: none;
+      outline: var(--m3e-comp-radio-outline-width) solid CanvasText;
+      outline-offset: calc(-1 * var(--m3e-comp-radio-outline-width));
+    }
+
+    .m3e-radio__container::before {
+      display: none;
+    }
+
+    .m3e-radio__dot {
+      background-color: CanvasText;
+    }
+
+    .m3e-radio__input:checked ~ .m3e-radio__container {
+      outline-color: Highlight;
+    }
+
+    .m3e-radio__input:checked ~ .m3e-radio__container .m3e-radio__dot {
+      background-color: Highlight;
+    }
+
+    .m3e-radio__input:disabled ~ .m3e-radio__container {
+      outline-color: GrayText;
+    }
+
+    .m3e-radio__input:disabled ~ .m3e-radio__container .m3e-radio__dot {
+      background-color: GrayText;
+    }
+
+    .m3e-radio__input:focus-visible ~ .m3e-radio__container {
+      outline-color: Highlight;
+      outline-offset: var(--m3e-comp-radio-focus-ring-offset);
+    }
+  }
+}

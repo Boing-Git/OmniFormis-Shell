@@ -19,23 +19,6 @@ PanelWindow {
     property int maskOffsetY: Vars.wallpaperMaskOffsetY !== undefined ? Vars.wallpaperMaskOffsetY : 0
     property bool anchorExpandFix: Vars.desktopMediaPlayerAnchorExpandFix !== undefined ? Vars.desktopMediaPlayerAnchorExpandFix : false
 
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.desktopMediaPlayerEnabled !== undefined && window.playerEnabled !== Vars.desktopMediaPlayerEnabled) window.playerEnabled = Vars.desktopMediaPlayerEnabled;
-            if (Vars.desktopMediaPlayerAnchorEnabled !== undefined && window.anchorEnabled !== Vars.desktopMediaPlayerAnchorEnabled) window.anchorEnabled = Vars.desktopMediaPlayerAnchorEnabled;
-            if (Vars.desktopMediaPlayerAnchorPoint !== undefined && window.anchorPoint !== Vars.desktopMediaPlayerAnchorPoint) window.anchorPoint = Vars.desktopMediaPlayerAnchorPoint;
-            if (Vars.desktopMediaPlayerAnchorCurve !== undefined && window.anchorCurve !== Vars.desktopMediaPlayerAnchorCurve) window.anchorCurve = Vars.desktopMediaPlayerAnchorCurve;
-            if (Vars.wallpaperMaskShape !== undefined && window.maskShape !== Vars.wallpaperMaskShape) window.maskShape = Vars.wallpaperMaskShape;
-            if (Vars.wallpaperMaskScale !== undefined && window.maskScale !== Vars.wallpaperMaskScale) window.maskScale = Vars.wallpaperMaskScale;
-            if (Vars.wallpaperMaskOffsetX !== undefined && window.maskOffsetX !== Vars.wallpaperMaskOffsetX) window.maskOffsetX = Vars.wallpaperMaskOffsetX;
-            if (Vars.wallpaperMaskOffsetY !== undefined && window.maskOffsetY !== Vars.wallpaperMaskOffsetY) window.maskOffsetY = Vars.wallpaperMaskOffsetY;
-            if (Vars.desktopMediaPlayerAnchorExpandFix !== undefined && window.anchorExpandFix !== Vars.desktopMediaPlayerAnchorExpandFix) window.anchorExpandFix = Vars.desktopMediaPlayerAnchorExpandFix;
-        }
-    }
-
     visible: window.playerEnabled
 
     WlrLayershell.namespace: "quickshell"
@@ -113,6 +96,8 @@ PanelWindow {
             id: player
             anchors.fill: parent
             anchors.margins: 24 // Give space for shadow
+            // Same surface as every desktop widget (clock, visualizer, vitals)
+            cardColor: Theme.surface_container_high
         }
 
         DragHandler {

@@ -37,6 +37,7 @@ ColumnLayout {
         spacing: Vars.spacingMedium
         
         Rectangle {
+            antialiasing: true
             width: 40; height: 40; radius: 20
             color: backHoverWifi.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (backHoverWifi.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
             QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; antialiasing: true; renderType: Text.QtRendering; font.hintingPreference: Font.PreferNoHinting; color: Theme.on_surface; text: "\ue5c4" }
@@ -47,10 +48,12 @@ ColumnLayout {
         
         // Master Toggle Switch
         Rectangle {
+            antialiasing: true
             width: 56; height: 32; radius: 16
             color: Networking.wifiEnabled ? (Vars.tColorSelected(Theme.primary)) : (Vars.tColor(Theme.surface_variant, Vars.componentOpacity))
             Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
             Rectangle {
+                antialiasing: true
                 width: 24; height: 24; radius: 12
                 color: Networking.wifiEnabled ? Theme.on_primary : Theme.on_surface_variant
                 anchors.verticalCenter: parent.verticalCenter
@@ -74,6 +77,7 @@ ColumnLayout {
             Repeater {
                 model: wifiMenu.wifiDevice ? wifiMenu.wifiDevice.networks.values : []
                 delegate: Rectangle {
+                    antialiasing: true
                     Layout.fillWidth: true; Layout.preferredHeight: 64
                     property real baseRadius: Vars.radiusLarge
                     property real edgeRadius: 4

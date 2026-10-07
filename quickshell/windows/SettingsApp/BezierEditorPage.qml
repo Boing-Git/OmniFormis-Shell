@@ -54,34 +54,24 @@ ColumnLayout {
         return arr[0].toFixed(2) + ", " + arr[1].toFixed(2) + ", " + arr[2].toFixed(2) + ", " + arr[3].toFixed(2);
     }
 
+    // A curve is one Quickshell variable plus its capitalised Hyprland twin
+    function hyprKeyFor(curve) {
+        return curve.charAt(0).toUpperCase() + curve.slice(1);
+    }
+
     function applyCurve() {
         var arr = localEdits[targetCurve] || [p1x, p1y, p2x, p2y];
-        var qsVal = getFormattedArrayStr(arr);
-        var qsProc = Qt.createQmlObject('import Quickshell.Io; Process { command: ["/home/boing/.local/bin/omniformis", "qs", "set", "' + targetCurve + '", "' + qsVal + '"]; onExited: destroy() }', rootPage);
-        qsProc.running = true;
-        
-        var hyprTarget = targetCurve.charAt(0).toUpperCase() + targetCurve.slice(1);
-        var hyprVal = getFormattedStr(arr);
-        var hyprProc = Qt.createQmlObject('import Quickshell.Io; Process { command: ["/home/boing/.local/bin/omniformis", "hypr", "set", "' + hyprTarget + '", "' + hyprVal + '"]; onExited: destroy() }', rootPage);
-        hyprProc.running = true;
+        SettingsApply.set("qs", targetCurve, getFormattedArrayStr(arr));
+        SettingsApply.set("hypr", hyprKeyFor(targetCurve), getFormattedStr(arr));
     }
-    
+
     function applyToAll() {
-        var curves = ["customStandard", "customStandardDecelerate", "customStandardAccelerate", "customEmphasizedDecelerate", "customEmphasizedAccelerate", "customExpressiveSpatialFast", "customExpressiveSpatialSlow"];
-        for (var i = 0; i < curves.length; i++) {
-            var c = curves[i];
-            if (localEdits[c]) {
-                var qsVal = getFormattedArrayStr(localEdits[c]);
-                var hyprVal = getFormattedStr(localEdits[c]);
-                var hc = c.charAt(0).toUpperCase() + c.slice(1);
-                var p1 = Qt.createQmlObject('import Quickshell.Io; Process { command: ["/home/boing/.local/bin/omniformis", "qs", "set", "' + c + '", "' + qsVal + '"]; onExited: destroy() }', rootPage);
-                var p2 = Qt.createQmlObject('import Quickshell.Io; Process { command: ["/home/boing/.local/bin/omniformis", "hypr", "set", "' + hc + '", "' + hyprVal + '"]; onExited: destroy() }', rootPage);
-                p1.running = true; p2.running = true;
-            }
+        for (var c in localEdits) {
+            SettingsApply.set("qs", c, getFormattedArrayStr(localEdits[c]));
+            SettingsApply.set("hypr", hyprKeyFor(c), getFormattedStr(localEdits[c]));
         }
-        var p3 = Qt.createQmlObject('import Quickshell.Io; Process { command: ["/home/boing/.local/bin/omniformis", "hypr", "set", "AnimateStyle", "Custom"]; onExited: destroy() }', rootPage);
-        p3.running = true;
-        
+        SettingsApply.set("hypr", "AnimateStyle", "Custom");
+
         rootPage.settingsChanged();
     }
 
@@ -233,6 +223,7 @@ ColumnLayout {
 
                 // P1 Handle
                 Rectangle {
+                    antialiasing: true
                     width: 16; height: 16; radius: 8
                     color: p1Mouse.pressed ? Theme.secondary : Theme.primary
                     x: rootPage.p1x * graph.width - width/2
@@ -259,6 +250,7 @@ ColumnLayout {
                 
                 // P2 Handle
                 Rectangle {
+                    antialiasing: true
                     width: 16; height: 16; radius: 8
                     color: p2Mouse.pressed ? Theme.tertiary : Theme.primary
                     x: rootPage.p2x * graph.width - width/2
@@ -300,13 +292,61 @@ ColumnLayout {
             }
 
             ComboBox {
+                id: targetCurveCombo
                 Layout.fillWidth: true
                 height: 40
                 model: ["customStandard", "customStandardDecelerate", "customStandardAccelerate", "customEmphasizedDecelerate", "customEmphasizedAccelerate", "customExpressiveSpatialFast", "customExpressiveSpatialSlow"]
+                currentIndex: model.indexOf(rootPage.targetCurve) >= 0 ? model.indexOf(rootPage.targetCurve) : 0
                 onActivated: function(index) { rootPage.targetCurve = model[index]; }
                 
-                background: Rectangle { color: Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity); radius: Vars.radiusSmall }
-                contentItem: QsText { text: parent.displayText; font.family: Vars.fontFamily; color: Theme.on_surface; font.pixelSize: 14; verticalAlignment: Text.AlignVCenter; leftPadding: 10 }
+                background: Rectangle {
+                    antialiasing: true 
+                    color: Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)
+                    radius: Vars.radiusSmall 
+                    border.width: targetCurveCombo.activeFocus ? 1 : 0
+                    border.color: Theme.primary
+                }
+                contentItem: QsText { text: targetCurveCombo.displayText; font.family: Vars.fontFamily; color: Theme.on_surface; font.pixelSize: 14; verticalAlignment: Text.AlignVCenter; leftPadding: 12 }
+                
+                delegate: ItemDelegate {
+                    width: targetCurveCombo.width
+                    height: 36
+                    highlighted: targetCurveCombo.highlightedIndex === index
+                    contentItem: QsText {
+                        text: modelData
+                        color: parent.highlighted ? Theme.primary : Theme.on_surface
+                        font.family: Vars.fontFamily
+                        font.pixelSize: 13
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
+                    background: Rectangle {
+                        antialiasing: true
+                        color: parent.highlighted ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.12) : "transparent"
+                        radius: Vars.radiusSmall
+                    }
+                }
+                
+                popup: Popup {
+                    y: targetCurveCombo.height + 4
+                    width: targetCurveCombo.width
+                    implicitHeight: contentItem.implicitHeight + 8
+                    padding: 4
+                    background: Rectangle {
+                        antialiasing: true
+                        color: Vars.tColor(Theme.surface_container_highest, Vars.panelOpacity)
+                        radius: Vars.radiusSmall
+                        border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.2)
+                        border.width: 1
+                    }
+                    contentItem: ListView {
+                        clip: true
+                        implicitHeight: Math.min(220, contentHeight)
+                        model: targetCurveCombo.popup.visible ? targetCurveCombo.delegateModel : null
+                        currentIndex: targetCurveCombo.highlightedIndex
+                        ScrollIndicator.vertical: ScrollIndicator { }
+                    }
+                }
             }
 
             QsText {
@@ -318,13 +358,61 @@ ColumnLayout {
             }
 
             ComboBox {
+                id: refCurveCombo
                 Layout.fillWidth: true
                 height: 40
                 model: ["None", "m3Standard", "m3StandardDecelerate", "m3StandardAccelerate", "m3EmphasizedDecelerate", "m3EmphasizedAccelerate", "m3ExpressiveSpatialFast", "m3ExpressiveSpatialSlow"]
+                currentIndex: model.indexOf(rootPage.referenceCurve) >= 0 ? model.indexOf(rootPage.referenceCurve) : 0
                 onActivated: function(index) { rootPage.referenceCurve = model[index]; curveCanvas.requestPaint(); }
                 
-                background: Rectangle { color: Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity); radius: Vars.radiusSmall }
-                contentItem: QsText { text: parent.displayText; font.family: Vars.fontFamily; color: Theme.on_surface; font.pixelSize: 14; verticalAlignment: Text.AlignVCenter; leftPadding: 10 }
+                background: Rectangle {
+                    antialiasing: true 
+                    color: Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity)
+                    radius: Vars.radiusSmall 
+                    border.width: refCurveCombo.activeFocus ? 1 : 0
+                    border.color: Theme.primary
+                }
+                contentItem: QsText { text: refCurveCombo.displayText; font.family: Vars.fontFamily; color: Theme.on_surface; font.pixelSize: 14; verticalAlignment: Text.AlignVCenter; leftPadding: 12 }
+
+                delegate: ItemDelegate {
+                    width: refCurveCombo.width
+                    height: 36
+                    highlighted: refCurveCombo.highlightedIndex === index
+                    contentItem: QsText {
+                        text: modelData
+                        color: parent.highlighted ? Theme.primary : Theme.on_surface
+                        font.family: Vars.fontFamily
+                        font.pixelSize: 13
+                        verticalAlignment: Text.AlignVCenter
+                        leftPadding: 8
+                    }
+                    background: Rectangle {
+                        antialiasing: true
+                        color: parent.highlighted ? Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.12) : "transparent"
+                        radius: Vars.radiusSmall
+                    }
+                }
+
+                popup: Popup {
+                    y: refCurveCombo.height + 4
+                    width: refCurveCombo.width
+                    implicitHeight: contentItem.implicitHeight + 8
+                    padding: 4
+                    background: Rectangle {
+                        antialiasing: true
+                        color: Vars.tColor(Theme.surface_container_highest, Vars.panelOpacity)
+                        radius: Vars.radiusSmall
+                        border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.2)
+                        border.width: 1
+                    }
+                    contentItem: ListView {
+                        clip: true
+                        implicitHeight: Math.min(220, contentHeight)
+                        model: refCurveCombo.popup.visible ? refCurveCombo.delegateModel : null
+                        currentIndex: refCurveCombo.highlightedIndex
+                        ScrollIndicator.vertical: ScrollIndicator { }
+                    }
+                }
             }
 
             QsText {
@@ -423,6 +511,7 @@ ColumnLayout {
                 clip: true
 
                 Rectangle {
+                    antialiasing: true
                     id: animBoxRef
                     width: 30; height: 30; radius: 6
                     color: Theme.outline_variant
@@ -433,6 +522,7 @@ ColumnLayout {
                 }
 
                 Rectangle {
+                    antialiasing: true
                     id: animBox
                     width: 30; height: 30; radius: 6
                     color: Theme.primary
@@ -444,7 +534,7 @@ ColumnLayout {
                 Button {
                     anchors.bottom: parent.bottom; anchors.right: parent.right; anchors.margins: 8
                     width: 80; height: 32
-                    background: Rectangle { color: Vars.tColor(Theme.surface_variant, Vars.componentOpacity); radius: Vars.radiusSmall }
+                    background: Rectangle { antialiasing: true; color: Vars.tColor(Theme.surface_variant, Vars.componentOpacity); radius: Vars.radiusSmall }
                     contentItem: QsText { text: "Test"; font.family: Vars.fontFamily; font.bold: true; color: Theme.on_surface; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                     onClicked: {
                         if (rootPage.testAnimObj) {
@@ -488,13 +578,13 @@ ColumnLayout {
                 spacing: Vars.spacingSmall
                 Button {
                     Layout.fillWidth: true; height: 40
-                    background: Rectangle { color: Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity); radius: Vars.radiusSmall }
+                    background: Rectangle { antialiasing: true; color: Vars.tColor(Theme.surface_container_highest, Vars.componentOpacity); radius: Vars.radiusSmall }
                     contentItem: QsText { text: "Apply Target"; font.family: Vars.fontFamily; font.bold: true; color: Theme.on_surface; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                     onClicked: applyCurve()
                 }
                 Button {
                     Layout.fillWidth: true; height: 40
-                    background: Rectangle { color: Theme.primary; radius: Vars.radiusSmall }
+                    background: Rectangle { antialiasing: true; color: Theme.primary; radius: Vars.radiusSmall }
                     contentItem: QsText { text: "Apply to All"; font.family: Vars.fontFamily; font.bold: true; color: Theme.on_primary; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                     onClicked: applyToAll()
                 }
@@ -520,7 +610,7 @@ ColumnLayout {
                     Button {
                         id: savePresetBtn
                         Layout.preferredWidth: 60; Layout.fillHeight: true
-                        background: Rectangle { color: Vars.tColor(Theme.surface_variant, Vars.componentOpacity); radius: Vars.radiusSmall }
+                        background: Rectangle { antialiasing: true; color: Vars.tColor(Theme.surface_variant, Vars.componentOpacity); radius: Vars.radiusSmall }
                         contentItem: QsText { text: "Save"; font.family: Vars.fontFamily; color: Theme.on_surface; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                         onClicked: {
                             // Ensure the current curve is in localEdits

@@ -52,6 +52,18 @@ ColumnLayout {
             "mediaPlayerLyricsAutoScroll": "Auto Scroll",
             "mediaPlayerExpandOverlaps": "Overlay Mode (No Layout Push)",
             "desktopMediaPlayerAnchorExpandFix": "Lock Anchor Position on Expand",
+            "desktopAudioVisualizerShape": "Audio Visualizer Bar Shape",
+            "desktopAudioVisualizerShapeMode": "Audio Visualizer Bar Shape Mode",
+            "desktopAudioVisualizerColorMode": "Audio Visualizer Color Mode",
+            "desktopAudioVisualizerColor": "Audio Visualizer Custom Color",
+            "desktopAudioVisualizerGradientStart": "Audio Visualizer Gradient Start Color",
+            "desktopAudioVisualizerGradientEnd": "Audio Visualizer Gradient End Color",
+            "desktopAudioVisualizerLayout": "Audio Visualizer Arrangement",
+            "desktopAudioVisualizerPositionShape": "Audio Visualizer Position Shape",
+            "desktopAudioVisualizerShapeSize": "Audio Visualizer Shape Size",
+            "desktopAudioVisualizerSpacing": "Audio Visualizer Shape Spacing",
+            "desktopAudioVisualizerRadius": "Audio Visualizer Circle Radius",
+            "desktopAudioVisualizerPresets": "Audio Visualizer Layout Presets",
             "gameMode": "Game Mode Optimization",
             "animationDuration": "Master Animation Duration",
             "flickDeceleration": "Scroll Deceleration Rate",
@@ -68,6 +80,7 @@ ColumnLayout {
             "fontGrading": "Interface Font Grade",
             "fontBaselineEnabled": "Relative Font Baseline Config",
             "pillPosition": "Panel Screen Position",
+            "clockPillMode": "Clock Pill Visibility",
             "panelStyle": "Panel Visual Style",
             "gaps_in": "Inner Window Gaps",
             "gaps_out": "Outer Window Gaps",
@@ -120,6 +133,18 @@ ColumnLayout {
             "mediaPlayerLyricsExpansion": "Direction in which the media player expands to show lyrics.",
             "mediaPlayerLyricsAutoScroll": "Enable automatic scrolling and active line highlighting for synchronized lyrics.",
             "desktopMediaPlayerAnchorExpandFix": "Prevent desktop media player anchor from shifting position when expanded.",
+            "desktopAudioVisualizerShape": "The shape of each individual bar itself (what each little glyph looks like) — not where the bars are positioned. Only used when Bar Shape Mode is Single.",
+            "desktopAudioVisualizerShapeMode": "Single uses the one Bar Shape for every bar; All Shapes cycles every bar through the full set of M3 shapes instead.",
+            "desktopAudioVisualizerColorMode": "Theme uses the shell's own accent gradient, warming toward louder bars. Custom paints every bar a single flat color. Gradient fills each shape with a two-color blend.",
+            "desktopAudioVisualizerColor": "The color used for every bar when Color Mode is set to Custom. Has no effect otherwise.",
+            "desktopAudioVisualizerGradientStart": "The first color of the two-color gradient painted across each shape when Color Mode is set to Gradient.",
+            "desktopAudioVisualizerGradientEnd": "The second color of the two-color gradient painted across each shape when Color Mode is set to Gradient.",
+            "desktopAudioVisualizerLayout": "Arrange the visualizer's bars in a horizontal Linear row, or spread around an outline in Circular mode.",
+            "desktopAudioVisualizerPositionShape": "In Circular mode, the outline the bars are spread around and pulse outward from — a Circle for an even ring, or any other M3 shape to trace its silhouette instead. Has no effect in Linear mode.",
+            "desktopAudioVisualizerShapeSize": "Size in pixels of each individual shape in the audio visualizer.",
+            "desktopAudioVisualizerSpacing": "Gap in pixels between neighboring shapes in the audio visualizer.",
+            "desktopAudioVisualizerRadius": "Overall radius of the outline the shapes sit on when the audio visualizer's layout is Circular.",
+            "desktopAudioVisualizerPresets": "Save the current shape, layout, size, spacing and radius as a named preset, and reapply or delete saved ones.",
             "gameMode": "Suspend heavy decorative shell animations and blur effects for optimal gaming performance.",
             "animationDuration": "Master transition duration in milliseconds for interface micro-animations.",
             "flickDeceleration": "Friction rate applied when coasting through scrollable UI flick views.",
@@ -136,6 +161,7 @@ ColumnLayout {
             "fontGrading": "Variable font grading axis (GRAD) for modifying visual weight without affecting text flow.",
             "fontBaselineEnabled": "Make font weight, grade, and round settings act as a global additive baseline, preserving semantic boldness.",
             "pillPosition": "Select the edge of the display monitor where the shell control bar is docked.",
+            "clockPillMode": "Configure clock pill behavior: Always Visible (reserves exclusive screen margin so windows stay clear), Dodge Windows (visible on empty screen, automatically hides when windows overlap/push it like in KDE), or Auto Hide (reveals on hover).",
             "panelStyle": "Choose between Floating, Attached (flush), or Framed shell bar geometry.",
             "gaps_in": "Spacing distance in pixels between adjacent tiled windows on the workspace.",
             "gaps_out": "Spacing distance in pixels between tiled windows and the outer display monitor screen edge.",
@@ -169,37 +195,9 @@ ColumnLayout {
         return rawHelp;
     }
 
+    // Live when the shell can apply it without a restart (decided by SettingsApply, not by a list)
     function updateVariable(key, val, source) {
-        var isQs = source === "Quickshell" || source === "quickshell";
-        var cmdArray = [];
-        var isLive = false;
-        if (isQs) {
-            var liveVars = ["clockShape", "clockShowTicks", "clockShowCenterDot", "clockShowDate", "clockSecondHandStyle", "clockHandThickness", "wallpaperMaskShape", "wallpaperMaskScale", "wallpaperMaskColor", "wallpaperMaskEnabled", "wallpaperMaskOffsetX", "wallpaperMaskOffsetY", "mediaPlayerShape", "mediaPlayerArtScale", "mediaPlayerArtOffsetX", "mediaPlayerArtOffsetY", "mediaPlayerWaveThickness", "mediaPlayerOrientation", "mediaPlayerLyricsExpansion", "mediaPlayerLyricsAutoScroll", "mediaPlayerExpandOverlaps", "desktopMediaPlayerAnchorExpandFix", "gameMode", "fontWeight", "fontItalic", "fontRounding", "fontGrading", "fontBaselineEnabled", "radiusAmount", "radiusSmall", "cornerPower", "spacingSmall", "spacingMedium", "spacingLarge", "paddingSmall", "paddingMedium", "paddingLarge", "fontFamily", "animationDuration", "flickDeceleration", "maximumFlickVelocity", "blurAmount", "panelOpacity", "componentOpacity", "overviewGridRows", "overviewGridColumns", "overviewScale", "gameLibraryRows", "gameLibraryColumns", "gameLibraryScale", "panelStyle", "pillPosition"];
-            isLive = liveVars.indexOf(key) !== -1 || key.startsWith("desktop");
-            cmdArray = ["/home/boing/.local/bin/omniformis", "qs", "set", key, String(val)];
-        } else {
-            cmdArray = ["/home/boing/.local/bin/omniformis", "hypr", "set", key, String(val)];
-        }
-        var cmd = JSON.stringify(cmdArray);
-        var proc = Qt.createQmlObject('import Quickshell.Io; Process { command: ' + cmd + '; onExited: destroy() }', rootPage);
-        proc.running = true;
-
-        if (isQs && isLive) {
-            try {
-                if (val === "true" || val === "false") {
-                    Vars.setLive(key, (val === "true"));
-                } else if (!isNaN(Number(val)) && val !== "") {
-                    Vars.setLive(key, Number(val));
-                } else {
-                    Vars.setLive(key, val);
-                }
-            } catch (e) {
-                console.warn("SettingsApp: Failed to update live variable: " + key + " = " + val + ". Error: " + e);
-            }
-        } else if (isQs && !isLive) {
-            var reloadProc = Qt.createQmlObject('import Quickshell.Io; Process { command: ["bash", "-c", "nohup bash ~/Dotfiles/scripts/reload.sh >/dev/null 2>&1 &"]; onExited: destroy() }', rootPage);
-            reloadProc.running = true;
-        }
+        SettingsApply.set(source, key, val);
     }
 
     function loadSettings() {
@@ -422,7 +420,7 @@ ColumnLayout {
                         category = "Theme";
                     } else if (category === "Animation Style" || key === "AnimateStyle" || key.startsWith("Custom")) {
                         category = "Animations";
-                    } else if (category === "Modifiers" || category === "Quickshell Keybinds" || key === "MM" || key === "SM" || key === "TM" || key === "QM" || key.startsWith("Qs") || key === "QuickLauncherKey") {
+                    } else if (category === "Modifiers" || category === "Navigation Keys" || category === "Quickshell Keybinds" || key === "MM" || key === "SM" || key === "TM" || key === "QM" || key.startsWith("Qs") || key === "QuickLauncherKey") {
                         category = "Keybinds";
                     } else if (category === "Input" || category === "Gestures" || key.startsWith("kb_") || key.startsWith("gesture_") || key === "follow_mouse" || key === "sensitivity" || key === "touchpad_natural_scroll" || key === "vimkeys") {
                         category = "Input";
@@ -576,7 +574,7 @@ ColumnLayout {
                         continue;
 
                     var key = line.substring(0, colonIdx).trim();
-                    if (key === "notificationHistory" || key === "historyUpdated" || key === "translucent" || key === "liquidGlass")
+                    if (key === "notificationHistory" || key === "historyUpdated" || key === "historyChanged" || key === "translucent" || key === "liquidGlass")
                         continue;
 
                     var valPart = line.substring(colonIdx + 1).trim();
@@ -594,7 +592,9 @@ ColumnLayout {
                     // CRITICAL RULE: ALL wallpaper, wallpaper mask, clock, calendar, and desktop widgets MUST route to the "Desktop" category ("Desktop & Widgets"). NEVER place them in "Theme".
                     // Map quickshell variables to specialized UI categories
                     var category = "General";
-                    if (key.startsWith("desktop") || key.startsWith("clock") || key.startsWith("mediaPlayer") || key.startsWith("overview") || key.toLowerCase().includes("wallpaper") || key.toLowerCase().includes("mask")) {
+                    if (key === "clockPillMode" || key === "panelStyle" || key === "pillPosition") {
+                        category = "Layout";
+                    } else if (key.startsWith("desktop") || key.startsWith("clock") || key.startsWith("mediaPlayer") || key.startsWith("overview") || key.toLowerCase().includes("wallpaper") || key.toLowerCase().includes("mask")) {
                         category = "Desktop";
                     } else if (key.startsWith("spacing") || key.startsWith("padding")) {
                         category = "Layout";
@@ -691,6 +691,26 @@ ColumnLayout {
                         min = 0;
                         max = 20; // Will be overridden in the delegate dynamically
                         step = 1;
+                    } else if (key === "desktopAudioVisualizerBars") {
+                        type = "slider";
+                        min = 4;
+                        max = 64;
+                        step = 1;
+                    } else if (key === "desktopAudioVisualizerShapeSize") {
+                        type = "slider";
+                        min = 8;
+                        max = 60;
+                        step = 1;
+                    } else if (key === "desktopAudioVisualizerSpacing") {
+                        type = "slider";
+                        min = 0;
+                        max = 40;
+                        step = 1;
+                    } else if (key === "desktopAudioVisualizerRadius") {
+                        type = "slider";
+                        min = 20;
+                        max = 150;
+                        step = 1;
                     }
 
                     var enumsStr = "";
@@ -717,12 +737,35 @@ ColumnLayout {
                     } else if (key === "panelStyle") {
                         type = "enum";
                         enumsStr = "Floating|||Attached|||Framed";
+                    } else if (key === "clockPillMode") {
+                        type = "enum";
+                        enumsStr = "Always Visible|||Dodge Windows|||Auto Hide";
                     } else if (key === "liquidGlassPreset") {
                         type = "enum";
                         enumsStr = "glass|||apple|||clear|||contrasted";
                     } else if (key.endsWith("AnchorPoint")) {
                         type = "enum";
                         enumsStr = "TopLeft|||TopCenter|||TopRight|||MiddleLeft|||Center|||MiddleRight|||BottomLeft|||BottomCenter|||BottomRight";
+                    } else if (key === "desktopAudioVisualizerShape") {
+                        type = "shape";
+                        enumsStr = "Circle|||Square|||Slanted|||Arch|||Flag|||Arrow|||Semicircle|||Oval|||Pill|||Triangle|||Diamond|||Clamshell|||Pentagon|||Gem|||VerySunny|||Sunny|||4SidedCookie|||6SidedCookie|||7SidedCookie|||9SidedCookie|||12SidedCookie|||GhostIsh|||4LeafClover|||8LeafClover|||Burst|||SoftBurst|||Boom|||SoftBoom|||Flower|||Puffy|||PuffyDiamond|||PixelCircle|||PixelTriangle|||Bun|||Heart";
+                    } else if (key === "desktopAudioVisualizerLayout") {
+                        type = "enum";
+                        enumsStr = "Linear|||Circular";
+                    } else if (key === "desktopAudioVisualizerShapeMode") {
+                        type = "enum";
+                        enumsStr = "Single|||All Shapes";
+                    } else if (key === "desktopAudioVisualizerColorMode") {
+                        type = "enum";
+                        enumsStr = "Theme|||Custom|||Gradient";
+                    } else if (key === "desktopAudioVisualizerColor" || key === "desktopAudioVisualizerGradientStart" || key === "desktopAudioVisualizerGradientEnd") {
+                        type = "color";
+                        enumsStr = "primary|||secondary|||tertiary|||surface_variant|||error|||background";
+                    } else if (key === "desktopAudioVisualizerPresets") {
+                        type = "presetManager";
+                    } else if (key === "desktopAudioVisualizerPositionShape") {
+                        type = "shape";
+                        enumsStr = "Circle|||Square|||Slanted|||Arch|||Flag|||Arrow|||Semicircle|||Oval|||Pill|||Triangle|||Diamond|||Clamshell|||Pentagon|||Gem|||VerySunny|||Sunny|||4SidedCookie|||6SidedCookie|||7SidedCookie|||9SidedCookie|||12SidedCookie|||GhostIsh|||4LeafClover|||8LeafClover|||Burst|||SoftBurst|||Boom|||SoftBoom|||Flower|||Puffy|||PuffyDiamond|||PixelCircle|||PixelTriangle|||Bun|||Heart";
                     }
 
                     newVars.push({
@@ -784,33 +827,26 @@ ColumnLayout {
 
             Rectangle {
                 id: fabMask
+                layer.enabled: true
+                layer.smooth: true
+                layer.samples: Vars.layerSamples
                 anchors.fill: parent
                 radius: reloadFab.radius
                 antialiasing: true
                 color: "black"
                 visible: false
-                layer.enabled: true
-                layer.samples: 32
             }
 
             Item {
                 id: shadowContainer
                 anchors.fill: parent
-                layer.enabled: true
-                layer.samples: 32
-                layer.effect: MultiEffect {
-                    shadowEnabled: true
-                    shadowBlur: 1.0
-                    shadowColor: Qt.rgba(0,0,0,0.25)
-                    shadowVerticalOffset: 4
-                    shadowHorizontalOffset: 0
-                }
 
                 Item {
                     id: finalMaskedContainer
                     anchors.fill: parent
                     layer.enabled: true
-                    layer.samples: 32
+                    layer.smooth: true
+                    layer.samples: Vars.layerSamples
                     layer.effect: MultiEffect {
                         maskEnabled: true
                         maskSource: fabMask
@@ -822,7 +858,8 @@ ColumnLayout {
                         sourceRect: Qt.rect(rootPage.width - reloadFab.width - 32 - settingsList.x, rootPage.height - reloadFab.height - 32 - settingsList.y, reloadFab.width, reloadFab.height)
                         
                         layer.enabled: true
-                        layer.samples: 32
+                        layer.smooth: true
+                        layer.samples: Vars.layerSamples
                         layer.effect: MultiEffect {
                             blurEnabled: true
                             blurMax: Vars.blurAmount

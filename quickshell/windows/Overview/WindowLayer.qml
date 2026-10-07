@@ -15,17 +15,8 @@ Item {
     id: root
 
     property var overviewPanel
+    property var rootContainer
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
 
     signal closeRequested
 
@@ -98,14 +89,14 @@ Item {
                 return winData.workspace;
             }
 
-            property int safeCols: (overviewContainer && overviewContainer.gridColumns > 0) ? overviewContainer.gridColumns : 5
-            property int safeRows: (overviewContainer && overviewContainer.gridRows > 0) ? overviewContainer.gridRows : 2
+            property int safeCols: (rootContainer && rootContainer.gridColumns > 0) ? rootContainer.gridColumns : 5
+            property int safeRows: (rootContainer && rootContainer.gridRows > 0) ? rootContainer.gridRows : 2
             property int localWsIndex: {
                 let localWs = Math.max(0, wsId - baseWorkspaceId);
                 let total = overviewPanel ? overviewPanel.totalWorkspaces : 10;
-                if (!overviewContainer || localWs >= total) return localWs;
+                if (!rootContainer || localWs >= total) return localWs;
                 
-                if (!overviewContainer.isVertical) {
+                if (!rootContainer.isVertical) {
                     let logicalRow = Math.floor(localWs / safeCols);
                     let logicalCol = localWs % safeCols;
                     let visualRow = Vars.pillPosition === "Bottom" ? (safeRows - 1 - logicalRow) : logicalRow;
@@ -199,7 +190,7 @@ Item {
                 color: "white"
                 z: -1
                 layer.enabled: true
-                layer.samples: 32
+                layer.samples: Vars.layerSamples
                 layer.smooth: true
             }
 
@@ -207,10 +198,10 @@ Item {
             ScreencopyView {
                 id: preview
                 anchors.fill: parent
-                captureSource: (overviewContainer && overviewContainer.visibleState) ? winItem.modelData : null
-                live: overviewContainer && overviewContainer.visibleState
+                captureSource: (rootContainer && rootContainer.visibleState) ? winItem.modelData : null
+                live: rootContainer && rootContainer.visibleState
                 layer.enabled: true
-                layer.samples: 32
+                layer.samples: Vars.layerSamples
                 layer.smooth: true
                 layer.effect: MultiEffect {
                     maskEnabled: true
@@ -286,16 +277,17 @@ Item {
 
     // === FOCUSED WORKSPACE INDICATOR ===
     Rectangle {
+        antialiasing: true
         id: focusedIndicator
         readonly property int activeWsId: Hyprland.focusedWorkspace?.id ?? 1
-        readonly property int safeCols: (overviewContainer && overviewContainer.gridColumns > 0) ? overviewContainer.gridColumns : 5
-        readonly property int safeRows: (overviewContainer && overviewContainer.gridRows > 0) ? overviewContainer.gridRows : 2
+        readonly property int safeCols: (rootContainer && rootContainer.gridColumns > 0) ? rootContainer.gridColumns : 5
+        readonly property int safeRows: (rootContainer && rootContainer.gridRows > 0) ? rootContainer.gridRows : 2
         readonly property int localActiveIndex: {
             let localWs = Math.max(0, activeWsId - baseWorkspaceId);
             let total = overviewPanel ? overviewPanel.totalWorkspaces : 10;
-            if (!overviewContainer || localWs >= total) return localWs;
+            if (!rootContainer || localWs >= total) return localWs;
             
-            if (!overviewContainer.isVertical) {
+            if (!rootContainer.isVertical) {
                 let logicalRow = Math.floor(localWs / safeCols);
                 let logicalCol = localWs % safeCols;
                 let visualRow = Vars.pillPosition === "Bottom" ? (safeRows - 1 - logicalRow) : logicalRow;
@@ -307,8 +299,8 @@ Item {
             let visualCol = Vars.pillPosition === "Right" ? (safeCols - 1 - logicalCol) : logicalCol;
             return logicalRow * safeCols + visualCol;
         }
-        readonly property int activeRow: overviewContainer ? Math.floor(localActiveIndex / overviewContainer.gridColumns) : 0
-        readonly property int activeCol: overviewContainer ? localActiveIndex % overviewContainer.gridColumns : 0
+        readonly property int activeRow: rootContainer ? Math.floor(localActiveIndex / rootContainer.gridColumns) : 0
+        readonly property int activeCol: rootContainer ? localActiveIndex % rootContainer.gridColumns : 0
 
         x: Math.round(root.x + activeCol * (overviewPanel.wsWidth + overviewPanel.wsSpacing))
         y: Math.round(root.y + activeRow * (overviewPanel.wsHeight + overviewPanel.wsSpacing))

@@ -18,16 +18,6 @@ Item {
     property bool expanded: false
     property var focusWindow: null
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
     
     // Expose panel for TopPills Wayland mask tracking
     property alias panel: panel
@@ -42,14 +32,9 @@ Item {
         searchBar.forceActiveFocus();
     }
 
-    property string debouncedSearchText: ""
-    onSearchTextChanged: searchDebounceTimer.restart()
-    
-    Timer {
-        id: searchDebounceTimer
-        interval: 150 // Debounce delay in ms
-        repeat: false
-        onTriggered: root.debouncedSearchText = root.searchText
+    // Removed debounce timer for instant filtering
+    onSearchTextChanged: {
+        // Notify model directly or let binding handle it
     }
 
     signal appLaunched()
@@ -57,7 +42,7 @@ Item {
 
     LC.LauncherModel {
         id: launcherModel
-        filterText: root.debouncedSearchText
+        filterText: root.searchText
     }
 
 
@@ -67,7 +52,6 @@ Item {
         if (!expanded) {
             MorphState.notifyClosed();
             searchBar.text = "";
-            root.debouncedSearchText = "";
         } else {
             MorphState.notifyOpened(500, panel.targetHeight, panel.targetRad, panel);
             launcherModel.refreshClipboard();
@@ -86,13 +70,13 @@ Item {
         anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
         anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
         
-        anchors.topMargin: -20
-        anchors.bottomMargin: -20
-        anchors.leftMargin: -20
-        anchors.rightMargin: -20
+        anchors.topMargin: root.expanded ? -20 : 0
+        anchors.bottomMargin: root.expanded ? -20 : 0
+        anchors.leftMargin: root.expanded ? -20 : 0
+        anchors.rightMargin: root.expanded ? -20 : 0
 
-        width: root.expanded ? 540 : 140
-        height: root.expanded ? 490 : 80
+        width: root.expanded ? 540 : 0
+        height: root.expanded ? 490 : 0
     }
 
     // The visual panel that animates
@@ -100,7 +84,7 @@ Item {
         id: panel
         property bool isBackgroundActive: root.expanded || (MorphState.openCount === 0 && MorphState.activeItem === panel && panel.width > 105)
         layer.enabled: false
-        layer.samples: 32
+        layer.samples: Vars.layerSamples
         anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
@@ -141,12 +125,14 @@ Item {
         // EXPANDED UI
         Item {
             id: innerUI
+            // Content must never draw outside the morphing panel
+            clip: true
             anchors.fill: parent
             anchors.margins: Vars.spacingMedium
             
             opacity: root.expanded ? 1.0 : 0.0
             visible: root.expanded || opacity > 0
-            Behavior on opacity { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: root.expanded ? Vars.customEmphasizedDecelerate : Vars.customEmphasizedAccelerate } }
+            Behavior on opacity { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.getFadeCurve(root.expanded) } }
 
             ColumnLayout {
                 id: mainLayout

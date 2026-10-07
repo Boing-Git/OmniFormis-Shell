@@ -1,0 +1,219 @@
+@layer m3e.components {
+  .m3e-card {
+    --m3e-card-container-color: var(--m3e-comp-card-filled-container-color);
+    --m3e-card-content-color: var(--m3e-comp-card-filled-content-color);
+    --m3e-card-container-shadow: var(--m3e-comp-card-filled-container-shadow);
+    --m3e-card-hover-container-shadow: var(--m3e-comp-card-filled-hover-container-shadow);
+    --m3e-card-focus-container-shadow: var(--m3e-comp-card-filled-focus-container-shadow);
+    --m3e-card-pressed-container-shadow: var(--m3e-comp-card-filled-pressed-container-shadow);
+    --m3e-card-disabled-container-shadow: var(--m3e-comp-card-filled-disabled-container-shadow);
+    --m3e-card-outline-color: transparent;
+    --m3e-card-hover-outline-color: var(--m3e-card-outline-color);
+    --m3e-card-focus-outline-color: var(--m3e-card-outline-color);
+    --m3e-card-pressed-outline-color: var(--m3e-card-outline-color);
+    --m3e-card-outline-width: 0px;
+    --m3e-card-disabled-container-color: var(--m3e-comp-card-filled-disabled-container-color);
+    --m3e-card-disabled-container-base-color: var(--m3e-comp-card-filled-disabled-container-base-color);
+    --m3e-card-disabled-container-opacity: var(--m3e-comp-card-filled-disabled-container-opacity);
+    --m3e-card-disabled-outline-color: transparent;
+    --m3e-card-disabled-outline-base-color: transparent;
+    --m3e-card-disabled-outline-opacity: 0;
+
+    background-color: var(--m3e-card-container-color);
+    border-color: var(--m3e-card-outline-color);
+    border-radius: var(--m3e-comp-card-container-shape);
+    border-style: solid;
+    border-width: var(--m3e-card-outline-width);
+    box-shadow: var(--m3e-card-container-shadow);
+    box-sizing: border-box;
+    color: var(--m3e-card-content-color);
+    display: block;
+    max-inline-size: 100%;
+    overflow: hidden;
+    overflow: clip;
+    position: relative;
+    transition:
+      background-color var(--m3e-sys-motion-expressive-default-effects-duration)
+        var(--m3e-sys-motion-expressive-default-effects-easing),
+      border-color var(--m3e-sys-motion-expressive-default-effects-duration)
+        var(--m3e-sys-motion-expressive-default-effects-easing),
+      box-shadow var(--m3e-sys-motion-expressive-default-effects-duration)
+        var(--m3e-sys-motion-expressive-default-effects-easing);
+  }
+
+  .m3e-card::before {
+    background: currentColor;
+    border-radius: inherit;
+    content: "";
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity var(--m3e-sys-motion-expressive-fast-effects-duration)
+      var(--m3e-sys-motion-expressive-fast-effects-easing);
+    z-index: 0;
+  }
+
+  .m3e-card__content {
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .m3e-card[data-m3e-interactive="true"] {
+    appearance: none;
+    cursor: pointer;
+    font: inherit;
+    inline-size: 100%;
+    margin: 0;
+    min-block-size: var(--m3e-comp-card-minimum-interactive-target);
+    min-inline-size: var(--m3e-comp-card-minimum-interactive-target);
+    padding: 0;
+    text-align: start;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (hover: hover) {
+    .m3e-card[data-m3e-interactive="true"]:hover:not(:disabled) {
+      border-color: var(--m3e-card-hover-outline-color);
+      box-shadow: var(--m3e-card-hover-container-shadow);
+    }
+
+    .m3e-card[data-m3e-interactive="true"]:hover:not(:disabled)::before {
+      opacity: var(--m3e-sys-state-hover);
+    }
+
+  }
+
+  .m3e-card[data-m3e-interactive="true"]:focus-visible {
+    border-color: var(--m3e-card-focus-outline-color);
+    box-shadow: var(--m3e-card-focus-container-shadow);
+    outline-color: var(--m3e-comp-card-focus-ring-color);
+    outline-offset: var(--m3e-comp-card-focus-ring-offset);
+    outline-style: solid;
+    outline-width: var(--m3e-comp-card-focus-ring-width);
+  }
+
+  .m3e-card[data-m3e-interactive="true"]:focus-visible:not(:disabled)::before {
+    opacity: var(--m3e-sys-state-focus);
+  }
+
+  .m3e-card[data-m3e-interactive="true"]:active:not(:disabled) {
+    border-color: var(--m3e-card-pressed-outline-color);
+    box-shadow: var(--m3e-card-pressed-container-shadow);
+  }
+
+  .m3e-card[data-m3e-interactive="true"]:active:not(:disabled)::before {
+    opacity: var(--m3e-sys-state-pressed);
+  }
+
+  .m3e-card[data-m3e-interactive="true"]:disabled {
+    background-color: color-mix(
+      in srgb,
+      var(--m3e-card-disabled-container-color)
+        calc(var(--m3e-card-disabled-container-opacity) * 100%),
+      var(--m3e-card-disabled-container-base-color)
+    );
+    border-color: color-mix(
+      in srgb,
+      var(--m3e-card-disabled-outline-color)
+        calc(var(--m3e-card-disabled-outline-opacity) * 100%),
+      var(--m3e-card-disabled-outline-base-color)
+    );
+    box-shadow: var(--m3e-card-disabled-container-shadow);
+    color: color-mix(
+      in srgb,
+      var(--m3e-comp-card-disabled-content-color)
+        calc(var(--m3e-comp-card-disabled-content-opacity) * 100%),
+      transparent
+    );
+    cursor: default;
+  }
+
+  .m3e-card[data-m3e-variant="filled"] {
+    --m3e-card-container-color: var(--m3e-comp-card-filled-container-color);
+    --m3e-card-content-color: var(--m3e-comp-card-filled-content-color);
+    --m3e-card-container-shadow: var(--m3e-comp-card-filled-container-shadow);
+    --m3e-card-hover-container-shadow: var(--m3e-comp-card-filled-hover-container-shadow);
+    --m3e-card-focus-container-shadow: var(--m3e-comp-card-filled-focus-container-shadow);
+    --m3e-card-pressed-container-shadow: var(--m3e-comp-card-filled-pressed-container-shadow);
+    --m3e-card-disabled-container-shadow: var(--m3e-comp-card-filled-disabled-container-shadow);
+    --m3e-card-disabled-container-color: var(--m3e-comp-card-filled-disabled-container-color);
+    --m3e-card-disabled-container-base-color: var(--m3e-comp-card-filled-disabled-container-base-color);
+    --m3e-card-disabled-container-opacity: var(--m3e-comp-card-filled-disabled-container-opacity);
+  }
+
+  .m3e-card[data-m3e-variant="elevated"] {
+    --m3e-card-container-color: var(--m3e-comp-card-elevated-container-color);
+    --m3e-card-content-color: var(--m3e-comp-card-elevated-content-color);
+    --m3e-card-container-shadow: var(--m3e-comp-card-elevated-container-shadow);
+    --m3e-card-hover-container-shadow: var(--m3e-comp-card-elevated-hover-container-shadow);
+    --m3e-card-focus-container-shadow: var(--m3e-comp-card-elevated-focus-container-shadow);
+    --m3e-card-pressed-container-shadow: var(--m3e-comp-card-elevated-pressed-container-shadow);
+    --m3e-card-disabled-container-shadow: var(--m3e-comp-card-elevated-disabled-container-shadow);
+    --m3e-card-disabled-container-color: var(--m3e-comp-card-elevated-disabled-container-color);
+    --m3e-card-disabled-container-base-color: var(--m3e-comp-card-elevated-disabled-container-base-color);
+    --m3e-card-disabled-container-opacity: var(--m3e-comp-card-elevated-disabled-container-opacity);
+  }
+
+  .m3e-card[data-m3e-variant="outlined"] {
+    --m3e-card-container-color: var(--m3e-comp-card-outlined-container-color);
+    --m3e-card-content-color: var(--m3e-comp-card-outlined-content-color);
+    --m3e-card-container-shadow: var(--m3e-comp-card-outlined-container-shadow);
+    --m3e-card-hover-container-shadow: var(--m3e-comp-card-outlined-hover-container-shadow);
+    --m3e-card-focus-container-shadow: var(--m3e-comp-card-outlined-focus-container-shadow);
+    --m3e-card-pressed-container-shadow: var(--m3e-comp-card-outlined-pressed-container-shadow);
+    --m3e-card-disabled-container-shadow: var(--m3e-comp-card-outlined-disabled-container-shadow);
+    --m3e-card-outline-color: var(--m3e-comp-card-outlined-outline-color);
+    --m3e-card-hover-outline-color: var(--m3e-comp-card-outlined-hover-outline-color);
+    --m3e-card-focus-outline-color: var(--m3e-comp-card-outlined-focus-outline-color);
+    --m3e-card-pressed-outline-color: var(--m3e-comp-card-outlined-pressed-outline-color);
+    --m3e-card-outline-width: var(--m3e-comp-card-outlined-outline-width);
+    --m3e-card-disabled-container-color: var(--m3e-comp-card-outlined-disabled-container-color);
+    --m3e-card-disabled-container-base-color: var(--m3e-comp-card-outlined-disabled-container-base-color);
+    --m3e-card-disabled-container-opacity: var(--m3e-comp-card-outlined-disabled-container-opacity);
+    --m3e-card-disabled-outline-color: var(--m3e-comp-card-outlined-disabled-outline-color);
+    --m3e-card-disabled-outline-base-color: var(--m3e-comp-card-outlined-disabled-outline-base-color);
+    --m3e-card-disabled-outline-opacity: var(--m3e-comp-card-outlined-disabled-outline-opacity);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .m3e-card,
+    .m3e-card::before {
+      transition: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .m3e-card {
+      background: Canvas;
+      border-color: CanvasText;
+      border-width: var(--m3e-comp-card-outlined-outline-width);
+      box-shadow: none;
+      color: CanvasText;
+      forced-color-adjust: auto;
+    }
+
+    .m3e-card::before {
+      display: none;
+    }
+
+    .m3e-card[data-m3e-interactive="true"]:focus-visible {
+      border-color: CanvasText;
+      box-shadow: none;
+      outline-color: Highlight;
+    }
+
+    .m3e-card[data-m3e-interactive="true"]:disabled {
+      background: Canvas;
+      border-color: GrayText;
+      box-shadow: none;
+      color: GrayText;
+    }
+  }
+}

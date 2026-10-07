@@ -1,0 +1,38 @@
+@layer m3e.components {
+  .m3e-button-group {
+    display: flex;
+    gap: var(--m3e-comp-button-group-between-space);
+  }
+
+  /* Press-triggered neighbor compression: reads each child's own native
+     :active state (no coupling to what the child actually is) and grows
+     the pressed one while shrinking its immediate siblings. This is a
+     visual transform, not the source's true flex-width redistribution —
+     see ADR 0023 for why a real reflow isn't practical in pure CSS here
+     (there is no free space for flex-grow to redistribute against in a
+     content-sized row). */
+  .m3e-button-group > * {
+    transform: scale(1);
+    transform-origin: center;
+    transition: transform var(--m3e-sys-motion-expressive-fast-spatial-duration)
+      var(--m3e-sys-motion-expressive-fast-spatial-easing);
+  }
+
+  .m3e-button-group > *:active {
+    transform: scale(var(--m3e-comp-button-group-pressed-scale));
+  }
+
+  .m3e-button-group > *:has(+ *:active) {
+    transform: scale(var(--m3e-comp-button-group-neighbor-scale));
+  }
+
+  .m3e-button-group > *:active + * {
+    transform: scale(var(--m3e-comp-button-group-neighbor-scale));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .m3e-button-group > * {
+      transition: none;
+    }
+  }
+}

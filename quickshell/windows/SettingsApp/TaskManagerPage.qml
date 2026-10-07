@@ -316,7 +316,7 @@ Item {
             Layout.bottomMargin: 0
             radius: 22
             antialiasing: true
-            color: Vars.tColor(Theme.surface_container, Vars.componentOpacity)
+            color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
             
             RowLayout {
                 anchors.fill: parent
@@ -389,72 +389,75 @@ Item {
                     
                     // CPU Card
                     Rectangle {
-                        Layout.fillWidth: true; Layout.preferredHeight: 96; radius: 16; color: Vars.tColor(Theme.surface_container, Vars.componentOpacity)
+                        antialiasing: true
+                        Layout.fillWidth: true; Layout.preferredHeight: 96; radius: 16; color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
                         RowLayout {
                             anchors.fill: parent; anchors.margins: 16; spacing: 16
                             Item { 
                                 width: 64; height: 64
                                 Image {
                                     anchors.fill: parent; sourceSize: Qt.size(64, 64); smooth: true; antialiasing: true; mipmap: true
-                                    property color bg: Qt.hsla(0.60, 0.35, 0.82, 1.0)
+                                    property color bg: Theme.primary_container
                                     property string pathColor: "rgb(" + Math.round(bg.r * 255) + "," + Math.round(bg.g * 255) + "," + Math.round(bg.b * 255) + ")"
                                     property string currentPath: m3TaskManager.getPath("Pill")
                                     source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + currentPath + "' fill='" + pathColor + "'/></svg>"
                                 }
-                                QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 32; color: Qt.hsla(0.60, 0.40, 0.25, 1.0); text: "memory" } 
+                                QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 32; color: Theme.on_primary_container; text: "memory" } 
                             }
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 4
                                 QsText { Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft; text: "CPU Usage"; font.family: Vars.fontFamily; font.pixelSize: 16; color: Theme.on_surface; setWeight: Font.Medium }
-                                QsText { Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft; text: rootTaskManager.cpuUsage; font.family: Vars.fontFamily; font.pixelSize: 24; color: Qt.hsla(0.60, 0.60, 0.75, 1.0); setWeight: Font.Bold }
+                                QsText { Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft; text: rootTaskManager.cpuUsage; font.family: Vars.fontFamily; font.pixelSize: 24; color: Theme.primary; setWeight: Font.Bold }
                             }
                         }
                     }
                     
                     // GPU Card
                     Rectangle {
-                        Layout.fillWidth: true; Layout.preferredHeight: 96; radius: 16; color: Vars.tColor(Theme.surface_container, Vars.componentOpacity)
+                        antialiasing: true
+                        Layout.fillWidth: true; Layout.preferredHeight: 96; radius: 16; color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
                         RowLayout {
                             anchors.fill: parent; anchors.margins: 16; spacing: 16
                             Item { 
                                 width: 64; height: 64
                                 Image {
                                     anchors.fill: parent; sourceSize: Qt.size(64, 64); smooth: true; antialiasing: true; mipmap: true
-                                    property color bg: Qt.hsla(0.80, 0.35, 0.82, 1.0)
+                                    property color bg: Theme.secondary_container
                                     property string pathColor: "rgb(" + Math.round(bg.r * 255) + "," + Math.round(bg.g * 255) + "," + Math.round(bg.b * 255) + ")"
                                     property string currentPath: m3TaskManager.getPath("Slanted")
                                     source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + currentPath + "' fill='" + pathColor + "'/></svg>"
                                 }
-                                QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 32; color: Qt.hsla(0.80, 0.40, 0.25, 1.0); text: "developer_board" } 
+                                QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 32; color: Theme.on_secondary_container; text: "developer_board" } 
                             }
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 4
                                 QsText { Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft; text: "GPU Usage"; font.family: Vars.fontFamily; font.pixelSize: 16; color: Theme.on_surface; setWeight: Font.Medium }
-                                QsText { Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft; text: rootTaskManager.gpuUsage; font.family: Vars.fontFamily; font.pixelSize: 24; color: Qt.hsla(0.80, 0.60, 0.75, 1.0); setWeight: Font.Bold }
+                                QsText { Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft; text: rootTaskManager.gpuUsage; font.family: Vars.fontFamily; font.pixelSize: 24; color: Theme.secondary; setWeight: Font.Bold }
                             }
                         }
                     }
                     
                     // RAM Card
                     Rectangle {
-                        Layout.fillWidth: true; Layout.preferredHeight: 96; radius: 16; color: Vars.tColor(Theme.surface_container, Vars.componentOpacity)
+                        antialiasing: true
+                        Layout.fillWidth: true; Layout.preferredHeight: 96; radius: 16; color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
                         RowLayout {
                             anchors.fill: parent; anchors.margins: 16; spacing: 16
                             Item { 
                                 width: 64; height: 64
                                 Image {
                                     anchors.fill: parent; sourceSize: Qt.size(64, 64); smooth: true; antialiasing: true; mipmap: true
-                                    property color bg: Qt.hsla(0.38, 0.35, 0.82, 1.0)
+                                    property color bg: Theme.tertiary_container
                                     property string pathColor: "rgb(" + Math.round(bg.r * 255) + "," + Math.round(bg.g * 255) + "," + Math.round(bg.b * 255) + ")"
                                     property string currentPath: m3TaskManager.getPath("Clamshell")
                                     source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + currentPath + "' fill='" + pathColor + "'/></svg>"
                                 }
-                                QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 32; color: Qt.hsla(0.38, 0.40, 0.25, 1.0); text: "storage" } 
+                                QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 32; color: Theme.on_tertiary_container; text: "storage" } 
                             }
                             ColumnLayout {
                                 Layout.fillWidth: true; spacing: 4
                                 QsText { Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft; text: "RAM Usage"; font.family: Vars.fontFamily; font.pixelSize: 16; color: Theme.on_surface; setWeight: Font.Medium }
-                                QsText { Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft; text: rootTaskManager.ramUsage; font.family: Vars.fontFamily; font.pixelSize: 24; color: Qt.hsla(0.38, 0.60, 0.75, 1.0); setWeight: Font.Bold }
+                                QsText { Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft; text: rootTaskManager.ramUsage; font.family: Vars.fontFamily; font.pixelSize: 24; color: Theme.tertiary; setWeight: Font.Bold }
                             }
                         }
                     }
@@ -505,6 +508,7 @@ Item {
                                 spacing: 2
                                 
                                 Rectangle {
+                                    antialiasing: true
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
@@ -535,6 +539,7 @@ Item {
                                 }
                                 
                                 Rectangle {
+                                    antialiasing: true
                                     Layout.preferredWidth: 90
                                     Layout.fillHeight: true
                                     color: Vars.tColorSelected(Theme.primary)
@@ -566,6 +571,7 @@ Item {
                                 }
                                 
                                 Rectangle {
+                                    antialiasing: true
                                     Layout.preferredWidth: 90
                                     Layout.fillHeight: true
                                     color: Vars.tColor(Theme.surface_variant, Vars.componentOpacity)
@@ -627,7 +633,7 @@ Item {
                                             width: dragArea.width; height: dragArea.height
                                             radius: 16
                                             antialiasing: true
-                                            color: modelData.enabled ? (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container, Vars.componentOpacity))
+                                            color: modelData.enabled ? (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity))
                                             
                                             // Pop out effect when dragging
                                             scale: dragArea.drag.active ? 1.02 : 1.0
@@ -673,6 +679,7 @@ Item {
                                                 QsText { Layout.fillWidth: true; text: modelData.cmd; font.family: Vars.fontFamily; font.pixelSize: 16; color: Theme.on_surface }
                                                 
                                                 Rectangle {
+                                                    antialiasing: true
                                                     width: 48; height: 48; radius: 24; color: toggleHover.containsMouse ? (Vars.tColor(Theme.surface_variant, 0.4)) : "transparent"
                                                     QsText { 
                                                         anchors.centerIn: parent; 
@@ -730,6 +737,7 @@ Item {
                                         anchors.fill: parent; anchors.margins: 0; spacing: 4
                                         
                                         Rectangle {
+                                            antialiasing: true
                                             Layout.fillWidth: true; Layout.fillHeight: true
                                             property bool isSel: rootTaskManager.processFilter === "cpu"
                                             color: isSel ? (Vars.tColorSelected(Theme.primary)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity))
@@ -742,6 +750,7 @@ Item {
                                             MouseArea { anchors.fill: parent; onClicked: rootTaskManager.processFilter = "cpu"; cursorShape: Qt.PointingHandCursor }
                                         }
                                         Rectangle {
+                                            antialiasing: true
                                             Layout.fillWidth: true; Layout.fillHeight: true
                                             property bool isSel: rootTaskManager.processFilter === "mem"
                                             color: isSel ? (Vars.tColorSelected(Theme.primary)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity))
@@ -756,6 +765,7 @@ Item {
                                             MouseArea { anchors.fill: parent; onClicked: rootTaskManager.processFilter = "mem"; cursorShape: Qt.PointingHandCursor }
                                         }
                                         Rectangle {
+                                            antialiasing: true
                                             Layout.fillWidth: true; Layout.fillHeight: true
                                             property bool isSel: rootTaskManager.processFilter === "gpu"
                                             color: isSel ? (Vars.tColorSelected(Theme.primary)) : (Vars.tColor(Theme.surface_container_high, Vars.componentOpacity))
@@ -774,6 +784,7 @@ Item {
                             Repeater {
                                 model: rootTaskManager.processModel
                                 delegate: Rectangle {
+                                    antialiasing: true
                                     Layout.fillWidth: true; Layout.preferredHeight: 72; radius: 24; 
                                     color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
                                     RowLayout {
@@ -788,6 +799,7 @@ Item {
                                         }
                                         
                                         Rectangle {
+                                            antialiasing: true
                                             width: 48; height: 48; radius: 24; color: killHover.containsMouse ? (Vars.tColor(Theme.error, 0.7)) : "transparent"
                                             QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 24; color: killHover.containsMouse ? Theme.on_error : Theme.error; text: "close" }
                                             MouseArea {

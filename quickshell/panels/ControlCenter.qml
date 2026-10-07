@@ -27,16 +27,6 @@ Item {
     property var focusWindow: null
     property bool forceHidePill: false
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
-    Timer {
-        interval: 100
-        running: true
-        repeat: true
-        onTriggered: {
-            if (Vars.gameMode !== undefined && parent.gameMode !== Vars.gameMode) {
-                parent.gameMode = Vars.gameMode;
-            }
-        }
-    }
 
     // Navigation state: "" (Main Dashboard), "wifi" (Wi-Fi Settings), "bluetooth" (Bluetooth Settings)
     property string currentSubMenu: ""
@@ -82,6 +72,7 @@ Item {
     signal openPowerMenuRequested()
     signal openOverviewRequested()
     signal openGameLibraryRequested()
+    signal openCheatSheetRequested()
     
     // Expose the visual panel for mask tracking in TopPills
     property alias panel: panel
@@ -110,26 +101,26 @@ Item {
 
     Item {
         id: panelMask
-                anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
+        anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
         anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
         anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
         anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
         
-        anchors.topMargin: -20
-        anchors.bottomMargin: -20
-        anchors.leftMargin: -20
-        anchors.rightMargin: -20
-        width: root.expanded ? 640 : 140
-        height: root.expanded ? 640 : 80
+        anchors.topMargin: root.expanded ? -20 : 0
+        anchors.bottomMargin: root.expanded ? -20 : 0
+        anchors.leftMargin: root.expanded ? -20 : 0
+        anchors.rightMargin: root.expanded ? -20 : 0
+        width: root.expanded ? 640 : 0
+        height: root.expanded ? 640 : 0
     }
 
     Primitives.SquircleMask {
         id: panel
         property bool isBackgroundActive: root.expanded || (MorphState.openCount === 0 && MorphState.activeItem === panel && panel.width > 105)
         layer.enabled: false
-        layer.samples: 32
+        layer.samples: Vars.layerSamples
         anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
         anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
         anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
@@ -142,6 +133,7 @@ Item {
             if (root.currentSubMenu === "wifi") return Math.min(800, wifiMenuObj.implicitHeight + (Vars.spacingLarge * 2));
             if (root.currentSubMenu === "bluetooth") return Math.min(800, bluetoothMenuObj.implicitHeight + (Vars.spacingLarge * 2));
             if (root.currentSubMenu === "display") return Math.min(800, displayMenuObj.implicitHeight + (Vars.spacingLarge * 2));
+            if (root.currentSubMenu === "disk") return Math.min(800, diskMenuObj.implicitHeight + (Vars.spacingLarge * 2));
             return 660; // Main dashboard
         }
         
@@ -358,6 +350,7 @@ Item {
                                 
                                 // Edit Button
                                 Rectangle {
+                                    antialiasing: true
                                     Layout.preferredWidth: 32; Layout.preferredHeight: 32; radius: 16
                                     color: editHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (editHover.containsMouse || root.isEditorMode ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
                                     QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 18; color: root.isEditorMode ? Theme.primary : Theme.on_surface; text: "edit" }
@@ -371,6 +364,7 @@ Item {
                                 
                                 // Refresh Button
                                 Rectangle {
+                                    antialiasing: true
                                     Layout.preferredWidth: 32; Layout.preferredHeight: 32; radius: 16
                                     color: refreshHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (refreshHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
                                     QsText { 
@@ -398,6 +392,7 @@ Item {
                                 
                                 // Settings Button
                                 Rectangle {
+                                    antialiasing: true
                                     Layout.preferredWidth: 32; Layout.preferredHeight: 32; radius: 16
                                     color: settingsHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (settingsHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
                                     QsText { 
@@ -425,6 +420,7 @@ Item {
                                 
                                 // Power Button
                                 Rectangle {
+                                    antialiasing: true
                                     Layout.preferredWidth: 32; Layout.preferredHeight: 32; radius: 16
                                     color: powerHover.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (powerHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
                                     QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 18; color: Theme.on_surface; text: "power_settings_new" }
@@ -440,6 +436,7 @@ Item {
 
                     // Modular Components
                     CC.ModuleGrid {
+                        id: moduleGridObj
                         isEditorMode: root.isEditorMode
                         gameMode: root.gameMode
                         onSubMenuRequested: (menuName) => { root.currentSubMenu = menuName; }
@@ -448,6 +445,7 @@ Item {
                         onOpenWallpaperRequested: { root.openWallpaperRequested() }
                         onOpenOverviewRequested: { root.openOverviewRequested() }
                         onOpenGameLibraryRequested: { root.openGameLibraryRequested() }
+                        onOpenCheatSheetRequested: { root.openCheatSheetRequested() }
                     }
 
                     CC.Sliders { }
@@ -456,7 +454,7 @@ Item {
                         Layout.preferredHeight: Vars.mediaPlayerExpandOverlaps ? (mediaPlayer.isVertical ? 300 : 180) : mediaPlayer.Layout.preferredHeight
                         Layout.preferredWidth: Vars.mediaPlayerExpandOverlaps ? -1 : mediaPlayer.Layout.preferredWidth
                         
-                        z: mediaPlayer.isExpanded ? 100 : 1
+                        z: (mediaPlayer.isExpanded || mediaPlayer.playerDropdownVisible) ? 100 : 1
                         
                         Behavior on Layout.preferredHeight { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutCubic } }
                         Behavior on Layout.preferredWidth { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutCubic } }
@@ -505,6 +503,16 @@ Item {
                 anchors.top: parent.top
             }
 
+            CC.DiskMenu {
+                id: diskMenuObj
+                isActive: root.currentSubMenu === "disk"
+                rows: moduleGridObj.diskRows
+                onBackRequested: { root.currentSubMenu = "" }
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+            }
+
             // ------------------------------------------
             // CUSTOM M3 SYSTEM TRAY CONTEXT MENU
             // ------------------------------------------
@@ -537,9 +545,6 @@ Item {
                 border.color: Qt.rgba(Theme.outline.r, Theme.outline.g, Theme.outline.b, 0.2)
                 clip: true
                 
-                layer.enabled: !root.gameMode
-                layer.samples: 32
-                layer.effect: MultiEffect { shadowEnabled: true; shadowBlur: 1.0; shadowColor: Qt.rgba(0,0,0,0.35); shadowVerticalOffset: 6; shadowHorizontalOffset: 0 }
 
                 transformOrigin: Item.Top
                 opacity: root.activeTrayMenu !== null ? 1.0 : 0.0

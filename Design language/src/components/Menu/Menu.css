@@ -1,0 +1,184 @@
+/* Popup listbox for Select reuses these same rules — see Select's own
+   stylesheet, which layers only its own field-chrome and listbox-option
+   deltas on top within the same components layer, matching the T14
+   TextField/TextArea precedent of one shared stylesheet owner. */
+@layer m3e.components {
+  .m3e-menu {
+    background-color: var(--m3e-comp-menu-container-color);
+    border-radius: var(--m3e-comp-menu-container-shape);
+    box-shadow: var(--m3e-comp-menu-container-shadow);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    max-inline-size: var(--m3e-comp-menu-container-max-width);
+    min-inline-size: var(--m3e-comp-menu-container-min-width);
+    opacity: 0;
+    outline: none;
+    overflow: auto;
+    padding-block: var(--m3e-comp-menu-container-padding-block);
+    padding-inline: 0;
+    transform: scale(0.8);
+    transform-origin: top;
+    transition:
+      opacity var(--m3e-sys-motion-expressive-fast-effects-duration)
+        var(--m3e-sys-motion-expressive-fast-effects-easing),
+      transform var(--m3e-sys-motion-expressive-fast-spatial-duration)
+        var(--m3e-sys-motion-expressive-fast-spatial-easing);
+    z-index: 1000;
+  }
+
+  .m3e-menu[data-m3e-open="true"] {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .m3e-menu__item {
+    align-items: center;
+    border-radius: var(--m3e-comp-menu-item-container-shape);
+    box-sizing: border-box;
+    color: var(--m3e-comp-menu-item-label-color);
+    cursor: pointer;
+    display: flex;
+    font-family: var(--m3e-sys-typescale-baseline-label-large-font-family);
+    font-size: var(--m3e-sys-typescale-baseline-label-large-font-size);
+    font-weight: var(--m3e-sys-typescale-baseline-label-large-font-weight);
+    letter-spacing: var(--m3e-sys-typescale-baseline-label-large-letter-spacing);
+    line-height: var(--m3e-sys-typescale-baseline-label-large-line-height);
+    min-block-size: var(--m3e-comp-menu-item-min-height);
+    outline: none;
+    padding-inline: var(--m3e-comp-menu-item-padding-inline);
+    position: relative;
+    transition: background-color var(--m3e-sys-motion-expressive-fast-effects-duration)
+      var(--m3e-sys-motion-expressive-fast-effects-easing);
+  }
+
+  .m3e-menu__item::before {
+    background: currentColor;
+    border-radius: inherit;
+    content: "";
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity var(--m3e-sys-motion-expressive-fast-effects-duration)
+      var(--m3e-sys-motion-expressive-fast-effects-easing);
+  }
+
+  @media (hover: hover) {
+    .m3e-menu__item:hover:not([aria-disabled="true"])::before {
+      opacity: var(--m3e-sys-state-hover);
+    }
+  }
+
+  .m3e-menu__item:active:not([aria-disabled="true"])::before {
+    opacity: var(--m3e-sys-state-pressed);
+  }
+
+  .m3e-menu__item:focus-visible {
+    outline: 2px solid var(--m3e-comp-menu-item-focus-ring-color);
+    outline-offset: -2px;
+  }
+
+  .m3e-menu__item:focus-visible::before {
+    opacity: var(--m3e-sys-state-focus);
+  }
+
+  .m3e-menu__item[data-m3e-checked="true"] {
+    background-color: var(--m3e-comp-menu-item-checked-container-color);
+    color: var(--m3e-comp-menu-item-checked-label-color);
+  }
+
+  .m3e-menu__item[aria-disabled="true"] {
+    color: color-mix(
+      in srgb,
+      var(--m3e-comp-menu-item-disabled-label-color)
+        calc(var(--m3e-comp-menu-item-disabled-label-opacity) * 100%),
+      transparent
+    );
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .m3e-menu__item[data-m3e-checked="true"][aria-disabled="true"] {
+    background-color: color-mix(
+      in srgb,
+      var(--m3e-comp-menu-item-checked-disabled-container-color)
+        calc(var(--m3e-comp-menu-item-checked-disabled-container-opacity) * 100%),
+      transparent
+    );
+    color: color-mix(
+      in srgb,
+      var(--m3e-comp-menu-item-checked-disabled-label-color)
+        calc(var(--m3e-comp-menu-item-checked-disabled-label-opacity) * 100%),
+      transparent
+    );
+  }
+
+  .m3e-menu__item-icon {
+    align-items: center;
+    color: var(--m3e-comp-menu-item-leading-icon-color);
+    display: flex;
+    flex: none;
+    inline-size: var(--m3e-comp-menu-item-icon-size);
+    justify-content: center;
+  }
+
+  .m3e-menu__item-icon[data-m3e-position="leading"] {
+    margin-inline-end: var(--m3e-comp-menu-item-padding-inline);
+  }
+
+  .m3e-menu__item-icon[data-m3e-position="trailing"] {
+    color: var(--m3e-comp-menu-item-trailing-icon-color);
+    margin-inline-start: var(--m3e-comp-menu-item-padding-inline);
+  }
+
+  .m3e-menu__item[aria-disabled="true"] .m3e-menu__item-icon[data-m3e-position="leading"] {
+    color: color-mix(
+      in srgb,
+      var(--m3e-comp-menu-item-disabled-leading-icon-color)
+        calc(var(--m3e-comp-menu-item-disabled-leading-icon-opacity) * 100%),
+      transparent
+    );
+  }
+
+  .m3e-menu__item[aria-disabled="true"] .m3e-menu__item-icon[data-m3e-position="trailing"] {
+    color: color-mix(
+      in srgb,
+      var(--m3e-comp-menu-item-disabled-trailing-icon-color)
+        calc(var(--m3e-comp-menu-item-disabled-trailing-icon-opacity) * 100%),
+      transparent
+    );
+  }
+
+  .m3e-menu__item-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .m3e-menu,
+    .m3e-menu__item,
+    .m3e-menu__item::before {
+      transition: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .m3e-menu {
+      border: 1px solid CanvasText;
+    }
+
+    .m3e-menu__item[data-m3e-checked="true"] {
+      background-color: Highlight;
+      color: HighlightText;
+      forced-color-adjust: none;
+    }
+
+    .m3e-menu__item:focus-visible {
+      outline-color: Highlight;
+    }
+  }
+}

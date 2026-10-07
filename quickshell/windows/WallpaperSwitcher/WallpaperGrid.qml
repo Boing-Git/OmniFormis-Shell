@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Effects
 import "../.."
 import "../../theme"
+import "../../core/primitives" as Primitives
 import Quickshell.Io
 
 GridView {
@@ -215,11 +216,13 @@ GridView {
                 color: "black"
                 visible: false
                 layer.enabled: true
-                layer.samples: 32
+                layer.smooth: true
+                layer.samples: Vars.layerSamples
             }
 
             layer.enabled: true
-            layer.samples: 32
+            layer.smooth: true
+            layer.samples: Vars.layerSamples
             layer.effect: MultiEffect {
                 maskEnabled: true
                 maskSource: tileMask
@@ -257,6 +260,18 @@ GridView {
                         anchors.fill: parent
                         asynchronous: true
                         sourceComponent: filePath.toLowerCase().endsWith(".gif") ? animatedPreview : staticPreview
+                    }
+
+                    // True from the moment the tile is created until its image has actually decoded
+                    readonly property bool mediaLoading: mediaLoader.status === Loader.Loading
+                        || (mediaLoader.status === Loader.Ready && mediaLoader.item !== null && mediaLoader.item.status === Image.Loading)
+
+                    Primitives.LoadingIndicator {
+                        anchors.centerIn: parent
+                        width: Math.max(32, Math.min(56, Math.min(parent.width, parent.height) * 0.3))
+                        height: width
+                        running: parent.mediaLoading
+                        z: 2
                     }
 
                     Component {

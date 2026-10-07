@@ -1,0 +1,14 @@
+/* The native multiline delta layered on top of the shared field chrome owned
+   by TextField's stylesheet (see the note at its top for why this file does
+   not re-declare the shared `.m3e-text-field*` rules itself). Shared label and
+   icon placement remains in the shared TextField stylesheet so every
+   TextFieldChrome consumer resolves it identically. */
+@layer m3e.components {
+  textarea.m3e-text-field__input {
+    /* `rows` remains the initial content height. The shared grid contributes
+       the Material top and bottom regions around it, and this one-line floor
+       keeps a one-row textarea aligned with the 56px single-line minimum. */
+    min-block-size: var(--m3e-sys-typescale-baseline-body-large-line-height);
+    resize: vertical;
+  }
+}
