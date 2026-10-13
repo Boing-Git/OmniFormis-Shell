@@ -16,7 +16,7 @@ local vars = {
     -- Set the system info app
     SysInfo = "btop",
     -- Frees up GPU/CPU for games: no blur, shadows, rounding, border, gaps or window animations, opaque windows, liquid glass and translucency off, lighter panel-corner anti-aliasing, and every desktop widget (clock, calendar, media player, system vitals, audio visualizer) hidden and fully stopped rather than just not animating
-    GameMode = false,
+    GameMode = true,
     -- Low-spec mode for old or weak hardware such as older ThinkPads, turns off blur, shadows, translucency and heavy shell effects ("auto", "on", "off")
     LowSpec = "auto",
     -- Select layout for hyprland
@@ -69,13 +69,13 @@ local vars = {
     -- Set the gap size between windows (inner)
     gaps_in = 5,
     -- Set the gap size between windows and screen edge (outer)
-    gaps_out = 15,
+    gaps_out = 13,
     -- Set the border size
     border_size = 2,
     -- Set window rounding
-    rounding = 13,
+    rounding = 8,
     -- Set rounding power (higher = larger area the rounding is applied)
-    rounding_power = 4,
+    rounding_power = 25,
     -- Set active window opacity
     active_opacity = 1.0,
     -- Set inactive window opacity
@@ -99,7 +99,7 @@ local vars = {
 
     -- Blur
     -- Enable blur
-    blur_enabled = false,
+    blur_enabled = true,
     -- Set blur size
     blur_size = 4,
     -- Set number of blur passes
@@ -109,7 +109,7 @@ local vars = {
 
     -- Liquid Glass
     liquidGlass = false,
-    liquidGlassPreset = "apple",
+    liquidGlassPreset = "glass",
 
     -- Groupbar
     -- Enable group bar
@@ -147,7 +147,7 @@ local vars = {
 
     -- Animation Style
     -- Select animation style for hyprland ("expressive", "spring", "jelly", "flyingcards", "snappy", "cinematic", "minimal", "fluid", "aggressive", "elegant", "playful", "elastic", "swift", "relaxed", "slipstream", "standard", "fluent", "custom", "none")
-    AnimateStyle = "expressive",
+    AnimateStyle = "elegant",
     
     -- --- Custom Animation Profile ---
     

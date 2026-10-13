@@ -180,18 +180,33 @@ Item {
                 color: Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12)
             }
 
+            // Mask shape rendered to its own texture via ShaderEffectSource, the same technique
+            // every other mask in this codebase uses (MediaPlayer's rootMask, GameLibrary's
+            // clipMask, etc). The previous approach — layer.enabled directly on a SquircleMask,
+            // which is itself built from an inner layered Rectangle/Shape — double-layers and
+            // doesn't reliably produce a usable mask texture, so the live preview rendered with
+            // hard rectangular corners instead of matching the tile's rounding.
             Primitives.SquircleMask {
-                id: previewMask
+                id: previewMaskShape
                 anchors.fill: parent
                 topLeftRadius: winItem.topLeftRadius
                 topRightRadius: winItem.topRightRadius
                 bottomLeftRadius: winItem.bottomLeftRadius
                 bottomRightRadius: winItem.bottomRightRadius
                 color: "white"
-                z: -1
-                layer.enabled: true
-                layer.samples: Vars.layerSamples
-                layer.smooth: true
+                visible: true // kept visible; hidden from the scene by the ShaderEffectSource below
+            }
+
+            ShaderEffectSource {
+                id: previewMask
+                sourceItem: previewMaskShape
+                anchors.fill: parent
+                hideSource: true
+                visible: false
+                // Oversample so small corner radii (inner grid tiles use Vars.radiusSmall, just
+                // a few px) survive the mask texture at full crispness instead of being smoothed
+                // away — the same fix MediaPlayer.qml's maskContainer already uses for this.
+                textureSize: Qt.size(Math.max(1, width) * 2, Math.max(1, height) * 2)
             }
 
             // Live screen capture
@@ -200,15 +215,16 @@ Item {
                 anchors.fill: parent
                 captureSource: (rootContainer && rootContainer.visibleState) ? winItem.modelData : null
                 live: rootContainer && rootContainer.visibleState
-                layer.enabled: true
-                layer.samples: Vars.layerSamples
-                layer.smooth: true
-                layer.effect: MultiEffect {
-                    maskEnabled: true
-                    maskSource: previewMask
-                    maskThresholdMin: 0.0
-                    maskSpreadAtMin: 1.0
-                }
+                visible: false
+            }
+
+            MultiEffect {
+                anchors.fill: parent
+                source: preview
+                maskEnabled: true
+                maskSource: previewMask
+                maskThresholdMin: 0.0
+                maskSpreadAtMin: 1.0
             }
 
             // Simple Hover interaction overlay

@@ -1,0 +1,84 @@
+{
+  "editor.background": "{{ colors.surface.dark.hex }}",
+  "editor.foreground": "{{ colors.on_surface.dark.hex }}",
+  "editorCursor.foreground": "{{ colors.primary.dark.hex }}",
+  "editor.selectionBackground": "{{ colors.primary_container.dark.hex }}",
+  "editor.lineHighlightBackground": "{{ colors.surface_container.dark.hex }}",
+  "editorLineNumber.foreground": "{{ colors.on_surface_variant.dark.hex }}",
+  "editorLineNumber.activeForeground": "{{ colors.primary.dark.hex }}",
+  "editorIndentGuide.background1": "{{ colors.surface_variant.dark.hex }}",
+  "editorIndentGuide.activeBackground1": "{{ colors.primary.dark.hex }}",
+  "editorWidget.background": "{{ colors.surface_container_high.dark.hex }}",
+  "editorWidget.foreground": "{{ colors.on_surface.dark.hex }}",
+  "editorGroupHeader.tabsBackground": "{{ colors.surface.dark.hex }}",
+  "editorGroup.border": "{{ colors.surface_variant.dark.hex }}",
+
+  "activityBar.background": "{{ colors.surface_container.dark.hex }}",
+  "activityBar.foreground": "{{ colors.on_surface.dark.hex }}",
+  "activityBar.inactiveForeground": "{{ colors.on_surface_variant.dark.hex }}",
+  "activityBarBadge.background": "{{ colors.primary.dark.hex }}",
+  "activityBarBadge.foreground": "{{ colors.on_primary.dark.hex }}",
+
+  "sideBar.background": "{{ colors.surface_container_low.dark.hex }}",
+  "sideBar.foreground": "{{ colors.on_surface.dark.hex }}",
+  "sideBarTitle.foreground": "{{ colors.on_surface.dark.hex }}",
+  "sideBarSectionHeader.background": "{{ colors.surface_container.dark.hex }}",
+
+  "statusBar.background": "{{ colors.surface_container.dark.hex }}",
+  "statusBar.foreground": "{{ colors.on_surface.dark.hex }}",
+  "statusBar.noFolderBackground": "{{ colors.surface_container.dark.hex }}",
+  "statusBar.debuggingBackground": "{{ colors.tertiary_container.dark.hex }}",
+  "statusBar.debuggingForeground": "{{ colors.on_tertiary_container.dark.hex }}",
+
+  "titleBar.activeBackground": "{{ colors.surface.dark.hex }}",
+  "titleBar.activeForeground": "{{ colors.on_surface.dark.hex }}",
+  "titleBar.inactiveBackground": "{{ colors.surface.dark.hex }}",
+  "titleBar.inactiveForeground": "{{ colors.on_surface_variant.dark.hex }}",
+
+  "tab.activeBackground": "{{ colors.surface_container_high.dark.hex }}",
+  "tab.activeForeground": "{{ colors.on_surface.dark.hex }}",
+  "tab.inactiveBackground": "{{ colors.surface_container_low.dark.hex }}",
+  "tab.inactiveForeground": "{{ colors.on_surface_variant.dark.hex }}",
+  "tab.border": "{{ colors.surface.dark.hex }}",
+  "tab.activeBorderTop": "{{ colors.primary.dark.hex }}",
+
+  "panel.background": "{{ colors.surface_container_low.dark.hex }}",
+  "panel.border": "{{ colors.surface_variant.dark.hex }}",
+  "panelTitle.activeForeground": "{{ colors.on_surface.dark.hex }}",
+  "panelTitle.activeBorder": "{{ colors.primary.dark.hex }}",
+
+  "focusBorder": "{{ colors.primary.dark.hex }}",
+  "button.background": "{{ colors.primary.dark.hex }}",
+  "button.foreground": "{{ colors.on_primary.dark.hex }}",
+  "button.hoverBackground": "{{ colors.primary_fixed_dim.dark.hex }}",
+  "badge.background": "{{ colors.primary.dark.hex }}",
+  "badge.foreground": "{{ colors.on_primary.dark.hex }}",
+
+  "input.background": "{{ colors.surface_container.dark.hex }}",
+  "input.foreground": "{{ colors.on_surface.dark.hex }}",
+  "input.border": "{{ colors.surface_variant.dark.hex }}",
+  "dropdown.background": "{{ colors.surface_container.dark.hex }}",
+  "dropdown.foreground": "{{ colors.on_surface.dark.hex }}",
+
+  "list.activeSelectionBackground": "{{ colors.primary_container.dark.hex }}",
+  "list.activeSelectionForeground": "{{ colors.on_primary_container.dark.hex }}",
+  "list.inactiveSelectionBackground": "{{ colors.surface_container_high.dark.hex }}",
+  "list.hoverBackground": "{{ colors.surface_container_high.dark.hex }}",
+  "list.focusBackground": "{{ colors.primary_container.dark.hex }}",
+
+  "scrollbarSlider.background": "{{ colors.surface_variant.dark.hex }}",
+  "scrollbarSlider.hoverBackground": "{{ colors.outline.dark.hex }}",
+  "scrollbarSlider.activeBackground": "{{ colors.primary.dark.hex }}",
+
+  "terminal.background": "{{ colors.surface.dark.hex }}",
+  "terminal.foreground": "{{ colors.on_surface.dark.hex }}",
+  "terminalCursor.foreground": "{{ colors.primary.dark.hex }}",
+
+  "notifications.background": "{{ colors.surface_container_high.dark.hex }}",
+  "notifications.foreground": "{{ colors.on_surface.dark.hex }}",
+
+  "quickInput.background": "{{ colors.surface_container_high.dark.hex }}",
+  "quickInput.foreground": "{{ colors.on_surface.dark.hex }}",
+
+  "progressBar.background": "{{ colors.primary.dark.hex }}"
+}

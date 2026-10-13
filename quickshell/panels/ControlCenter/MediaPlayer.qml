@@ -206,6 +206,10 @@ Rectangle {
         anchors.fill: parent
         hideSource: true
         visible: false
+        // Supersampled so the rounded-corner mask the MultiEffects below cut against has more
+        // antialiasing to work with than a flat 1:1 capture would give them.
+        textureSize: Qt.size(width * 2, height * 2)
+        smooth: true
     }
 
     // Background Image
@@ -273,6 +277,10 @@ Rectangle {
             source: combinedBackground
             maskEnabled: true
             maskSource: rootMask
+            // A soft threshold spread antialiases the mask edge instead of cutting it off as a
+            // hard binary step, which otherwise looks jagged on the rounded corners.
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 0.1
         }
     }
 
@@ -317,6 +325,8 @@ Rectangle {
         layer.effect: MultiEffect {
             maskEnabled: true
             maskSource: rootMask
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 0.1
         }
 
         GridLayout {

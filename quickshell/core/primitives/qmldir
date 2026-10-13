@@ -6,3 +6,8 @@ SquircleMask 1.0 SquircleMask.qml
 ClockPill 1.0 ClockPill.qml
 InvertedCorner 1.0 InvertedCorner.qml
 M3Shapes 1.0 M3Shapes.qml
+IconButton 1.0 IconButton.qml
+ToggleSwitch 1.0 ToggleSwitch.qml
+GroupedListItem 1.0 GroupedListItem.qml
+Slider 1.0 Slider.qml
+DateStatusIcon 1.0 DateStatusIcon.qml

@@ -245,6 +245,11 @@ PanelWindow {
             maskEnabled: true
             maskInverted: true
             maskSource: maskContainer
+            // A soft threshold spread antialiases the hole-punch edge instead of a hard binary
+            // cutoff, which otherwise leaves a thin sliver of the background color's own pixels
+            // peeking through right at the seam with the wallpaper shape.
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 0.1
             opacity: root.currentMaskEnabled ? 1.0 : 0.0
             visible: opacity > 0
             Behavior on opacity {

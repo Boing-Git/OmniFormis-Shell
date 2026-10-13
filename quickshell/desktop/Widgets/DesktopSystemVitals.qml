@@ -287,29 +287,38 @@ PanelWindow {
                 source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + gaugeM3.getPath(gauge.dialShape) + "' fill='" + gauge.toRgb(gauge.plate) + "'/></svg>"
             }
 
-            Image {
+            // Usage reading as an orbiting dot (same technique as AnalogClock's "Orbiting Dot"
+            // second hand) instead of a speedometer needle: an Item rotated to the reading's
+            // angle, with the dot pushed outward from its pivot via anchors.
+            Item {
                 id: needle
-                width: parent.width * 0.4
-                height: width
-                anchors.centerIn: parent
-                smooth: true
-                antialiasing: true
-                mipmap: true
-                transformOrigin: Item.Center
-                // The M3 "Arrow" shape points straight up at rotation 0, but mounted here it reads
-                // 180° out from needleAngle's own convention (0% = lower-left, 100% = lower-right),
-                // so the extra half-turn corrects it to actually point at the reading.
-                rotation: gauge.needleAngle + 180
-                scale: 0.8 + (gauge.clampedPercent / 100) * 0.3
-                source: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + gaugeM3.getPath("Arrow") + "' fill='" + gauge.toRgb(gauge.accent) + "'/></svg>"
+                anchors.fill: parent
+                // needleAngle's own convention already matches a plain top-anchored dot (0deg =
+                // straight up = the 50% mark at the dial's top), unlike the old Arrow image,
+                // which pointed up by default and needed a +180deg correction to read correctly.
+                rotation: gauge.needleAngle
 
                 Behavior on rotation {
                     enabled: !gauge.gameMode
                     RotationAnimation { direction: RotationAnimation.Shortest; duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow }
                 }
-                Behavior on scale {
-                    enabled: !gauge.gameMode
-                    NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow }
+
+                Rectangle {
+                    width: 12 + (gauge.clampedPercent / 100) * 4
+                    height: width
+                    radius: width / 2
+                    antialiasing: true
+                    color: gauge.accent
+
+                    anchors.bottom: parent.verticalCenter
+                    anchors.bottomMargin: dial.width * 0.28
+                    anchors.horizontalCenter: parent.horizontalCenter
+
+                    Behavior on color { ColorAnimation { duration: Vars.animationDuration } }
+                    Behavior on width {
+                        enabled: !gauge.gameMode
+                        NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow }
+                    }
                 }
             }
         }

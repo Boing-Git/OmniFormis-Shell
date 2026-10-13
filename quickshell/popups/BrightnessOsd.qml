@@ -147,7 +147,7 @@ Item {
         }
     }
 
-    Slider {
+    Primitives.Slider {
         id: bg
         anchors.centerIn: parent
 
@@ -155,6 +155,11 @@ Item {
         width: mainContainer.isVertical ? 48 : (mainContainer.isVisible ? 320 : 100)
         height: mainContainer.isVertical ? (mainContainer.isVisible ? 320 : 100) : 48
         padding: 0
+
+        trackHeight: mainContainer.trackHeight
+        gap: mainContainer.gap
+        handleWidth: mainContainer.handleWidth
+        icon: mainContainer.brightnessIcon
 
         opacity: mainContainer.isVisible ? 1.0 : 0.0
         visible: opacity > 0
@@ -188,150 +193,6 @@ Item {
         onMoved: {
             Vars.currentBrightness = value;
         }
-
-        background: Item {
-            x: bg.leftPadding
-            y: bg.topPadding
-            width: bg.availableWidth
-            height: bg.availableHeight
-
-            // HORIZONTAL TRACKS
-            Item {
-                anchors.centerIn: parent
-                width: parent.width
-                height: mainContainer.trackHeight
-                visible: !mainContainer.isVertical
-
-                property real leftRadiusLarge: 6
-                property real leftRadiusSmall: 2
-                property real handlePos: bg.visualPosition * (width - mainContainer.handleWidth)
-
-                QsText {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 12
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: mainContainer.brightnessIcon
-                    font.family: "Material Symbols Outlined"
-                    font.pixelSize: 20
-                    color: Theme.on_surface_variant
-                    opacity: 0.8
-                }
-
-                Rectangle {
-                    antialiasing: true
-                    id: osdLeftTrack
-                    x: 0
-                    y: 0
-                    width: Math.max(0, parent.handlePos - mainContainer.gap)
-                    height: parent.height
-                    color: Theme.primary
-                    clip: true
-
-                    topLeftRadius: Math.min(parent.leftRadiusLarge, width / 2)
-                    bottomLeftRadius: Math.min(parent.leftRadiusLarge, width / 2)
-                    topRightRadius: Math.min(parent.leftRadiusSmall, width / 2)
-                    bottomRightRadius: Math.min(parent.leftRadiusSmall, width / 2)
-
-                    QsText {
-                        x: 12
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: mainContainer.brightnessIcon
-                        font.family: "Material Symbols Outlined"
-                        font.pixelSize: 20
-                        color: Theme.on_primary
-                    }
-                }
-
-                Rectangle {
-                    antialiasing: true
-                    id: osdRightTrack
-                    x: parent.handlePos + mainContainer.handleWidth + mainContainer.gap
-                    y: 0
-                    width: Math.max(0, parent.width - x)
-                    height: parent.height
-                    color: Vars.tColor(Theme.surface_variant, Vars.componentOpacity)
-
-                    topLeftRadius: Math.min(parent.leftRadiusSmall, width / 2)
-                    bottomLeftRadius: Math.min(parent.leftRadiusSmall, width / 2)
-                    topRightRadius: Math.min(parent.leftRadiusLarge, width / 2)
-                    bottomRightRadius: Math.min(parent.leftRadiusLarge, width / 2)
-                }
-            }
-
-            // VERTICAL TRACKS
-            Item {
-                anchors.centerIn: parent
-                width: mainContainer.trackHeight
-                height: parent.height
-                visible: mainContainer.isVertical
-
-                property real leftRadiusLarge: 6
-                property real leftRadiusSmall: 2
-                property real handlePos: bg.visualPosition * (height - mainContainer.handleWidth)
-
-                QsText {
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 12
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: mainContainer.brightnessIcon
-                    font.family: "Material Symbols Outlined"
-                    font.pixelSize: 20
-                    color: Theme.on_surface_variant
-                    opacity: 0.8
-                }
-
-                Rectangle {
-                    antialiasing: true
-                    id: osdTopTrack
-                    x: 0
-                    y: 0
-                    width: parent.width
-                    height: Math.max(0, parent.handlePos - mainContainer.gap)
-                    color: Vars.tColor(Theme.surface_variant, Vars.componentOpacity)
-
-                    topLeftRadius: Math.min(parent.leftRadiusLarge, height / 2)
-                    topRightRadius: Math.min(parent.leftRadiusLarge, height / 2)
-                    bottomLeftRadius: Math.min(parent.leftRadiusSmall, height / 2)
-                    bottomRightRadius: Math.min(parent.leftRadiusSmall, height / 2)
-                }
-
-                Rectangle {
-                    antialiasing: true
-                    id: osdBottomTrack
-                    x: 0
-                    y: parent.handlePos + mainContainer.handleWidth + mainContainer.gap
-                    width: parent.width
-                    height: Math.max(0, parent.height - y)
-                    color: Theme.primary
-                    clip: true
-
-                    topLeftRadius: Math.min(parent.leftRadiusSmall, height / 2)
-                    topRightRadius: Math.min(parent.leftRadiusSmall, height / 2)
-                    bottomLeftRadius: Math.min(parent.leftRadiusLarge, height / 2)
-                    bottomRightRadius: Math.min(parent.leftRadiusLarge, height / 2)
-
-                    QsText {
-                        anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 12
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: mainContainer.brightnessIcon
-                        font.family: "Material Symbols Outlined"
-                        font.pixelSize: 20
-                        color: Theme.on_primary
-                    }
-                }
-            }
-        }
-
-        handle: Rectangle {
-            x: bg.leftPadding + (mainContainer.isVertical ? (bg.availableWidth - width) / 2 : bg.visualPosition * (bg.availableWidth - width))
-            y: bg.topPadding + (mainContainer.isVertical ? bg.visualPosition * (bg.availableHeight - height) : (bg.availableHeight - height) / 2)
-
-            width: mainContainer.isVertical ? (mainContainer.trackHeight + 8) : mainContainer.handleWidth
-            height: mainContainer.isVertical ? mainContainer.handleWidth : (mainContainer.trackHeight + 8)
-            radius: Math.min(width, height) / 2
-            antialiasing: true
-            color: Theme.primary
-        }
     }
+
 }

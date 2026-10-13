@@ -17,7 +17,10 @@ Item {
 
     property real power: Vars.cornerPower
 
-    Behavior on radius { enabled: !Vars.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+    // No Behavior here: radius tracks the host panel's actual width/height (see TopPills.qml),
+    // and most panels resize instantly with no matching behavior of their own. An animated
+    // radius here would lag a frame-instant panel resize, leaving a stale corner at the old
+    // size briefly visible until the animation caught up.
 
     // The fill runs this far past the solid edges, under the panel and past the screen edge, so
     // the curve is the only anti-aliased edge. Two anti-aliased edges meeting at a fractional

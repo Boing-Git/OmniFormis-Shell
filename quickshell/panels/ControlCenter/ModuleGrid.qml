@@ -20,6 +20,27 @@ ColumnLayout {
     property bool isEditorMode: false
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
     property bool systemModeIsDark: Theme.surface.r < 0.5
+
+    // Game Mode and System Mode both round-trip through the omniformis CLI and then a full
+    // shell restart to actually apply, so the real gameMode/systemModeIsDark values above don't
+    // change for up to ~1s after a click — long enough that the tile looked like it ignored the
+    // click. These give instant feedback instead and clear themselves the moment the real value
+    // catches up (or after staleTimeout, if the restart never happens for some reason), so they
+    // can't get stuck showing a stale state.
+    property var gameModePending: null
+    property bool effectiveGameMode: gameModePending !== null ? gameModePending : gameMode
+    onGameModeChanged: gameModePending = null
+    property var systemModeDarkPending: null
+    property bool effectiveSystemModeIsDark: systemModeDarkPending !== null ? systemModeDarkPending : systemModeIsDark
+    onSystemModeIsDarkChanged: systemModeDarkPending = null
+    Timer {
+        interval: 5000
+        running: moduleGridRoot.gameModePending !== null || moduleGridRoot.systemModeDarkPending !== null
+        onTriggered: {
+            moduleGridRoot.gameModePending = null;
+            moduleGridRoot.systemModeDarkPending = null;
+        }
+    }
     property int activeMaxRow: 4
     property real baseCellWidth: (width - (12 * 3)) / 4
     signal subMenuRequested(string menuName)
@@ -454,8 +475,8 @@ ColumnLayout {
                                         (moduleId === "audio" ? (moduleGridRoot.audioNode && !moduleGridRoot.audioNode.audio.muted) : false) || 
                                         (moduleId === "display" ? false : false) ||
                                         (moduleId === "peace" ? NotificationService.peaceMode : false) ||
-                                        (moduleId === "game_mode" ? moduleGridRoot.gameMode : false) ||
-                                        (moduleId === "system_mode" ? moduleGridRoot.systemModeIsDark : false) ||
+                                        (moduleId === "game_mode" ? moduleGridRoot.effectiveGameMode : false) ||
+                                        (moduleId === "system_mode" ? moduleGridRoot.effectiveSystemModeIsDark : false) ||
                                         (moduleId === "game_library" ? false : false) ||
                                         (moduleId === "disk" ? false : false)
 
@@ -470,7 +491,7 @@ ColumnLayout {
                                        moduleId === "wallpaper" ? "wallpaper" :
                                        moduleId === "overview" ? "grid_view" : 
                                        moduleId === "game_mode" ? "sports_esports" :
-                                       moduleId === "system_mode" ? (moduleGridRoot.systemModeIsDark ? "dark_mode" : "light_mode") :
+                                       moduleId === "system_mode" ? (moduleGridRoot.effectiveSystemModeIsDark ? "dark_mode" : "light_mode") :
                                        moduleId === "game_library" ? "videogame_asset" :
                                        moduleId === "disk" ? "hard_drive" :
                                        moduleId === "cheat_sheet" ? "keyboard" : ""
@@ -514,7 +535,7 @@ ColumnLayout {
                         case "game_mode":
                             return isActive ? "On" : "Off";
                         case "system_mode":
-                            return moduleGridRoot.systemModeIsDark ? "Dark" : "Light";
+                            return moduleGridRoot.effectiveSystemModeIsDark ? "Dark" : "Light";
                         case "game_library":
                             return "Steam Games";
                         case "disk":
@@ -544,12 +565,18 @@ ColumnLayout {
                     else if (moduleId === "bluetooth") { if (activeDelegateWrapper.gridRoot.adapter) activeDelegateWrapper.gridRoot.adapter.enabled = !activeDelegateWrapper.gridRoot.adapter.enabled }
                     else if (moduleId === "audio") { if (activeDelegateWrapper.gridRoot.audioNode) activeDelegateWrapper.gridRoot.audioNode.audio.muted = !activeDelegateWrapper.gridRoot.audioNode.audio.muted }
                     else if (moduleId === "peace") NotificationService.peaceMode = !NotificationService.peaceMode;
-                    else if (moduleId === "game_mode") Quickshell.execDetached({ command: ["/home/boing/.local/bin/omniformis", "hypr", "set", "GameMode", moduleGridRoot.gameMode ? "false" : "true"] });
-                    else if (moduleId === "system_mode") Quickshell.execDetached({ command: ["/home/boing/.local/bin/omniformis", "theme", "toggle"] });
+                    else if (moduleId === "game_mode") {
+                        let next = !moduleGridRoot.effectiveGameMode;
+                        moduleGridRoot.gameModePending = next;
+                        Quickshell.execDetached({ command: ["/home/boing/.local/bin/omniformis", "hypr", "set", "GameMode", next ? "true" : "false"] });
+                    }
+                    else if (moduleId === "system_mode") {
+                        moduleGridRoot.systemModeDarkPending = !moduleGridRoot.effectiveSystemModeIsDark;
+                        Quickshell.execDetached({ command: ["/home/boing/.local/bin/omniformis", "theme", "toggle"] });
+                    }
                     else doAction();
                 }
 
-                // --- INSERT YOUR WORKING MODULE UI HERE ---
                 Item {
                     id: contentWrapper
                     anchors.fill: parent
@@ -681,7 +708,6 @@ ColumnLayout {
                         }
                     }
                 }
-                // --- END WORKING MODULE UI ---
 
                 // ---- EDITOR OVERLAY ----
                 Item {

@@ -22,6 +22,18 @@ output_path = '~/.config/color-schemes/material-you/dark/vscode-colors.json'
 input_path = './templates/light/vscode.json'
 output_path = '~/.config/color-schemes/material-you/light/vscode-colors.json'
 
+# Proper workbench.colorCustomizations JSON (real VS Code color keys), for VSCodium's built-in
+# "import" mechanism (see vscodium.nix) rather than the matugen-theme extension — that extension
+# needs to write into its own install directory, which home-manager installs read-only from the
+# Nix store, so it can never actually update there.
+[templates.vscodium-customizations-dark]
+input_path = './templates/dark/vscode-customizations.json'
+output_path = '~/.config/color-schemes/material-you/dark/vscodium-colors.json'
+
+[templates.vscodium-customizations-light]
+input_path = './templates/light/vscode-customizations.json'
+output_path = '~/.config/color-schemes/material-you/light/vscodium-colors.json'
+
 [templates.wezterm-dark]
 input_path = './templates/dark/wezterm.lua'
 output_path = '~/.config/color-schemes/material-you/dark/wezterm.lua'

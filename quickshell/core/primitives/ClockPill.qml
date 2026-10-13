@@ -10,13 +10,18 @@ Item {
     id: root
     property bool isVertical: Vars.pillPosition === "Left" || Vars.pillPosition === "Right"
     onIsVerticalChanged: { if (timeTimer) timeTimer.triggered(); }
-    width: isVertical ? Math.max(40, contentGrid.implicitWidth + 20) : (contentGrid.implicitWidth + 38)
-    height: isVertical ? (contentGrid.implicitHeight + 38) : 40
+    // Same value as contentGrid's own spacing below, so the clock-to-icon gap and the two edge
+    // margins read as one consistent rhythm instead of a cramped inner gap between two much
+    // wider outer ones.
+    property int contentGap: 14
+    // Rounded up to an even number so (width - contentGrid.implicitWidth) always splits into two
+    // equal integer-pixel margins instead of occasionally leaving left and right a pixel off.
+    width: isVertical ? Math.max(48, contentGrid.implicitWidth + 24) : (Math.ceil((contentGrid.implicitWidth + contentGap * 2) / 2) * 2)
+    height: isVertical ? (contentGrid.implicitHeight + 44) : Vars.clockPillThickness
     signal clicked
     signal rightClicked
     signal scrolled(int delta)
     property string timeString: ""
-    property string dateString: ""
     property bool gameMode: Vars.gameMode !== undefined ? Vars.gameMode : false
     property alias panel: clockRect
     property bool isHovered: dragArea.containsMouse
@@ -71,15 +76,11 @@ Item {
                     h = "0" + h;
                 if (m < 10)
                     m = "0" + m;
-                
-                var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                
+
                 if (root.isVertical) {
                     root.timeString = h + "\n" + m;
-                    root.dateString = months[d.getMonth()] + "\n" + d.getDate();
                 } else {
                     root.timeString = h + ":" + m;
-                    root.dateString = months[d.getMonth()] + " " + d.getDate();
                 }
             }
             Component.onCompleted: triggered()
@@ -88,7 +89,7 @@ Item {
         Grid {
             id: contentGrid
             anchors.centerIn: parent
-            spacing: root.isVertical ? 6 : 8
+            spacing: root.isVertical ? 6 : root.contentGap
             columns: root.isVertical ? 1 : 2
             rows: root.isVertical ? 2 : 1
             horizontalItemAlignment: Grid.AlignHCenter
@@ -97,7 +98,7 @@ Item {
             QsText {
                 id: clockText
                 font.family: Vars.fontFamily
-                font.pixelSize: 14
+                font.pixelSize: 21
                 setWeight: 600
                 color: Theme.on_surface
                 text: root.timeString
@@ -105,16 +106,8 @@ Item {
                 lineHeight: root.isVertical ? 0.9 : 1.0
             }
 
-            QsText {
-                id: dateText
-                font.family: Vars.fontFamily
-                font.pixelSize: 14
-                setWeight: 600
-                color: Theme.on_surface
-                opacity: 0.7
-                text: root.dateString
-                horizontalAlignment: Text.AlignHCenter
-                lineHeight: root.isVertical ? 0.9 : 1.0
+            Primitives.DateStatusIcon {
+                id: dateStatusIcon
             }
         }
 

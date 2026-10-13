@@ -43,6 +43,20 @@ in
   options.programs.omniformis = {
     enable = mkEnableOption "OmniFormis Shell configuration";
 
+    dotfilesDir = mkOption {
+      type = types.nullOr types.path;
+      default = osCfg.dotfilesDir or null;
+      description = ''
+        Absolute path to a live OmniFormis-Shell checkout (e.g. ~/Dotfiles). When set,
+        `~/.config/hypr` is symlinked straight to this checkout's `hypr/` folder instead of a
+        frozen Nix store copy, so hand edits and the Quickshell Settings page (which both write
+        through the omniformis CLI into hypr/modules/variables.lua and keybinds.lua) take effect
+        on the next `hyprctl reload` instead of only after the next Home Manager switch. When
+        left null, `hyprland.settings`/`hyprland.binds` are baked into an immutable copy as
+        before.
+      '';
+    };
+
     quickshell = {
       enable = mkEnableOption "Quickshell configuration";
       settings = mkOption {
@@ -253,7 +267,15 @@ in
       brightnessctl
     ];
     xdg.configFile = mkMerge [
-      (mkIf cfg.quickshell.enable {
+      (mkIf cfg.quickshell.enable (
+        if cfg.dotfilesDir != null then
+          # Live checkout: Settings page writes and the shell's own reload script act on these
+          # files directly, instead of on a copy frozen at the last Home Manager switch (and
+          # which Home Manager would refuse to activate over anyway, since this path is
+          # typically already a manually-created live-editing symlink from before this option
+          # existed — activation aborts the whole generation rather than clobber a foreign file).
+          { "quickshell".source = config.lib.file.mkOutOfStoreSymlink "${cfg.dotfilesDir}/quickshell"; }
+        else {
         "quickshell".source = pkgs.runCommand "quickshell-config" {} ''
           mkdir -p $out
           cp -r ${../quickshell}/* $out/
@@ -435,28 +457,35 @@ in
           }
 EOF
         '';
-      })
-      (mkIf cfg.hyprland.enable {
-        "hypr".source = pkgs.runCommand "hyprland-config" {} ''
-          mkdir -p $out
-          cp -r ${../hypr}/* $out/
-          chmod -R +w $out
-          cp ${pkgs.writeText "keybinds.lua" keybindsLua} $out/modules/keybinds.lua
-          cat > $out/modules/variables.lua <<'EOF'
-          ----------------------------------------------------------------------------------------
-          --- These variables will be used in various locations in the hypr config so set them ---
-          ----------------------------------------------------------------------------------------
+      }
+      ))
+      (mkIf cfg.hyprland.enable (
+        if cfg.dotfilesDir != null then
+          # Live checkout: hyprctl reload (and the Settings page's omniformis writes) act on
+          # these files directly, instead of on a copy frozen at the last Home Manager switch.
+          { "hypr".source = config.lib.file.mkOutOfStoreSymlink "${cfg.dotfilesDir}/hypr"; }
+        else {
+          "hypr".source = pkgs.runCommand "hyprland-config" {} ''
+            mkdir -p $out
+            cp -r ${../hypr}/* $out/
+            chmod -R +w $out
+            cp ${pkgs.writeText "keybinds.lua" keybindsLua} $out/modules/keybinds.lua
+            cat > $out/modules/variables.lua <<'EOF'
+            ----------------------------------------------------------------------------------------
+            --- These variables will be used in various locations in the hypr config so set them ---
+            ----------------------------------------------------------------------------------------
 
-          local vars = {
+            local vars = {
 
-          ${variablesLua}
+            ${variablesLua}
 
-          }
+            }
 
-          return vars
+            return vars
 EOF
-        '';
-      })
+          '';
+        }
+      ))
       (mkIf cfg.wezterm.enable { "wezterm".source = ../wezterm; })
       (mkIf cfg.fish.enable { "fish".source = ../fish; })
       (mkIf cfg.btop.enable { "btop".source = ../btop; })

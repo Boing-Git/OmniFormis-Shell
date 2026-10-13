@@ -4,13 +4,12 @@ import Quickshell
 import "../../theme"
 import "../.."
 
-// Per-mount disk usage, opened from the "disk" tile in ModuleGrid. Follows WifiMenu.qml's
-// submenu shape exactly: isActive/backRequested driven purely by the parent.
+// Per-mount disk usage, opened from the "disk" tile in ModuleGrid. No back button — dismissed
+// by clicking outside the panel, same as the rest of Control Center.
 ColumnLayout {
     id: diskMenu
 
     property bool isActive: false
-    signal backRequested()
 
     // Supplied by ControlCenter.qml from ModuleGrid's diskRows, so there is a single Process
     // polling df rather than one per view.
@@ -26,22 +25,6 @@ ColumnLayout {
         Behavior on x { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
     }
     Behavior on opacity { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: isActive ? Vars.customEmphasizedDecelerate : Vars.customEmphasizedAccelerate } }
-
-    // Header
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: Vars.spacingMedium
-
-        Rectangle {
-            antialiasing: true
-            width: 40; height: 40; radius: 20
-            color: backHoverDisk.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (backHoverDisk.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
-            QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; antialiasing: true; renderType: Text.QtRendering; font.hintingPreference: Font.PreferNoHinting; color: Theme.on_surface; text: "" }
-            MouseArea { id: backHoverDisk; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: diskMenu.backRequested() }
-            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-        }
-        QsText { text: "Storage"; font.family: Vars.fontFamily; font.pixelSize: 24; setWeight: Font.Bold; color: Theme.on_surface; Layout.fillWidth: true }
-    }
 
     Flickable {
         id: diskFlickable

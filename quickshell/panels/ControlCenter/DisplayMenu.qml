@@ -6,6 +6,7 @@ import Quickshell.Io
 import QtCore
 import "../../theme"
 import "../.."
+import "../../core/primitives" as Primitives
 
 ColumnLayout {
     id: displayMenu
@@ -31,13 +32,9 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: Vars.spacingMedium
         
-        Rectangle {
-            antialiasing: true
-            width: 40; height: 40; radius: 20
-            color: backHoverDisp.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (backHoverDisp.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
-            QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Theme.on_surface; text: "\ue5c4" }
-            MouseArea { id: backHoverDisp; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: displayMenu.backRequested() }
-            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+        Primitives.IconButton {
+            icon: "\ue5c4"
+            onClicked: displayMenu.backRequested()
         }
         QsText { text: "Display Scale"; font.family: Vars.fontFamily; font.pixelSize: 24; setWeight: Font.Bold; color: Theme.on_surface; Layout.fillWidth: true }
     }

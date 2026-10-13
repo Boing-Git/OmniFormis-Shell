@@ -101,17 +101,22 @@ Item {
 
     Item {
         id: panelMask
-        anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
-        anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
-        anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
-        anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
-
-        anchors.topMargin: root.expanded ? -20 : 0
-        anchors.bottomMargin: root.expanded ? -20 : 0
-        anchors.leftMargin: root.expanded ? -20 : 0
-        anchors.rightMargin: root.expanded ? -20 : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four bleed-margin lines, so a pillPosition change can't
+        // leave this item part-anchored to the old edge while the other axis has already moved
+        // to the new one (that mismatch is what made expanded popups fail to render their
+        // content after a live position change).
+        property real _bleed: root.expanded ? -20 : 0
+        x: {
+            if (Vars.pillPosition === "Left") return _bleed;
+            if (Vars.pillPosition === "Right") return parent.width - width - _bleed;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (Vars.pillPosition === "Bottom") return parent.height - height - _bleed;
+            if (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") return (parent.height - height) / 2;
+            return _bleed;
+        }
         width: root.expanded ? 660 : 0
         height: root.expanded ? 740 : 0
     }
@@ -119,12 +124,20 @@ Item {
     Primitives.SquircleMask {
         id: panel
         property bool isBackgroundActive: root.expanded || (MorphState.openCount === 0 && MorphState.activeItem === panel && panel.width > 105)
-        anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
-        anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
-        anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
-        anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines, so a pillPosition change can't leave this item part-anchored to
+        // the old edge while the other axis has already moved to the new one (that mismatch is
+        // what made expanded popups fail to render their content after a live position change).
+        x: {
+            if (Vars.pillPosition === "Left") return 0;
+            if (Vars.pillPosition === "Right") return parent.width - width;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (Vars.pillPosition === "Bottom") return parent.height - height;
+            if (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") return (parent.height - height) / 2;
+            return 0;
+        }
 
         width: root.expanded ? 620 : (MorphState.anyExpanded ? MorphState.targetWidth : 100)
         height: root.expanded ? 700 : (MorphState.anyExpanded ? MorphState.targetHeight : 40)
@@ -159,34 +172,6 @@ Item {
             ColumnLayout {
                 anchors.fill: parent
                 spacing: Vars.spacingMedium
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 12
-
-                    QsText {
-                        text: "Shortcuts"
-                        font.family: Vars.fontFamily
-                        font.pixelSize: 20
-                        setWeight: 700
-                        color: Theme.on_surface
-                        Layout.fillWidth: true
-                    }
-
-                    Rectangle {
-                        width: 36; height: 36; radius: 18
-                        antialiasing: true
-                        color: closeHover.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent"
-                        QsText {
-                            anchors.centerIn: parent
-                            text: "close"
-                            font.family: "Material Symbols Outlined"
-                            font.pixelSize: 20
-                            color: Theme.on_surface_variant
-                        }
-                        MouseArea { id: closeHover; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.expanded = false }
-                    }
-                }
 
                 Primitives.SearchBar {
                     id: searchBar

@@ -52,17 +52,22 @@ Item {
 
     Item {
         id: panelMask
-        anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
-        anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
-        anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
-        anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
-        
-        anchors.topMargin: root.expanded ? -20 : 0
-        anchors.bottomMargin: root.expanded ? -20 : 0
-        anchors.leftMargin: root.expanded ? -20 : 0
-        anchors.rightMargin: root.expanded ? -20 : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four bleed-margin lines, so a pillPosition change can't
+        // leave this item part-anchored to the old edge while the other axis has already moved
+        // to the new one (that mismatch is what made expanded popups fail to render their
+        // content after a live position change).
+        property real _bleed: root.expanded ? -20 : 0
+        x: {
+            if (Vars.pillPosition === "Left") return _bleed;
+            if (Vars.pillPosition === "Right") return parent.width - width - _bleed;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (Vars.pillPosition === "Bottom") return parent.height - height - _bleed;
+            if (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") return (parent.height - height) / 2;
+            return _bleed;
+        }
         width: root.expanded ? 420 : 0
         height: root.expanded ? 440 : 0
     }
@@ -73,12 +78,20 @@ Item {
         property bool isBackgroundActive: root.expanded || (MorphState.openCount === 0 && MorphState.activeItem === panel && panel.width > 105)
         layer.enabled: false
         layer.samples: Vars.layerSamples
-        anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
-        anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
-        anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
-        anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines, so a pillPosition change can't leave this item part-anchored to
+        // the old edge while the other axis has already moved to the new one (that mismatch is
+        // what made expanded popups fail to render their content after a live position change).
+        x: {
+            if (Vars.pillPosition === "Left") return 0;
+            if (Vars.pillPosition === "Right") return parent.width - width;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (Vars.pillPosition === "Bottom") return parent.height - height;
+            if (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") return (parent.height - height) / 2;
+            return 0;
+        }
 
         property real targetHeight: root.expanded ? contentColumn.implicitHeight + 24 : (MorphState.anyExpanded ? MorphState.targetHeight : 40)
         width: root.expanded ? 380 : (MorphState.anyExpanded ? MorphState.targetWidth : 100)

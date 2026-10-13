@@ -4,16 +4,20 @@ import Quickshell
 import Quickshell.Bluetooth
 import "../../theme"
 import "../.."
+import "../../core/primitives" as Primitives
 
 ColumnLayout {
     id: bluetoothMenu
-    
+
     // Parent should set this to control visibility and animations
     property bool isActive: false
     signal backRequested()
 
     property var adapter: Bluetooth.defaultAdapter
     property bool adapterState: adapter ? adapter.enabled : false
+    // Pre-filtered so the Repeater's index lines up with visual position (needed for the grouped
+    // list's isFirst/isLast), instead of including hidden devices and giving them a 0-height row.
+    property var pairedDevices: adapterState && adapter ? adapter.devices.values.filter(d => d.paired || d.connected) : []
 
     // Remove anchors.fill to allow dynamic implicit height
     anchors.margins: Vars.spacingLarge
@@ -23,7 +27,7 @@ ColumnLayout {
         id: filledIconFont
         source: "../../theme/assets/MaterialSymbolsRounded-Filled.ttf"
     }
-    
+
     opacity: isActive ? 1.0 : 0.0
     visible: opacity > 0
     transform: Translate {
@@ -36,32 +40,16 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         spacing: Vars.spacingMedium
-        
-        Rectangle {
-            antialiasing: true
-            width: 40; height: 40; radius: 20
-            color: backHoverBt.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (backHoverBt.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
-            QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Theme.on_surface; text: "\ue5c4" }
-            MouseArea { id: backHoverBt; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: bluetoothMenu.backRequested() }
-            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+
+        Primitives.IconButton {
+            icon: ""
+            onClicked: bluetoothMenu.backRequested()
         }
         QsText { text: "Bluetooth Devices"; font.family: Vars.fontFamily; font.pixelSize: 24; setWeight: Font.Bold; color: Theme.on_surface; Layout.fillWidth: true }
-        
-        // Master Toggle Switch
-        Rectangle {
-            antialiasing: true
-            width: 56; height: 32; radius: 16
-            color: adapterState ? (Vars.tColorSelected(Theme.primary)) : (Vars.tColor(Theme.surface_variant, Vars.componentOpacity))
-            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-            Rectangle {
-                antialiasing: true
-                width: 24; height: 24; radius: 12
-                color: adapterState ? Theme.on_primary : Theme.on_surface_variant
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left; anchors.leftMargin: adapterState ? 28 : 4
-                Behavior on anchors.leftMargin { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-            }
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: if(adapter) adapter.enabled = !adapter.enabled }
+
+        Primitives.ToggleSwitch {
+            checked: bluetoothMenu.adapterState
+            onToggled: if (bluetoothMenu.adapter) bluetoothMenu.adapter.enabled = !bluetoothMenu.adapter.enabled
         }
     }
 
@@ -76,19 +64,23 @@ ColumnLayout {
             width: bluetoothFlickable.width; spacing: Vars.spacingSmall
 
             Repeater {
-                model: adapter && adapterState ? adapter.devices.values : []
-                delegate: Rectangle {
-                    visible: modelData.paired || modelData.connected
-                    Layout.fillWidth: true; Layout.preferredHeight: visible ? 64 : 0
-                    radius: 16
-                    antialiasing: true
-                    Behavior on radius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    color: modelData.connected ? (Vars.tColorSelected(Theme.secondary_container)) : (btMouse.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (btMouse.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : (Vars.tColor(Theme.surface_container_low, Vars.componentOpacity))))
-                    Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    
+                model: bluetoothMenu.pairedDevices
+                delegate: Primitives.GroupedListItem {
+                    Layout.fillWidth: true; Layout.preferredHeight: 64
+                    isFirst: index === 0
+                    isLast: index === bluetoothMenu.pairedDevices.length - 1
+                    selected: modelData.connected
+                    onClicked: {
+                        if (modelData.connected) {
+                            modelData.disconnect();
+                        } else {
+                            modelData.connect();
+                        }
+                    }
+
                     RowLayout {
                         anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 16; spacing: 12
-                        
+
                         Rectangle {
                             Layout.preferredWidth: 40; Layout.preferredHeight: 40
                             radius: modelData.connected ? 12 : 20
@@ -100,37 +92,26 @@ ColumnLayout {
                                 font.family: modelData.connected ? filledIconFont.name : "Material Symbols Outlined"
                                 font.pixelSize: 22
                                 color: modelData.connected ? Theme.on_primary : Theme.on_surface_variant
-                                text: modelData.connected ? "\ue1a7" : "\ue1a7" // Same unicode, just filled font
+                                text: ""
                                 Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             }
                         }
-                        
+
                         ColumnLayout {
                             Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter; spacing: 0
-                            QsText { 
+                            QsText {
                                 text: modelData.name ? modelData.name : "Unknown Device"; font.family: Vars.fontFamily; font.pixelSize: 14; setWeight: Font.Bold
                                 color: modelData.connected ? Theme.on_surface : Theme.on_surface_variant
                                 Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             }
-                            QsText { 
+                            QsText {
                                 text: modelData.connected ? "Connected" : "Paired"; font.family: Vars.fontFamily; font.pixelSize: 12; opacity: 0.8
                                 color: Theme.on_surface_variant
                                 Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             }
                         }
-                        
+
                         Item { Layout.fillWidth: true } // Spacer pushes everything to the left
-                    }
-                    MouseArea {
-                        id: btMouse
-                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor; hoverEnabled: true
-                        onClicked: {
-                            if (modelData.connected) {
-                                modelData.disconnect();
-                            } else {
-                                modelData.connect();
-                            }
-                        }
                     }
                 }
             }

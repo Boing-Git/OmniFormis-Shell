@@ -34,8 +34,8 @@ local style_map = {
     none = "None"
 }
 
-local style_lower = AnimateStyle and string.lower(AnimateStyle) or "expressive"
-local module_name = style_map[style_lower] or "Expressive"
+local style_lower = AnimateStyle and string.lower(AnimateStyle)
+local module_name = style_map[style_lower]
 
 local is_vert = false
 local pill_dir = "top"

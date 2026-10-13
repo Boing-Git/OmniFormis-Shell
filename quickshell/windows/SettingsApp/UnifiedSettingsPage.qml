@@ -31,6 +31,8 @@ ColumnLayout {
     function prettyTitle(key) {
         var custom = {
             "clockShape": "Desktop Clock Outline Shape",
+            "clockDateShape": "Clock Pill Date Badge Shape",
+            "clockDateBadgeColor": "Clock Pill Date Badge Color",
             "clockShowTicks": "Show Minute Ticks",
             "clockShowCenterDot": "Show Center Dot Pivot",
             "clockShowDate": "Show Orbiting Date",
@@ -122,6 +124,8 @@ ColumnLayout {
             "clockShowTicks": "Display hour dial tick marks around the perimeter of the analog clock widget.",
             "clockShowCenterDot": "Render the prominent decorative center pin dot on the analog clock hands.",
             "clockShape": "Select the Material 3 expressive silhouette shape for the desktop clock container.",
+            "clockDateShape": "Select the Material 3 shape for the date badge in the panel clock pill.",
+            "clockDateBadgeColor": "Choose the theme color used to fill the date and month badges in the panel clock pill.",
             "wallpaperMaskShape": "Select the geometric clipping cutout shape applied to the wallpaper background.",
             "wallpaperMaskScale": "Scale zoom factor for the wallpaper cutout mask geometry.",
             "wallpaperMaskColor": "Solid tint background color visible around the perimeter of the masked wallpaper.",
@@ -735,12 +739,12 @@ ColumnLayout {
                     if (key === "wallpaperMaskShape") {
                         type = "shape";
                         enumsStr = "Circle|||Square|||Slanted|||Arch|||Flag|||Arrow|||Semicircle|||Oval|||Pill|||Triangle|||Diamond|||Clamshell|||Pentagon|||Gem|||VerySunny|||Sunny|||4SidedCookie|||6SidedCookie|||7SidedCookie|||9SidedCookie|||12SidedCookie|||GhostIsh|||4LeafClover|||8LeafClover|||Burst|||SoftBurst|||Boom|||SoftBoom|||Flower|||Puffy|||PuffyDiamond|||PixelCircle|||PixelTriangle|||Bun|||Heart";
-                    } else if (key === "wallpaperMaskColor") {
+                    } else if (key === "wallpaperMaskColor" || key === "clockDateBadgeColor") {
                         type = "color";
                         enumsStr = "transparent|||background|||primary|||secondary|||tertiary|||surface_variant|||error";
                     } else if (key === "wallpaperMaskEnabled" || key === "fontItalic" || key === "fontBaselineEnabled") {
                         type = "bool";
-                    } else if (key === "clockShape") {
+                    } else if (key === "clockShape" || key === "clockDateShape") {
                         type = "shape";
                         enumsStr = "Circle|||Square|||VerySunny|||Sunny|||4SidedCookie|||6SidedCookie|||7SidedCookie|||9SidedCookie|||12SidedCookie|||SoftBurst|||SoftBoom|||Flower|||Puffy|||Bun";
                     } else if (key === "clockSecondHandStyle") {

@@ -7,6 +7,12 @@ import "variables.js" as RawVars
 QtObject {
     id: root
 
+    // ClockPill's fixed horizontal-mode height, shared with ClockStrut's exclusive-zone
+    // reservation so the two can't drift apart — every previous resize of the pill left the
+    // strut's own hardcoded thickness stale, reserving too little space for "Always Visible"
+    // mode and letting windows poke up into the bottom of the pill.
+    property int clockPillThickness: 66
+
     property real radiusAmount: RawVars.radiusAmount !== undefined ? RawVars.radiusAmount : 0
     property real baseRadiusSmall: RawVars.radiusSmall !== undefined ? RawVars.radiusSmall : 0
     property real radiusSmall: baseRadiusSmall * (radiusAmount * 2)
@@ -48,6 +54,8 @@ QtObject {
     property real wallpaperMaskOffsetX: RawVars.wallpaperMaskOffsetX !== undefined ? RawVars.wallpaperMaskOffsetX : 0
     property real wallpaperMaskOffsetY: RawVars.wallpaperMaskOffsetY !== undefined ? RawVars.wallpaperMaskOffsetY : 0
     property string clockShape: RawVars.clockShape !== undefined ? RawVars.clockShape : ""
+    property string clockDateShape: RawVars.clockDateShape !== undefined ? RawVars.clockDateShape : "Puffy"
+    property string clockDateBadgeColor: RawVars.clockDateBadgeColor !== undefined ? RawVars.clockDateBadgeColor : "tertiary"
     property bool clockShowTicks: RawVars.clockShowTicks !== undefined ? RawVars.clockShowTicks : false
     property bool clockShowCenterDot: RawVars.clockShowCenterDot !== undefined ? RawVars.clockShowCenterDot : false
     property bool clockShowDate: RawVars.clockShowDate !== undefined ? RawVars.clockShowDate : true
@@ -177,6 +185,8 @@ QtObject {
         if (root.wallpaperMaskOffsetX !== RawVars.wallpaperMaskOffsetX) root.wallpaperMaskOffsetX = RawVars.wallpaperMaskOffsetX;
         if (root.wallpaperMaskOffsetY !== RawVars.wallpaperMaskOffsetY) root.wallpaperMaskOffsetY = RawVars.wallpaperMaskOffsetY;
         if (root.clockShape !== RawVars.clockShape) root.clockShape = RawVars.clockShape;
+        if (root.clockDateShape !== RawVars.clockDateShape) root.clockDateShape = RawVars.clockDateShape;
+        if (root.clockDateBadgeColor !== RawVars.clockDateBadgeColor) root.clockDateBadgeColor = RawVars.clockDateBadgeColor;
         if (root.clockShowTicks !== RawVars.clockShowTicks) root.clockShowTicks = RawVars.clockShowTicks;
         if (root.clockShowCenterDot !== RawVars.clockShowCenterDot) root.clockShowCenterDot = RawVars.clockShowCenterDot;
         if (root.clockShowDate !== RawVars.clockShowDate) root.clockShowDate = RawVars.clockShowDate;

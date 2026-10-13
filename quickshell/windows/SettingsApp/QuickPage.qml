@@ -501,7 +501,6 @@ Flickable {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
                                 quickPageRoot.openWallpaperSwitcher();
                             }
                         }
@@ -569,7 +568,6 @@ Flickable {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
                                     if (themeModeSettings.currentMode !== "light") {
                                         themeModeSettings.currentMode = "light";
                                         syncMatugenAndTheme();
@@ -626,7 +624,6 @@ Flickable {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
                                     if (themeModeSettings.currentMode !== "dark") {
                                         themeModeSettings.currentMode = "dark";
                                         syncMatugenAndTheme();
@@ -715,7 +712,6 @@ Flickable {
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
                                         wallpaperSettings.matugenScheme = modelData.scheme;
                                         syncMatugenAndTheme();
                                     }
@@ -770,8 +766,7 @@ Flickable {
                                 antialiasing: true
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 38
-                                property bool localOverride: false
-                                property bool isSelected: localOverride ? true : (modelData.mode === "solid" ? (!(Vars._translucent && !Vars.gameMode) && !(Vars._liquidGlass && !Vars.gameMode)) : (modelData.mode === "translucent" ? (Vars._translucent && !Vars.gameMode) : (Vars._liquidGlass && !Vars.gameMode)))
+                                property bool isSelected: modelData.mode === "solid" ? (!(Vars._translucent && !Vars.gameMode) && !(Vars._liquidGlass && !Vars.gameMode)) : (modelData.mode === "translucent" ? (Vars._translucent && !Vars.gameMode) : (Vars._liquidGlass && !Vars.gameMode))
                                 property bool hasLeft: index > 0
                                 property bool hasRight: index < styleModeRepeater.count - 1
 
@@ -806,11 +801,8 @@ Flickable {
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
                                         if (parent.isSelected) return;
-                                        
-                                        parent.localOverride = true;
-                                        
+
                                         if (modelData.mode === "solid") {
                                             SettingsApply.set("qs", "_translucent", false);
                                             SettingsApply.set("qs", "_liquidGlass", false);
@@ -910,7 +902,6 @@ Flickable {
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
                                         wallpaperSettings.awwwTransitionType = modelData.mode;
                                     }
                                 }
@@ -1021,7 +1012,6 @@ Flickable {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
                                     if (Vars.pillPosition !== modelData.pos)
                                         SettingsApply.set("qs", "pillPosition", modelData.pos);
                                 }
@@ -1105,7 +1095,6 @@ Flickable {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
                                     if (Vars.panelStyle !== modelData.style)
                                         SettingsApply.set("qs", "panelStyle", modelData.style);
                                 }
@@ -1207,7 +1196,6 @@ Flickable {
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
                                         if (Vars.liquidGlassPreset !== modelData.preset) {
                                             SettingsApply.set("qs", "liquidGlassPreset", modelData.preset);
                                             SettingsApply.set("hypr", "liquidGlassPreset", modelData.preset);
@@ -1403,7 +1391,6 @@ Flickable {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                                        console.log("Global Style Button Clicked: " + modelData.mode);
                             morphAnim.restart();
                             createNewPreset();
                         }

@@ -190,14 +190,21 @@ PanelWindow {
 
     Item {
         id: clockHoverZone
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines, so a pillPos change (e.g. Left -> Top) can't leave this item
+        // part-anchored to the old edge while the other axis has already moved to the new one.
         width: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? 18 : clockPill.width
         height: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? clockPill.height : 18
+        x: {
+            if (topWindow.pillPos === "Left") return 0;
+            if (topWindow.pillPos === "Right") return parent.width - width;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return 0;
+        }
         
         MouseArea {
             id: clockHoverArea
@@ -330,13 +337,21 @@ PanelWindow {
     ClockPill {
         id: clockPill
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change (e.g. Left -> Top)
+        // can't leave the pill part-anchored to the old edge while the other axis has already
+        // moved to the new one (the cause of the pill rendering dead-center on a live change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
+
         readonly property bool hasAnyOverlay: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible || workspacesItem.overlayVisible
         readonly property bool isHoverTriggered: !topWindow.suppressHover && (topWindow.pillHoverGrace || clockHoverArea.containsMouse || clockPill.isHovered)
 
@@ -351,12 +366,7 @@ PanelWindow {
             }
             return isHoverTriggered;
         }
-        
-        anchors.topMargin: (topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left") ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
-        
+
         opacity: isShown ? 1.0 : 0.0
         visible: opacity > 0
         
@@ -391,16 +401,21 @@ PanelWindow {
     HyprWorkspaces {
         id: workspacesItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible
 
         onRequestCloseAll: {
@@ -412,16 +427,21 @@ PanelWindow {
     Launcher {
         id: launcherItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         width: 100
         height: 40
         focusWindow: topWindow
@@ -576,16 +596,21 @@ PanelWindow {
     PowerMenu {
         id: powerMenuItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         width: 100
         height: 40
         focusWindow: topWindow
@@ -620,16 +645,21 @@ PanelWindow {
     PolkitDialog {
         id: polkitItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         width: polkitItem.panel.width
         height: polkitItem.panel.height
         focusWindow: topWindow
@@ -645,16 +675,21 @@ PanelWindow {
     NotificationPopup {
         id: notificationPopupItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         width: 100
         height: 40
         focusWindow: topWindow
@@ -670,16 +705,21 @@ PanelWindow {
     ControlCenter {
         id: controlCenterItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         width: 100
         height: 40
         focusWindow: topWindow
@@ -726,48 +766,63 @@ PanelWindow {
     VolumeOsd {
         id: volumeOsdItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         preventShow: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || launcherItem.panel.width > 105 || controlCenterItem.panel.width > 105 || powerMenuItem.panel.width > 105 || polkitItem.panel.width > 105 || notificationPopupItem.panel.width > 105 || emojiPickerItem.panel.width > 105 || wallpaperSwitcherItem.panel.width > 105 || colorSchemeSwitcherItem.panel.width > 105 || settingsAppItem.panel.width > 105 || cheatSheetItem.panel.width > 105 || brightnessOsdItem.isVisible
     }
 
     BrightnessOsd {
         id: brightnessOsdItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         preventShow: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || launcherItem.panel.width > 105 || controlCenterItem.panel.width > 105 || powerMenuItem.panel.width > 105 || polkitItem.panel.width > 105 || notificationPopupItem.panel.width > 105 || emojiPickerItem.panel.width > 105 || wallpaperSwitcherItem.panel.width > 105 || colorSchemeSwitcherItem.panel.width > 105 || settingsAppItem.panel.width > 105 || cheatSheetItem.panel.width > 105 || volumeOsdItem.isVisible
     }
 
     WallpaperSwitcher {
         id: wallpaperSwitcherItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         focusWindow: topWindow
         forceHidePill: launcherItem.expanded || controlCenterItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible
 
@@ -784,16 +839,21 @@ PanelWindow {
     EmojiPicker {
         id: emojiPickerItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         width: 100
         height: 40
         focusWindow: topWindow
@@ -809,16 +869,21 @@ PanelWindow {
     ColorSchemeSwitcher {
         id: colorSchemeSwitcherItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         focusWindow: topWindow
         forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible
 
@@ -840,16 +905,21 @@ PanelWindow {
     SettingsApp {
         id: settingsAppItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         focusWindow: topWindow
         forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || colorSchemeSwitcherItem.expanded || cheatSheetItem.expanded || volumeOsdItem.isVisible
         onDetachToggled: function(isFloating) {
@@ -873,16 +943,21 @@ PanelWindow {
     KeybindCheatSheet {
         id: cheatSheetItem
         gameMode: topWindow.gameMode
-        anchors.top: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? undefined : parent.top
-        anchors.bottom: topWindow.pillPos === "Bottom" ? parent.bottom : undefined
-        anchors.left: topWindow.pillPos === "Left" ? parent.left : undefined
-        anchors.right: topWindow.pillPos === "Right" ? parent.right : undefined
-        anchors.horizontalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? parent.verticalCenter : undefined
-        anchors.topMargin: topWindow.pillPos === "Bottom" || topWindow.pillPos === "Right" || topWindow.pillPos === "Left" ? 0 : topWindow.defaultEdgeMargin
-        anchors.bottomMargin: topWindow.pillPos === "Bottom" ? topWindow.defaultEdgeMargin : 0
-        anchors.leftMargin: topWindow.pillPos === "Left" ? topWindow.defaultEdgeMargin : 0
-        anchors.rightMargin: topWindow.pillPos === "Right" ? topWindow.defaultEdgeMargin : 0
+        // x/y are computed as one atomic expression per axis instead of six independently
+        // toggled anchor lines plus four margin lines, so a pillPos change can't leave this
+        // item part-anchored to the old edge while the other axis has already moved to the new
+        // one (that mismatch is what caused panels to render mid-screen, or with zero effective
+        // size, right after a live position change).
+        x: {
+            if (topWindow.pillPos === "Left") return topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Right") return parent.width - width - topWindow.defaultEdgeMargin;
+            return (parent.width - width) / 2;
+        }
+        y: {
+            if (topWindow.pillPos === "Bottom") return parent.height - height - topWindow.defaultEdgeMargin;
+            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
+            return topWindow.defaultEdgeMargin;
+        }
         focusWindow: topWindow
         forceHidePill: launcherItem.expanded || controlCenterItem.expanded || wallpaperSwitcherItem.expanded || colorSchemeSwitcherItem.expanded || powerMenuItem.expanded || polkitItem.expanded || notificationPopupItem.expanded || emojiPickerItem.expanded || settingsAppItem.expanded || volumeOsdItem.isVisible
 
@@ -906,7 +981,7 @@ PanelWindow {
             property real pw: targetPanel?.panel?.width ?? targetPanel?.width ?? 0
             property real ph: targetPanel?.panel?.height ?? targetPanel?.height ?? 0
             property string pos: Vars.pillPosition || "Top"
-            
+
             InvertedCorner {
                 x: parent.pos === "Right" ? (parent.px + parent.pw - width) : (parent.pos === "Left" ? parent.px : parent.px - width)
                 y: (parent.pos === "Right" || parent.pos === "Left") ? parent.py - height : (parent.pos === "Bottom" ? parent.py + parent.ph - height : parent.py)

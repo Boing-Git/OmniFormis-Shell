@@ -263,6 +263,7 @@ Item {
                 
                 // Orbiting Date Text (180 degrees from Second Dot)
                 Item {
+                    id: dateOrbit
                     rotation: (root.seconds * 6) + 180
                     visible: root.currentShowDate
 
@@ -282,7 +283,7 @@ Item {
                             property real totalAngle: (root.dateString.length - 1) * charSpacing
                             rotation: (index * charSpacing) - (totalAngle / 2)
                             anchors.centerIn: parent
-                            
+
                             QsText {
                                 text: root.dateString[index]
                                 font.pixelSize: 18 // Increased font size
@@ -292,11 +293,19 @@ Item {
                                 layer.enabled: false // Disable layer to prevent pixelation when rotated
                                 layer.samples: Vars.layerSamples
                                 antialiasing: true
-                                
+
                                 // Push the characters outward from the center along the circumference
                                 anchors.bottom: parent.verticalCenter
                                 anchors.bottomMargin: dial.height * 0.45 // Decreased distance
                                 anchors.horizontalCenter: parent.horizontalCenter
+
+                                // Cancels out dateOrbit's own rotation (which only exists to carry the
+                                // text's circumference position around with the second hand), leaving
+                                // just the small per-character curve tilt above. Without this each
+                                // letter inherited the full orbit angle directly, so the date read
+                                // upside-down for half of every minute whenever that angle passed
+                                // through the 90-270deg range.
+                                rotation: -dateOrbit.rotation
                             }
                         }
                     }

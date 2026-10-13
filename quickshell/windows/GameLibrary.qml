@@ -142,12 +142,22 @@ Item {
                 layer.smooth: true
                 layer.samples: Vars.layerSamples
                 
-                anchors.top: (!Vars.pillPosition || Vars.pillPosition === "Top") ? parent.top : undefined
-                anchors.bottom: Vars.pillPosition === "Bottom" ? parent.bottom : undefined
-                anchors.left: Vars.pillPosition === "Left" ? parent.left : undefined
-                anchors.right: Vars.pillPosition === "Right" ? parent.right : undefined
-                anchors.horizontalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? undefined : parent.horizontalCenter
-                anchors.verticalCenter: (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") ? parent.verticalCenter : undefined
+                // x/y are computed as one atomic expression per axis instead of six independently
+                // toggled anchor lines plus four margin lines, so a pillPosition change can't
+                // leave this item part-anchored to the old edge while the other axis has already
+                // moved to the new one (that mismatch is what made expanded popups fail to
+                // render their content after a live position change).
+                property real activeMargin: (Vars.panelStyle === "Flat" || Vars.panelStyle === "Attached") ? 0 : Vars.spacingSmall
+                x: {
+                    if (Vars.pillPosition === "Left") return activeMargin;
+                    if (Vars.pillPosition === "Right") return parent.width - width - activeMargin;
+                    return (parent.width - width) / 2;
+                }
+                y: {
+                    if (Vars.pillPosition === "Bottom") return parent.height - height - activeMargin;
+                    if (Vars.pillPosition === "Left" || Vars.pillPosition === "Right") return (parent.height - height) / 2;
+                    return activeMargin;
+                }
 
                 property var gamesArray: libraryPanel.parseGames(libraryPanel.gameListText)
                 property int actualItems: gamesArray.length
@@ -167,12 +177,6 @@ Item {
                 property real innerMaxWidth: parent.width - (2 * Vars.spacingSmall)
                 property bool touchesEdges: false
 
-                property real activeMargin: (Vars.panelStyle === "Flat" || Vars.panelStyle === "Attached") ? 0 : Vars.spacingSmall
-                anchors.topMargin: (!Vars.pillPosition || Vars.pillPosition === "Top") ? activeMargin : 0
-                anchors.bottomMargin: Vars.pillPosition === "Bottom" ? activeMargin : 0
-                anchors.leftMargin: Vars.pillPosition === "Left" ? activeMargin : 0
-                anchors.rightMargin: Vars.pillPosition === "Right" ? activeMargin : 0
-                
                 width: overviewContainer.visibleState ? (touchesEdges ? innerMaxWidth : targetWidth) : (MorphState.anyExpanded ? MorphState.targetWidth : 100)
                 height: overviewContainer.visibleState ? targetHeight : (MorphState.anyExpanded ? MorphState.targetHeight : 40)
                 

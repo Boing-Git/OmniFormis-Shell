@@ -4,10 +4,11 @@ import Quickshell
 import Quickshell.Networking
 import "../../theme"
 import "../.."
+import "../../core/primitives" as Primitives
 
 ColumnLayout {
     id: wifiMenu
-    
+
     // Parent should set this to control visibility and animations
     property bool isActive: false
     signal backRequested()
@@ -22,7 +23,7 @@ ColumnLayout {
         id: filledIconFont
         source: "../../theme/assets/MaterialSymbolsRounded-Filled.ttf"
     }
-    
+
     opacity: isActive ? 1.0 : 0.0
     visible: opacity > 0
     transform: Translate {
@@ -35,32 +36,16 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         spacing: Vars.spacingMedium
-        
-        Rectangle {
-            antialiasing: true
-            width: 40; height: 40; radius: 20
-            color: backHoverWifi.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (backHoverWifi.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : "transparent")
-            QsText { anchors.centerIn: parent; font.family: "Material Symbols Outlined"; font.pixelSize: 20; antialiasing: true; renderType: Text.QtRendering; font.hintingPreference: Font.PreferNoHinting; color: Theme.on_surface; text: "\ue5c4" }
-            MouseArea { id: backHoverWifi; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: wifiMenu.backRequested() }
-            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
+
+        Primitives.IconButton {
+            icon: ""
+            onClicked: wifiMenu.backRequested()
         }
         QsText { text: "Wi-Fi Networks"; font.family: Vars.fontFamily; font.pixelSize: 24; setWeight: Font.Bold; color: Theme.on_surface; Layout.fillWidth: true }
-        
-        // Master Toggle Switch
-        Rectangle {
-            antialiasing: true
-            width: 56; height: 32; radius: 16
-            color: Networking.wifiEnabled ? (Vars.tColorSelected(Theme.primary)) : (Vars.tColor(Theme.surface_variant, Vars.componentOpacity))
-            Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-            Rectangle {
-                antialiasing: true
-                width: 24; height: 24; radius: 12
-                color: Networking.wifiEnabled ? Theme.on_primary : Theme.on_surface_variant
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left; anchors.leftMargin: Networking.wifiEnabled ? 28 : 4
-                Behavior on anchors.leftMargin { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-            }
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Networking.wifiEnabled = !Networking.wifiEnabled }
+
+        Primitives.ToggleSwitch {
+            checked: Networking.wifiEnabled
+            onToggled: Networking.wifiEnabled = !Networking.wifiEnabled
         }
     }
 
@@ -76,29 +61,22 @@ ColumnLayout {
 
             Repeater {
                 model: wifiMenu.wifiDevice ? wifiMenu.wifiDevice.networks.values : []
-                delegate: Rectangle {
-                    antialiasing: true
+                delegate: Primitives.GroupedListItem {
                     Layout.fillWidth: true; Layout.preferredHeight: 64
-                    property real baseRadius: Vars.radiusLarge
-                    property real edgeRadius: 4
-                    property bool isFirst: index === 0
-                    property bool isLast: index === (wifiMenu.wifiDevice ? wifiMenu.wifiDevice.networks.values.length - 1 : 0)
+                    isFirst: index === 0
+                    isLast: index === (wifiMenu.wifiDevice ? wifiMenu.wifiDevice.networks.values.length - 1 : 0)
+                    selected: modelData.connected
+                    onClicked: {
+                        if (modelData.connected) {
+                            modelData.disconnect();
+                        } else {
+                            modelData.connect();
+                        }
+                    }
 
-                    topLeftRadius: isFirst ? baseRadius : edgeRadius
-                    topRightRadius: isFirst ? baseRadius : edgeRadius
-                    bottomLeftRadius: isLast ? baseRadius : edgeRadius
-                    bottomRightRadius: isLast ? baseRadius : edgeRadius
-
-                    Behavior on topLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    Behavior on topRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    Behavior on bottomLeftRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    Behavior on bottomRightRadius { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    color: modelData.connected ? (Vars.tColorSelected(Theme.secondary_container)) : (wifiMouse.pressed ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.12) : (wifiMouse.containsMouse ? Qt.rgba(Theme.on_surface.r, Theme.on_surface.g, Theme.on_surface.b, 0.08) : (Vars.tColor(Theme.surface_container_low, Vars.componentOpacity))))
-                    Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
-                    
                     RowLayout {
                         anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 16; spacing: 12
-                        
+
                         Rectangle {
                             Layout.preferredWidth: 40; Layout.preferredHeight: 40
                             radius: modelData.connected ? 12 : 20
@@ -114,40 +92,29 @@ ColumnLayout {
                                 font.hintingPreference: Font.PreferNoHinting
                                 color: modelData.connected ? Theme.on_primary : Theme.on_surface_variant
                                 text: {
-                                    if (modelData.signalStrength === undefined) return "\ue63e";
+                                    if (modelData.signalStrength === undefined) return "";
                                     let tier = Math.min(Math.floor(modelData.signalStrength / 25), 3);
-                                    return ["\ue1ba", "\uebe4", "\uebd6", "\ue1d8"][tier] || "\ue63e";
+                                    return ["", "", "", ""][tier] || "";
                                 }
                                 Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             }
                         }
-                        
+
                         ColumnLayout {
                             Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter; spacing: 0
-                            QsText { 
+                            QsText {
                                 text: modelData.name; font.family: Vars.fontFamily; font.pixelSize: 14; setWeight: Font.Bold
                                 color: modelData.connected ? Theme.on_surface : Theme.on_surface_variant
                                 Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             }
-                            QsText { 
+                            QsText {
                                 text: modelData.connected ? "Connected" : "Available"; font.family: Vars.fontFamily; font.pixelSize: 12; opacity: 0.8
                                 color: Theme.on_surface_variant
                                 Behavior on color { ColorAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customStandard } }
                             }
                         }
-                        
+
                         Item { Layout.fillWidth: true } // Spacer pushes everything to the left
-                    }
-                    MouseArea {
-                        id: wifiMouse
-                        anchors.fill: parent; cursorShape: Qt.PointingHandCursor; hoverEnabled: true
-                        onClicked: {
-                            if (modelData.connected) {
-                                modelData.disconnect();
-                            } else {
-                                modelData.connect();
-                            }
-                        }
                     }
                 }
             }

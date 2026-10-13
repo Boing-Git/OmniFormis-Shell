@@ -150,10 +150,10 @@ ColumnLayout {
 
         onDropped: function(drop) {
             if (drop.source && drop.source.moduleId) {
+                // deactivateModule() already persists via saveLayout() when it finds a match
                 moduleStashContainer.moduleGridRoot.deactivateModule(drop.source.moduleId);
                 drop.accept();
             }
-            moduleStashContainer.moduleGridRoot.saveLayout();
         }
 
         Rectangle {

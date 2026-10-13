@@ -11,7 +11,7 @@ Item {
 
     property bool isVertical: Vars.pillPosition === "Left" || Vars.pillPosition === "Right"
     width: isVertical ? 40 : (overlayVisible ? workspaceLayout.implicitWidth + Vars.spacingLarge : 100)
-    height: isVertical ? (overlayVisible ? workspaceLayout.implicitHeight + Vars.spacingLarge : 100) : 40
+    height: isVertical ? (overlayVisible ? workspaceLayout.implicitHeight + Vars.spacingLarge : 100) : Vars.clockPillThickness
 
     Behavior on width {
         enabled: !mainContainer.gameMode
@@ -153,8 +153,12 @@ Item {
                 topRightRadius: targetRad
                 bottomLeftRadius: targetRad
                 bottomRightRadius: targetRad
-                implicitWidth: mainContainer.isVertical ? 32 : (isFocused ? 50 : 32)
-                implicitHeight: mainContainer.isVertical ? (isFocused ? 50 : 32) : 32
+                // Scaled to the same ratio ClockPill grew by (Vars.clockPillThickness / the old
+                // fixed 40px pill height), so the dots fill the taller pill instead of leaving
+                // a lot of empty padding around unchanged 32/50px dots.
+                readonly property real sizeScale: Vars.clockPillThickness / 40
+                implicitWidth: mainContainer.isVertical ? 32 * sizeScale : (isFocused ? 50 * sizeScale : 32 * sizeScale)
+                implicitHeight: mainContainer.isVertical ? (isFocused ? 50 * sizeScale : 32 * sizeScale) : 32 * sizeScale
 
                 Behavior on implicitWidth {
                     enabled: !mainContainer.gameMode
@@ -186,7 +190,7 @@ Item {
 
                 QsText {
                     font.family: Vars.fontFamily
-                    font.pixelSize: 14
+                    font.pixelSize: 14 * wsItem.sizeScale
                     setWeight: isFocused ? 600 : 500
                     anchors.centerIn: parent
                     text: wsId

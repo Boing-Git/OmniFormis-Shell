@@ -67,12 +67,16 @@ done
 echo "Done! Theme is now set to '$SELECTED_THEME' in '$MODE' mode."
 
 # Update VSCodium Matugen theme
-VSCODIUM_THEME_FILE="$HOME/.antigravity/extensions/haikalllp.matugen-theme-1.0.2-universal/themes/matugen.json"
-if [ -f "$CURRENT_DIR/vscodium.json" ]; then
+# VSCodium reads this via workbench.colorCustomizations.import (vscodium.nix) instead of a
+# theme extension: home-manager installs extensions read-only from the Nix store, so an
+# extension that needs an external tool to overwrite one of its own files (the old
+# haikalllp.matugen-theme approach) can never actually update under this setup.
+VSCODIUM_THEME_FILE="$HOME/.config/vscodium/colors.json"
+if [ -f "$CURRENT_DIR/vscodium-colors.json" ]; then
     mkdir -p "$(dirname "$VSCODIUM_THEME_FILE")"
     rm -f "$VSCODIUM_THEME_FILE"
-    ln -sf "$CURRENT_DIR/vscodium.json" "$VSCODIUM_THEME_FILE"
-    echo "Linked vscodium.json to VSCodium Matugen theme"
+    ln -sf "$CURRENT_DIR/vscodium-colors.json" "$VSCODIUM_THEME_FILE"
+    echo "Linked vscodium-colors.json to $VSCODIUM_THEME_FILE"
 fi
 
 # Update Starship theme

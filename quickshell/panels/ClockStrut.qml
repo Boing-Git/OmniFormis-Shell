@@ -18,7 +18,7 @@ PanelWindow {
         if (strutWindow.pillPos === "Left" || strutWindow.pillPos === "Right") {
             return 48 + margin;
         } else {
-            return 40 + margin;
+            return Vars.clockPillThickness + margin;
         }
     }
 
