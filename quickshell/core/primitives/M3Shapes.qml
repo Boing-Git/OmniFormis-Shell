@@ -47,6 +47,39 @@ QtObject {
         return m3AbstractPaths[shapeName] || m3AbstractPaths["Circle"];
     }
 
+    // Re-emits an abstract path with every coordinate scaled about the shape's own (50,50)
+    // center — used to build an enlarged copy of a shape's outline (e.g. for a drop shadow ring)
+    // that still shares the exact same silhouette, rather than approximating it with a stroke.
+    function scalePath(pathStr, factor) {
+        var tokens = pathStr.match(/[A-Za-z]|[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?/g);
+        if (!tokens) return pathStr;
+        function s(v) { return (50 + (parseFloat(v) - 50) * factor).toFixed(3); }
+        var out = "";
+        var i = 0;
+        while (i < tokens.length) {
+            var cmd = tokens[i];
+            if (cmd === 'M' || cmd === 'L') {
+                out += cmd + s(tokens[i + 1]) + " " + s(tokens[i + 2]);
+                i += 3;
+            } else if (cmd === 'C') {
+                out += cmd + s(tokens[i + 1]) + " " + s(tokens[i + 2]) + " " + s(tokens[i + 3]) + " " + s(tokens[i + 4]) + " " + s(tokens[i + 5]) + " " + s(tokens[i + 6]);
+                i += 7;
+            } else if (cmd === 'H') {
+                out += cmd + s(tokens[i + 1]);
+                i += 2;
+            } else if (cmd === 'V') {
+                out += cmd + s(tokens[i + 1]);
+                i += 2;
+            } else if (cmd === 'Z' || cmd === 'z') {
+                out += 'Z';
+                i += 1;
+            } else {
+                i += 1;
+            }
+        }
+        return out;
+    }
+
     // Walks an abstract path's M/L/C/H/V commands and returns a dense set of points along its
     // outline (bezier curves subdivided into `steps` segments each) — the shared groundwork both
     // getShapePeaks (find the spikes) and getOutlinePoints (sample evenly by angle) build on.
@@ -153,5 +186,128 @@ QtObject {
             result.push({ x: 50 + dirX * bestT, y: 50 + dirY * bestT });
         }
         return result;
+    }
+
+    // Re-expresses an abstract path (0-100, centered on 50,50) as a path in real pixel units,
+    // centered on the origin (0,0) instead — i.e. "this shape, sized to fit a w x h box, as if
+    // drawn around its own center". Used so a widget's shadow can trace its exact M3 shape rather
+    // than approximating it with a rounded rect.
+    function pathForBox(shapeName, w, h) {
+        var tokens = getPath(shapeName).match(/[A-Za-z]|[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?/g);
+        if (!tokens) return "";
+        function sx(v) { return ((parseFloat(v) - 50) / 100 * w).toFixed(3); }
+        function sy(v) { return ((parseFloat(v) - 50) / 100 * h).toFixed(3); }
+        var out = "";
+        var i = 0;
+        while (i < tokens.length) {
+            var cmd = tokens[i];
+            if (cmd === 'M' || cmd === 'L') {
+                out += cmd + sx(tokens[i + 1]) + " " + sy(tokens[i + 2]);
+                i += 3;
+            } else if (cmd === 'C') {
+                out += cmd + sx(tokens[i + 1]) + " " + sy(tokens[i + 2]) + " " + sx(tokens[i + 3]) + " " + sy(tokens[i + 4]) + " " + sx(tokens[i + 5]) + " " + sy(tokens[i + 6]);
+                i += 7;
+            } else if (cmd === 'H') {
+                out += cmd + sx(tokens[i + 1]);
+                i += 2;
+            } else if (cmd === 'V') {
+                out += cmd + sy(tokens[i + 1]);
+                i += 2;
+            } else if (cmd === 'Z' || cmd === 'z') {
+                out += 'Z';
+                i += 1;
+            } else {
+                i += 1;
+            }
+        }
+        return out;
+    }
+
+    // A true outward offset (parallel curve) of an abstract path, sized to a w x h box and
+    // centered on the origin — unlike scaling the path up from its center, which moves a sharp
+    // corner radially outward by far more than it moves a flat edge (a corner near the shape's
+    // own center barely grows at all when scaled, while one far from center shoots outward),
+    // producing spiky overshoot artifacts at a shape's corners/notches instead of a halo that
+    // evenly hugs the outline. This instead samples the outline into many points and nudges each
+    // one by `distance` along its own local outward normal — the same offset everywhere along the
+    // edge, corners included, which is what an even, edge-hugging shadow actually needs.
+    function offsetPathForBox(shapeName, w, h, distance) {
+        var poly = samplePath(getPath(shapeName), 10);
+        var n = poly.length;
+        if (n < 3) return "";
+        var pts = [];
+        for (var i = 0; i < n; i++) {
+            pts.push({ x: (poly[i].x - 50) / 100 * w, y: (poly[i].y - 50) / 100 * h });
+        }
+        var out = [];
+        for (var j = 0; j < n; j++) {
+            var prev = pts[(j - 1 + n) % n];
+            var next = pts[(j + 1) % n];
+            var tx = next.x - prev.x, ty = next.y - prev.y;
+            var tlen = Math.max(0.0001, Math.hypot(tx, ty));
+            tx /= tlen;
+            ty /= tlen;
+            var nx = ty, ny = -tx; // tangent rotated 90°; flipped below if it points inward
+            var p = pts[j];
+            if (nx * p.x + ny * p.y < 0) {
+                nx = -nx;
+                ny = -ny;
+            }
+            out.push({ x: p.x + nx * distance, y: p.y + ny * distance });
+        }
+        var d = "M" + out[0].x.toFixed(3) + "," + out[0].y.toFixed(3);
+        for (var k = 1; k < n; k++) d += " L" + out[k].x.toFixed(3) + "," + out[k].y.toFixed(3);
+        d += " Z";
+        return d;
+    }
+
+    // A rounded rect's own outline, as an SVG path centered on the origin (0,0) — the same
+    // coordinate convention as pathForBox, so a widget's shadow can treat a plain rounded-rect
+    // card and an M3 path shape identically once it has one of these path strings in hand.
+    function roundedRectPath(w, h, topLeftR, topRightR, bottomRightR, bottomLeftR) {
+        var hw = w / 2, hh = h / 2;
+        var maxR = Math.max(0, Math.min(hw, hh));
+        var tl = Math.max(0, Math.min(topLeftR, maxR));
+        var tr = Math.max(0, Math.min(topRightR, maxR));
+        var br = Math.max(0, Math.min(bottomRightR, maxR));
+        var bl = Math.max(0, Math.min(bottomLeftR, maxR));
+        function f(v) { return v.toFixed(3); }
+        return "M" + f(-hw + tl) + "," + f(-hh) + " " + "H" + f(hw - tr) + " " + "A" + f(tr) + "," + f(tr) + " 0 0 1 " + f(hw) + "," + f(-hh + tr) + " " + "V" + f(hh - br) + " " + "A" + f(br) + "," + f(br) + " 0 0 1 " + f(hw - br) + "," + f(hh) + " " + "H" + f(-hw + bl) + " " + "A" + f(bl) + "," + f(bl) + " 0 0 1 " + f(-hw) + "," + f(hh - bl) + " " + "V" + f(-hh + tl) + " " + "A" + f(tl) + "," + f(tl) + " 0 0 1 " + f(-hw + tl) + "," + f(-hh) + " Z";
+    }
+
+    // Scales any path already expressed in origin-centered coordinates (pathForBox or
+    // roundedRectPath's output) about that same origin — enlarging it in place without shifting
+    // its center, which is exactly what a drop-shadow ring needs.
+    function scaleCentered(pathStr, factor) {
+        var tokens = pathStr.match(/[A-Za-z]|[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?/g);
+        if (!tokens) return pathStr;
+        function s(v) { return (parseFloat(v) * factor).toFixed(3); }
+        var out = "";
+        var i = 0;
+        while (i < tokens.length) {
+            var cmd = tokens[i];
+            if (cmd === 'M' || cmd === 'L') {
+                out += cmd + s(tokens[i + 1]) + " " + s(tokens[i + 2]);
+                i += 3;
+            } else if (cmd === 'C') {
+                out += cmd + s(tokens[i + 1]) + " " + s(tokens[i + 2]) + " " + s(tokens[i + 3]) + " " + s(tokens[i + 4]) + " " + s(tokens[i + 5]) + " " + s(tokens[i + 6]);
+                i += 7;
+            } else if (cmd === 'H') {
+                out += cmd + s(tokens[i + 1]);
+                i += 2;
+            } else if (cmd === 'V') {
+                out += cmd + s(tokens[i + 1]);
+                i += 2;
+            } else if (cmd === 'A') {
+                out += cmd + s(tokens[i + 1]) + " " + s(tokens[i + 2]) + " " + tokens[i + 3] + " " + tokens[i + 4] + " " + tokens[i + 5] + " " + s(tokens[i + 6]) + " " + s(tokens[i + 7]);
+                i += 8;
+            } else if (cmd === 'Z' || cmd === 'z') {
+                out += 'Z';
+                i += 1;
+            } else {
+                i += 1;
+            }
+        }
+        return out;
     }
 }

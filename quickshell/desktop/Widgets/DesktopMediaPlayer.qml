@@ -5,6 +5,7 @@ import QtCore
 import "../.."
 import "../../panels/ControlCenter" as CC
 import "../../theme"
+import "../../core/primitives" as Primitives
 
 PanelWindow {
     id: window
@@ -95,6 +96,16 @@ PanelWindow {
         Behavior on height { NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.OutCubic } }
         Behavior on x { enabled: window.anchorEnabled; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
         Behavior on y { enabled: window.anchorEnabled; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+
+        Primitives.ShapeDropShadow {
+            targetWidth: playerContainer.width - 48
+            targetHeight: playerContainer.height - 48
+            // Matches CC.MediaPlayer's own rootMaskShape.targetRad
+            topLeftRadius: 32
+            topRightRadius: 32
+            bottomLeftRadius: 32
+            bottomRightRadius: 32
+        }
 
         Loader {
             id: playerLoader

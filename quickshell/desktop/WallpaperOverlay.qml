@@ -7,6 +7,7 @@ import ".."
 import QtCore
 import "Variables"
 import "../theme"
+import "../core/primitives" as Primitives
 
 PanelWindow {
     id: root
@@ -260,6 +261,27 @@ PanelWindow {
             }
         }
 
+        // 5.5 Drop Shadow — cast by the wallpaper's own edge onto the surrounding mask surface
+        // (outside the hole, never over the wallpaper itself), so the wallpaper reads as a raised
+        // layer the mask casts a shadow away from, rather than a flat cutout.
+        Item {
+            x: maskBounds.x
+            y: maskBounds.y
+            width: maskBounds.width
+            height: maskBounds.height
+            scale: maskBounds.scale
+
+            Primitives.ShapeDropShadow {
+                targetWidth: parent.width
+                targetHeight: parent.height
+                m3ShapeName: maskBounds.currentPathName
+                shapeRotation: maskBounds.shapeRotation
+                peakOpacity: 0.45
+                reach: 0.09
+                shadowEnabled: !Vars.lowSpec && root.currentMaskEnabled
+            }
+        }
+
         // 6. Inner Shadow SVG
         Item {
             id: shadowStrokeContainer
@@ -410,73 +432,5 @@ PanelWindow {
             }
         }
 
-        // 8. Solid Border SVG
-        Item {
-            id: borderStrokeContainer
-            anchors.fill: parent
-            layer.enabled: true
-            layer.smooth: true
-            layer.samples: Vars.layerSamples
-            visible: false
-
-            Item {
-                x: maskBounds.x
-                y: maskBounds.y
-                width: maskBounds.width
-                height: maskBounds.height
-                scale: maskBounds.scale
-
-                Item {
-                    anchors.centerIn: parent
-                    property real scaleFactor: Math.min(4, 4096 / Math.max(parent.width, parent.height, 1))
-                    width: parent.width * scaleFactor
-                    height: parent.height * scaleFactor
-                    scale: 1.0 / scaleFactor
-
-                    Image {
-                        anchors.fill: parent
-                        sourceSize.width: width
-                        sourceSize.height: height
-                        smooth: true
-                        antialiasing: true
-                        mipmap: true
-                        asynchronous: true
-                        property string path: m3.getPath(maskBounds.previousPathName)
-                        source: Vars.lowSpec ? "" : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='none' stroke='white' stroke-width='2'/></svg>"
-                        opacity: 1.0 - maskBounds.morphProgress
-                        rotation: maskBounds.shapeRotation
-                    }
-                    Image {
-                        anchors.fill: parent
-                        sourceSize.width: width
-                        sourceSize.height: height
-                        smooth: true
-                        antialiasing: true
-                        mipmap: true
-                        asynchronous: true
-                        property string path: m3.getPath(maskBounds.currentPathName)
-                        source: Vars.lowSpec ? "" : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='" + path + "' fill='none' stroke='white' stroke-width='2'/></svg>"
-                        opacity: maskBounds.morphProgress
-                    }
-                }
-            }
-        }
-
-        // 9. Solid Border Blended
-        MultiEffect {
-            z: 101
-            anchors.fill: parent
-            source: borderStrokeContainer
-            colorizationColor: bgRect.color
-            colorization: 1.0
-            opacity: root.currentMaskEnabled ? 1.0 : 0.0
-            visible: opacity > 0
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: 500
-                    easing.type: Easing.InOutQuad
-                }
-            }
-        }
     }
 }

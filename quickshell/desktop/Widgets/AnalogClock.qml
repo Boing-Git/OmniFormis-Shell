@@ -5,6 +5,7 @@ import QtQuick.Shapes
 import "../../"
 import Quickshell
 import "../../theme"
+import "../../core/primitives" as Primitives
 
 Item {
     id: root
@@ -47,6 +48,15 @@ Item {
 
     M3Shapes {
         id: m3
+    }
+
+    // The clock face is an M3 path shape (Sunny, Circle, Flower, ...) — this traces that exact
+    // same shape/path for the shadow, so spikes and petals get their own halo instead of a
+    // generic round approximation.
+    Primitives.ShapeDropShadow {
+        targetWidth: root.width
+        targetHeight: root.height
+        m3ShapeName: root.currentClockShape
     }
 
     Image {

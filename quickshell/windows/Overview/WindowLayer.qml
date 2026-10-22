@@ -223,8 +223,8 @@ Item {
                 source: preview
                 maskEnabled: true
                 maskSource: previewMask
-                maskThresholdMin: 0.0
-                maskSpreadAtMin: 1.0
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 0.1
             }
 
             // Simple Hover interaction overlay

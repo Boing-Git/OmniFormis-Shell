@@ -190,22 +190,14 @@ PanelWindow {
 
     Item {
         id: clockHoverZone
-        // x/y are computed as one atomic expression per axis instead of six independently
-        // toggled anchor lines, so a pillPos change (e.g. Left -> Top) can't leave this item
-        // part-anchored to the old edge while the other axis has already moved to the new one.
-        width: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? 18 : clockPill.width
-        height: (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") ? clockPill.height : 18
-        x: {
-            if (topWindow.pillPos === "Left") return 0;
-            if (topWindow.pillPos === "Right") return parent.width - width;
-            return (parent.width - width) / 2;
-        }
-        y: {
-            if (topWindow.pillPos === "Bottom") return parent.height - height;
-            if (topWindow.pillPos === "Left" || topWindow.pillPos === "Right") return (parent.height - height) / 2;
-            return 0;
-        }
-        
+        // Mirrors clockPill's own geometry directly instead of recomputing it independently, so
+        // the hover zone can never drift from the pill's actual rendered bounds (e.g. by missing
+        // defaultEdgeMargin or guessing its cross-axis thickness).
+        width: clockPill.width
+        height: clockPill.height
+        x: clockPill.x - clockPill.width / 2
+        y: clockPill.y - clockPill.heigth / 2
+
         MouseArea {
             id: clockHoverArea
             anchors.fill: parent

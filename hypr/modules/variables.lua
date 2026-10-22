@@ -147,7 +147,7 @@ local vars = {
 
     -- Animation Style
     -- Select animation style for hyprland ("expressive", "spring", "jelly", "flyingcards", "snappy", "cinematic", "minimal", "fluid", "aggressive", "elegant", "playful", "elastic", "swift", "relaxed", "slipstream", "standard", "fluent", "custom", "none")
-    AnimateStyle = "elegant",
+    AnimateStyle = "minimal",
     
     -- --- Custom Animation Profile ---
     

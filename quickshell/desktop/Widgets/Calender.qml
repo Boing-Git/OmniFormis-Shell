@@ -1,8 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
-import "../../" 
+import "../../"
 import "../../theme"
+import "../../core/primitives" as Primitives
 Item {
     id: root
     width: 320
@@ -42,6 +43,15 @@ Item {
         } else {
             currentMonth--;
         }
+    }
+
+    Primitives.ShapeDropShadow {
+        targetWidth: root.width
+        targetHeight: root.height
+        topLeftRadius: 24
+        topRightRadius: 24
+        bottomLeftRadius: 24
+        bottomRightRadius: 24
     }
 
     // --- Background ---

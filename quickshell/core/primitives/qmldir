@@ -1,4 +1,5 @@
 module Primitives
+ShapeDropShadow 1.0 ShapeDropShadow.qml
 LoadingIndicator 1.0 LoadingIndicator.qml
 SearchBar 1.0 SearchBar.qml
 QsText 1.0 QsText.qml

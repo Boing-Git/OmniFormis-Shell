@@ -164,6 +164,16 @@ PanelWindow {
             width: gaugeRow.implicitWidth + (backgroundEnabled ? Vars.spacingLarge * 2 : 0)
             height: gaugeRow.implicitHeight + (backgroundEnabled ? Vars.spacingLarge * 2 : 0)
 
+            Primitives.ShapeDropShadow {
+                targetWidth: card.width
+                targetHeight: card.height
+                shadowEnabled: card.backgroundEnabled
+                topLeftRadius: Vars.radiusLarge
+                topRightRadius: Vars.radiusLarge
+                bottomLeftRadius: Vars.radiusLarge
+                bottomRightRadius: Vars.radiusLarge
+            }
+
             // A plain rounded rect, like every other card in the shell — an M3-shape image (the
             // "Puffy" cookie used for small square icon badges elsewhere) stretches and distorts
             // when forced into a non-square card, which is what happened here before.

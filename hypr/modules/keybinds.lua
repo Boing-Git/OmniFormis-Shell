@@ -19,7 +19,7 @@ return {
     -- Open the code editor
     EditorBind = "$MM + X",
     -- Open the file manager
-    FilesBind = "$MM + B",
+    FilesBind = "$MM + P",
     -- Open the file context menu for the copied file
     OmniActionBind = "$MM + O",
 
@@ -175,9 +175,9 @@ return {
     -- Lower the display brightness with the volume key
     BrightnessDownBind = "$QM + XF86AudioLowerVolume",
     -- Raise the display brightness with the scroll wheel
-    BrightnessUpScrollBind = "$QM + mouse_up",
+    BrightnessUpScrollBind = "",
     -- Lower the display brightness with the scroll wheel
-    BrightnessDownScrollBind = "$QM + mouse_down",
+    BrightnessDownScrollBind = "",
     -- Raise the display brightness with the laptop brightness key
     BrightnessUpKeyBind = "XF86MonBrightnessUp",
     -- Lower the display brightness with the laptop brightness key

@@ -326,6 +326,16 @@ PanelWindow {
                 ? Math.min(actualRingExtent + Vars.spacingMedium, Math.min(width, height) / 2)
                 : Vars.radiusLarge
 
+            Primitives.ShapeDropShadow {
+                targetWidth: card.width
+                targetHeight: card.height
+                shadowEnabled: card.backgroundEnabled
+                topLeftRadius: card.backgroundRadius
+                topRightRadius: card.backgroundRadius
+                bottomLeftRadius: card.backgroundRadius
+                bottomRightRadius: card.backgroundRadius
+            }
+
             Primitives.SquircleMask {
                 anchors.fill: parent
                 visible: card.backgroundEnabled

@@ -13,7 +13,7 @@ Item {
     // Same value as contentGrid's own spacing below, so the clock-to-icon gap and the two edge
     // margins read as one consistent rhythm instead of a cramped inner gap between two much
     // wider outer ones.
-    property int contentGap: 14
+    property int contentGap: 5
     // Rounded up to an even number so (width - contentGrid.implicitWidth) always splits into two
     // equal integer-pixel margins instead of occasionally leaving left and right a pixel off.
     width: isVertical ? Math.max(48, contentGrid.implicitWidth + 24) : (Math.ceil((contentGrid.implicitWidth + contentGap * 2) / 2) * 2)
@@ -89,12 +89,16 @@ Item {
         Grid {
             id: contentGrid
             anchors.centerIn: parent
-            spacing: root.isVertical ? 6 : root.contentGap
+            spacing: root.isVertical ? 3 : root.contentGap
             columns: root.isVertical ? 1 : 2
             rows: root.isVertical ? 2 : 1
             horizontalItemAlignment: Grid.AlignHCenter
             verticalItemAlignment: Grid.AlignVCenter
+            rightPadding: 20;
 
+            Primitives.DateStatusIcon {
+                id: dateStatusIcon
+            }   
             QsText {
                 id: clockText
                 font.family: Vars.fontFamily
@@ -105,15 +109,12 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 lineHeight: root.isVertical ? 0.9 : 1.0
             }
-
-            Primitives.DateStatusIcon {
-                id: dateStatusIcon
-            }
         }
 
         MouseArea {
             id: dragArea
             anchors.fill: parent
+            anchors.margins: -6
             hoverEnabled: true
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             cursorShape: Qt.PointingHandCursor
