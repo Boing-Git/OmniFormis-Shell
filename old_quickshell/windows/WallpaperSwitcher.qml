@@ -375,13 +375,15 @@ Item {
         var cmd = "";
         if (settings.matugenScheme === "scheme-auto" || settings.matugenScheme === "auto" || !settings.matugenScheme) {
             // First run matugen immediately for instant feedback, then run auto_scheme_matugen to refine it in background
-            cmd = "matugen image '" + safePath + "' -m " + mode + " -t " + matugenSchemeArg + " --prefer saturation";
+            cmd = "bash ~/Dotfiles/scripts/theme-apply.sh '" + safePath + "' " + matugenSchemeArg + " saturation";
             // We run auto_scheme_matugen.sh in detached process so it doesn't block UI and can update later
             Quickshell.execDetached({
                 command: ["bash", "-c", "sleep 1.5; bash ~/Dotfiles/scripts/auto_scheme_matugen.sh '" + safePath + "' " + mode + "; bash ~/.config/color-schemes/set-theme.sh material-you " + mode + "; nohup bash ~/Dotfiles/scripts/reload.sh >/dev/null 2>&1 &"]
             });
         } else {
-            cmd = "matugen image '" + safePath + "' -m " + mode + " -t " + matugenSchemeArg + " --prefer saturation";
+            // the shared theming script (scripts/theme-apply.sh): the repo's matugen config,
+            // one run at a time, a log and a notification when it fails
+            cmd = "bash ~/Dotfiles/scripts/theme-apply.sh '" + safePath + "' " + matugenSchemeArg + " saturation";
         }
                   
         matugenProc.command = ["bash", "-c", cmd];

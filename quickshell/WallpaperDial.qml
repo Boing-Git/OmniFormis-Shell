@@ -30,7 +30,6 @@ DialDelegate {
     property bool useAwww: true
     property real transitionDuration: 1.2
     property bool useMatugen: true
-    property int matugenColorIndex: Prefs.themeColor
     required property var reelColor
 
     // the holes along the film strip, and the loading spinner
@@ -192,10 +191,8 @@ DialDelegate {
                            "--transition-duration", String(transitionDuration)])
         }
 
-        // --source-color-index stops matugen from prompting (there's no terminal)
-        if (useMatugen)
-            matugenProc.exec(["matugen", "image", path,
-                              "--source-color-index", String(matugenColorIndex)])
+        // the desktop's colours from it (scripts/theme-apply.sh: matugen, never prompting)
+        if (useMatugen) Prefs.applyTheme(path)
         currentPath = path       // the one we just applied is now the current one
         wallpaperSelected(path)
     }
@@ -218,10 +215,6 @@ DialDelegate {
                 if (m && dial.currentPath === "") dial.currentPath = m[1].trim()
             }
         }
-    }
-    Process {
-        id: matugenProc
-        stderr: SplitParser { onRead: data => console.warn("matugen:", data) }
     }
 
     WallpaperLibrary {

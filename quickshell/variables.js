@@ -251,8 +251,14 @@ const lockStatePath = "/home/boing/.local/state/dial-quickshell/locked";
 // so locking never waits for a blur
 const lockCachePath = "/home/boing/.cache/dial-quickshell/lock";
 
-// Which of the wallpaper's colours matugen themes from: 0 = most dominant ... 4
-const matugenColorIndex = 0;
+// What a new wallpaper's colours become (Prefs.themeScheme / themeSource): matugen's scheme
+// type, and which of the wallpaper's colours it starts from ("0".."3": the most common
+// first; or "saturation", "less-saturation", "lightness", "darkness")
+const themeScheme = "scheme-tonal-spot";
+const themeSource = "0";
+
+// the one script every shell themes through (matugen, never prompting, one run at a time)
+const themeApplyScript = "/home/boing/Dotfiles/scripts/theme-apply.sh";
 
 // ── shuffle ──
 

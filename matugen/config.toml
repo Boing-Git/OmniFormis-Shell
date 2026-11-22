@@ -4,7 +4,9 @@ json_format = "hex"
 
 [config.wallpaper]
 command = "awww img --transition-type center --transition-duration 1.5 --transition-bezier 0.05,0.7,0.1,1 '{{ image }}'"
-set = true
+# the shells set the wallpaper themselves (awww, with their own transition): matugen
+# setting it again ran a second transition over theirs
+set = false
 
 [templates.vscode-raw-dark]
 input_path = './templates/dark/vscode'
@@ -129,12 +131,12 @@ post_hook = 'pkill -SIGUSR1 nvim || true'
 [templates.spicetify-dark]
 input_path = './templates/dark/spicetify.ini'
 output_path = '~/.config/color-schemes/material-you/dark/spicetify.ini'
-post_hook = "bash -c 'spicetify config color_scheme MaterialYou && spicetify apply' >/dev/null 2>&1 &"
+post_hook = "sh -c '~/Dotfiles/matugen/post-hook-scripts/spicetify-reload.sh >>${XDG_STATE_HOME:-$HOME/.local/state}/theme-apply/spicetify.log 2>&1 &'"
 
 [templates.spicetify-light]
 input_path = './templates/light/spicetify.ini'
 output_path = '~/.config/color-schemes/material-you/light/spicetify.ini'
-post_hook = "bash -c 'spicetify config color_scheme MaterialYou && spicetify apply' >/dev/null 2>&1 &"
+# (one reload per run is enough: the dark template's hook does it; two raced each other)
 
 [templates.steam-dark]
 input_path = './templates/dark/steam.css'

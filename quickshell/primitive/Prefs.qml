@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import "../variables.js" as Vars
@@ -134,7 +135,45 @@ QtObject {
     property string wallpaperSort: Vars.sortBy
     property bool wallpaperDescending: Vars.sortDescending
     property bool wallpaperShuffle: Vars.shuffle
-    property int themeColor: Vars.matugenColorIndex
+
+    // ── the theme ── what a wallpaper's colours become (Vars.themeApplyScript runs matugen):
+    // the kind of scheme, and which of the wallpaper's colours it starts from
+    property string themeScheme: Vars.themeScheme
+    property string themeSource: Vars.themeSource
+    readonly property var schemeTypes: ["scheme-tonal-spot", "scheme-content", "scheme-expressive", "scheme-fidelity",
+        "scheme-fruit-salad", "scheme-monochrome", "scheme-neutral", "scheme-rainbow", "scheme-vibrant", "scheme-smart"]
+
+    // colours the whole desktop from `image` (the wallpaper dial, and a Scheme or Theme
+    // from change, with the wallpaper on screen). Detached: the script queues runs itself
+    function applyTheme(image) {
+        if (image) Quickshell.execDetached([Vars.themeApplyScript, image, themeScheme, themeSource])
+    }
+
+    // for the chips' dots, from the wallpaper on screen: each scheme's primary, secondary
+    // and tertiary ({ "scheme-vibrant": [..3] }), and the colour each source picks
+    property var schemeDots: ({})
+    property var sourceDots: ({})
+    property Process _preview: Process {
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const schemes = {}, sources = {}
+                for (const line of text.split("\n")) {
+                    const p = line.trim().split(" ")
+                    if (p[0].startsWith("source:")) sources[p[0].slice(7)] = [p[1]]
+                    else if (p.length === 4) schemes[p[0]] = p.slice(1)
+                }
+                root.schemeDots = schemes
+                root.sourceDots = sources
+            }
+        }
+    }
+    function _previewTheme() {
+        if (Backdrop.wallpaper !== "") _preview.exec([Vars.themeApplyScript, "--preview", Backdrop.wallpaper, themeSource].concat(schemeTypes))
+    }
+    property Connections _wallpaperWatch: Connections {
+        target: Backdrop
+        function onWallpaperChanged() { root._previewTheme() }
+    }
 
     // ── worked out from the settings above ──
     // glide level → momentum (DialRotation.momentum); level 8 is the old default, 0.98
@@ -376,9 +415,20 @@ QtObject {
           help: "Z to A, newest first, biggest first." },
         { key: "wallpaperShuffle", group: "Wallpaper", label: "Shuffle", icon: "shuffle", type: "bool",
           help: "A fixed scramble on top of the order." },
-        { key: "themeColor", group: "Wallpaper", label: "Theme colour", icon: "palette", type: "number", min: 0, max: 4, step: 1,
-          help: "Which of the wallpaper's colours the theme is made from. 0: the most dominant." }
+        { key: "themeScheme", group: "Wallpaper", label: "Scheme", icon: "palette", type: "choice",
+          options: schemeTypes.map(t => ({ value: t, label: _schemeLabel(t), colors: schemeDots[t] || [] })),
+          help: "How the wallpaper's colour becomes the desktop's colours. Each chip shows its own, from this wallpaper." },
+        { key: "themeSource", group: "Wallpaper", label: "Theme from", icon: "colorize", type: "choice",
+          options: [{ value: "0", label: "Main colour" }, { value: "1", label: "2nd colour" }, { value: "2", label: "3rd colour" },
+                    { value: "3", label: "4th colour" }, { value: "saturation", label: "Most vivid" },
+                    { value: "less-saturation", label: "Most muted" }, { value: "lightness", label: "Lightest" },
+                    { value: "darkness", label: "Darkest" }].map(o => Object.assign(o, { colors: sourceDots[o.value] || [] })),
+          help: "Which of the wallpaper's colours the theme starts from. Each chip shows the colour it picks." }
     ]
+    function _schemeLabel(t) {
+        const s = t.replace("scheme-", "").replace("-", " ")
+        return s.charAt(0).toUpperCase() + s.slice(1)
+    }
 
     // every setting, with a Preset choice first in each group that has presets
     readonly property var schema: {
@@ -530,6 +580,11 @@ QtObject {
             revision++
             _rememberCustom(e.group)
             _save()
+
+            // a new scheme or source recolours the desktop now, from the wallpaper on screen
+            // (here, not on the property: loading the saved settings must not re-theme)
+            if (key === "themeScheme" || key === "themeSource") applyTheme(Backdrop.wallpaper)
+            if (key === "themeSource") _previewTheme()
         }
         return ""
     }
@@ -610,6 +665,13 @@ QtObject {
                 if (n.translucent === true && !(k in n)) n[k] = was[k]
                 else if (n.translucent !== true) delete n[k]
             delete n.translucent
+            changed = true
+        }
+
+        // Theme colour (an index, 0..4, where 4 always failed: matugen takes 0..3) → Theme from
+        if ("themeColor" in n) {
+            n.themeSource = String(Math.max(0, Math.min(3, Math.round(Number(n.themeColor)) || 0)))
+            delete n.themeColor
             changed = true
         }
         return { settings: n, changed: changed }
