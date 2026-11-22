@@ -96,6 +96,10 @@ QtObject {
     property real knobGemSize: 42
     property real knobIconSize: 22
     property real knobNumberSize: 13
+
+    // how much the gem and its icon grow while the mouse is on the knob (px)
+    property real knobGemHoverGrow: 10
+    property real knobIconHoverGrow: 8
     property string volumeGemShape: "12SidedCookie"
     property string brightnessGemShape: "Sunny"
 

@@ -302,7 +302,10 @@ Item {
 
     Shape {
         id: gem
-        width: root.cfg.knobGemSize          // hoverArea.hovered ? root.cfg.knobGemSize + 10 : root.cfg.knobGemSize do this 
+        // grows while the mouse is on the knob (`hot`, from the control center: a MouseArea
+        // here would take the drags and the wheel the dial hands the knob). Centred, since
+        // x / y take half the width off
+        width: root.cfg.knobGemSize + (root.hot ? root.cfg.knobGemHoverGrow : 0)
         height: width
         x: root.dial.centerX + root.radius * Math.cos(root.dial.midDeg * Math.PI / 180) - width / 2
         y: root.dial.centerY + root.radius * Math.sin(root.dial.midDeg * Math.PI / 180) - height / 2
@@ -310,22 +313,8 @@ Item {
         scale: root.popScale * root.stretchScale
         preferredRendererType: Shape.CurveRenderer
 
-        // Behavior on width {
-        //     NumberAnimation { 
-        //         duration: Vars.m3eCurves.fastEffects.duration
-        //         easing.type: Easing.BezierSpline
-        //         easing.bezierCurve: Vars.m3eCurves.fastEffects.bezier
-        //     }
-        // }
-
-        // MouseArea {
-        //     id: hoverArea
-        //     anchors.fill: parent
-        //     hoverEnabled: true
-        //     property bool hovered: false
-        //     onEntered: hovered = true
-        //     onExited: hovered = false
-        // }
+        // a size is a spatial move: the fast spatial curve (calm with Bounce 0)
+        Behavior on width { NumberAnimation { duration: Prefs.fastSpatial.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Prefs.fastSpatial.bezier } }
 
         ShapePath {
             strokeColor: "transparent"
@@ -340,7 +329,9 @@ Item {
     SymbolIcon {
         anchors.centerIn: gem
         text: root.level.icon
-        size:  root.cfg.knobIconSize // hoverArea.hovered ? root.cfg.knobIconSize + 8 :
+        // grows with the gem (on the way out, as the number takes its place)
+        size: root.cfg.knobIconSize + (root.hot ? root.cfg.knobIconHoverGrow : 0)
+        Behavior on size { NumberAnimation { duration: Prefs.fastSpatial.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Prefs.fastSpatial.bezier } }
         filled: true
         rotation: root.shake
         scale: root.popScale * root.stretchScale
