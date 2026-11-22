@@ -18,3 +18,9 @@ local vars = require("modules.variables")
     hl.exec_cmd("qs")
     hl.exec_cmd("hypridle")
  end)
+
+-- A monitor that comes back (a DisplayPort monitor does after a suspend or a long sleep) got
+-- a black wallpaper: awww-daemon paints a new output black until it is told to restore
+hl.on("monitor.added", function ()
+    hl.exec_cmd("sleep 1 && awww restore")
+end)
