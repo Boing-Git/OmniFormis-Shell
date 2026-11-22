@@ -338,7 +338,7 @@ PanelWindow {
             else if (overGap) currentControl.gapClick()
             else if (overVolume) volume.toggleMute()
             else if (overBrightness) { /* nothing to switch: scroll it */ }
-            else if (overInner) { if (subItems.length > 0) subItems[ring2.selectedIndex].activate() }
+            else if (overInner) { if (subItems.length > 0) subItems[ring2.wrap(spin2.heading)].activate() }
             else controls[selectedControl].toggle()
             dial.open = true
         }
@@ -346,7 +346,7 @@ PanelWindow {
         // right-click / Delete on the inner ring: the device's second action (e.g. forget)
         onSecondaryActivated: {
             if (!overInner && hovered) return
-            const it = subItems[ring2.selectedIndex]
+            const it = subItems[ring2.wrap(spin2.heading)]
             if (it && it.secondary) it.secondary()
         }
 

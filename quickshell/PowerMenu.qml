@@ -45,7 +45,8 @@ PanelWindow {
         // Lock hands over to the lock screen (lock/): its sheet grows on from this dial's
         // size, out of this spot. The rest run their command
         onActivated: {
-            const e = powerItems[ring.selectedIndex]
+            // the item the ring is settling on, not one passing the mark mid-spin
+            const e = powerItems[ring.wrap(spin.heading)]
             if (e.lock && Dials.lock) Dials.lock.lock(dial.currentSize)
             else runner.exec(e.command)
         }

@@ -55,7 +55,9 @@ PanelWindow {
         // launch the app at the 45° mark
         onActivated: applySelected()
         function applySelected() {
-            if (apps.length > 0) apps[ring.selectedIndex].entry.execute()
+            // the app the ring is turning to, not the one passing the mark mid-spin (a search
+            // spins to its match, and Enter often comes before the ring gets there)
+            if (apps.length > 0) apps[ring.wrap(spin.heading)].entry.execute()
             open = false             // close the dial (content fades out, then it shrinks)
         }
 

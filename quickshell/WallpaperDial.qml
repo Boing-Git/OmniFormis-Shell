@@ -180,7 +180,7 @@ DialDelegate {
     onSecondaryActivated: if (searchText !== "") { searching = true; searchBar.backspace(); searchBar.focusInput() }
     onOpenChanged: if (!open) searching = false
     function applySelected() {
-        const path = wallpapers.selectedPath
+        const path = wallpapers.targetPath
         if (path === "") return
         if (useAwww) {
             // grow out of the dial: "top-left", ... on a corner, "top", ... on an edge

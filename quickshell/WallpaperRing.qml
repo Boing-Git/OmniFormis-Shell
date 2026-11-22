@@ -84,6 +84,10 @@ Item {
     // plain filesystem path, for command-line tools
     readonly property string selectedPath: decodeURIComponent(selectedUrl.toString().replace(/^file:\/\//, ""))
 
+    // the wallpaper the ring is turning to (a search spins to its match): what Enter applies,
+    // even mid-spin
+    readonly property string targetPath: library ? decodeURIComponent(String(library.urlAt(rotation.heading)).replace(/^file:\/\//, "")) : ""
+
     function scrollBy(dir) { rotation.scrollBy(dir) }    // -1 / +1
     function dragBy(deg) { rotation.dragBy(deg) }
     function fling(speed) { rotation.fling(speed) }
