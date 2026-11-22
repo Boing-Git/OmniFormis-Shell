@@ -346,7 +346,18 @@ fn apply(key: &str, compute: impl FnOnce(&HyprVarInfo) -> Result<String, String>
         }
         let updated = update_var(&content, key, &value, &info.val_type)?;
         if updated != content {
+            let before = crate::utils::hyprland_config_errors(false);
             write_source(src, &updated);
+
+            // Hyprland rejects it (a layout name it doesn't know, a bad bind): put the file
+            // back, so a bad value never sticks (a wrong layout would lock out the password)
+            if let (Some(b), Some(a)) = (before, crate::utils::hyprland_config_errors(true)) {
+                if crate::utils::change_rejected(&b, &a) {
+                    write_source(src, &content);
+                    let _ = crate::utils::hyprland_config_errors(true);
+                    return Err(format!("Hyprland rejected {} = {}: {}", key, value, a.lines().next().unwrap_or("")));
+                }
+            }
         }
         Ok::<(String, String, Source), String>((value, info.val_type.clone(), src))
     });

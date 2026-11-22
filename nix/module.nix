@@ -260,6 +260,7 @@ in
 
   config = mkIf cfg.enable {
     home.packages = with pkgs; [
+      (callPackage ./omniformis.nix { })
       imagemagick
       bc
       python3
