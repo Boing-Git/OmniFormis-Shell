@@ -36,10 +36,6 @@ QtObject {
     property real selectedTileSize: 100
     property real tileIconSize: 32
 
-    // true: the unselected tiles take turns through primary / secondary / tertiary
-    // container colours; false: all primary-container
-    property bool tileColorCycle: true
-
     // ms for one turn of the selected tile's shape (0: no spin)
     property int tileSpin: 0
 

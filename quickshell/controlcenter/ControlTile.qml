@@ -60,8 +60,10 @@ Item {
     opacity: lifted ? liftedOpacity : 1
     Behavior on opacity { NumberAnimation { duration: Vars.expressiveFastEffects.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.expressiveFastEffects.bezier } }
 
-    // the unselected tiles take turns through the container colours (or all primary)
-    readonly property int tone: cfg.tileColorCycle ? itemIndex % 3 : 0
+    // the unselected tiles take turns through the container colours, or all wear one
+    // (Prefs.ringColors): 0 primary, 1 secondary, 2 tertiary
+    readonly property int tone: Prefs.ringColors === "three" ? itemIndex % 3
+        : Math.max(0, ["primary", "secondary", "tertiary"].indexOf(Prefs.ringColors))
     readonly property color fill: selected ? Roles.primary
         : tone === 1 ? Roles.secondary_container
         : tone === 2 ? Roles.tertiary_container

@@ -44,6 +44,10 @@ QtObject {
     // "straight"
     property string tileStyle: Vars.design.tiles
     property string trackStyle: Vars.design.tracks
+
+    // the control center's outer ring: "three" colours taking turns, or all "primary" /
+    // "secondary" / "tertiary"
+    property string ringColors: Vars.design.ringColors
     readonly property string fontFamily: textFont === "system" ? Qt.application.font.family : textFont
 
     property int openBounce: Vars.openBounce
@@ -305,6 +309,10 @@ QtObject {
         { key: "trackStyle", group: "Design", label: "Tracks", icon: "timeline", type: "choice",
           options: [{ value: "wavy", label: "Wavy" }, { value: "straight", label: "Straight" }],
           help: "The timeline ring while something plays: M3's travelling wave, or a straight line." },
+        { key: "ringColors", group: "Design", label: "Ring colours", icon: "palette", type: "choice",
+          options: [{ value: "three", label: "Three" }, { value: "primary", label: "Primary" },
+                    { value: "secondary", label: "Secondary" }, { value: "tertiary", label: "Tertiary" }],
+          help: "The control center's outer ring: its tiles take turns through three colours, or all wear one." },
         { key: "textFont", group: "Design", label: "Text font", icon: "match_case", type: "choice",
           options: [{ value: "system", label: "System" }, { value: "Inter", label: "Inter" }],
           help: "The font of the shell's words. Inter: close to Apple's San Francisco." },

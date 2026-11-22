@@ -204,6 +204,10 @@ const design = {
     tiles: "tonal",
     tracks: "wavy",
 
+    // the control center's outer ring: "three" (the tiles take turns through primary /
+    // secondary / tertiary containers) or all one: "primary", "secondary", "tertiary"
+    ringColors: "three",
+
     // a ring that isn't liquid glass while liquid glass is on: its white wash and the white
     // of its hairline edges (1 px)
     flatBandWash: 0.08,
