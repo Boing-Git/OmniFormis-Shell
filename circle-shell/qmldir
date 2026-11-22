@@ -1,0 +1,5 @@
+singleton Colors 1.0 Colors.qml
+singleton Tree 1.0 Tree.qml
+SpringValue 1.0 SpringValue.qml
+Bubble 1.0 Bubble.qml
+Goo 1.0 Goo.qml

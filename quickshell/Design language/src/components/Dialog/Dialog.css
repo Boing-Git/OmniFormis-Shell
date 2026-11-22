@@ -1,0 +1,152 @@
+@layer m3e.components {
+  .m3e-dialog {
+    background-color: var(--m3e-comp-dialog-container-color);
+    block-size: fit-content;
+    border: none;
+    border-radius: var(--m3e-comp-dialog-container-shape);
+    box-shadow: var(--m3e-comp-dialog-container-shadow);
+    box-sizing: border-box;
+    color: var(--m3e-comp-dialog-supporting-text-color);
+    font-family: var(--m3e-sys-typescale-baseline-body-medium-font-family);
+    font-size: var(--m3e-sys-typescale-baseline-body-medium-font-size);
+    font-weight: var(--m3e-sys-typescale-baseline-body-medium-font-weight);
+    inline-size: fit-content;
+    letter-spacing: var(--m3e-sys-typescale-baseline-body-medium-letter-spacing);
+    line-height: var(--m3e-sys-typescale-baseline-body-medium-line-height);
+    margin: auto;
+    max-block-size: calc(100vh - var(--m3e-comp-dialog-container-viewport-margin) * 2);
+    max-inline-size: min(
+      var(--m3e-comp-dialog-container-max-width),
+      calc(100vw - var(--m3e-comp-dialog-container-viewport-margin) * 2)
+    );
+    min-inline-size: var(--m3e-comp-dialog-container-min-width);
+    opacity: 0;
+    overflow-y: auto;
+    padding: var(--m3e-comp-dialog-container-padding);
+    transform: scale(0.8);
+    transition:
+      display var(--m3e-sys-motion-expressive-default-spatial-duration)
+        var(--m3e-sys-motion-expressive-default-spatial-easing) allow-discrete,
+      opacity var(--m3e-sys-motion-expressive-default-spatial-duration)
+        var(--m3e-sys-motion-expressive-default-spatial-easing),
+      overlay var(--m3e-sys-motion-expressive-default-spatial-duration)
+        var(--m3e-sys-motion-expressive-default-spatial-easing) allow-discrete,
+      transform var(--m3e-sys-motion-expressive-default-spatial-duration)
+        var(--m3e-sys-motion-expressive-default-spatial-easing);
+  }
+
+  /* The `[open]` attribute is native — showModal()/show()/close() toggle it
+     directly, so no library-owned open/closed class is needed to drive
+     this transition. */
+  .m3e-dialog[open] {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  @starting-style {
+    .m3e-dialog[open] {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+  }
+
+  .m3e-dialog::backdrop {
+    background-color: var(--m3e-comp-dialog-scrim-color);
+    opacity: 0;
+    transition:
+      display var(--m3e-sys-motion-expressive-default-effects-duration)
+        var(--m3e-sys-motion-expressive-default-effects-easing) allow-discrete,
+      opacity var(--m3e-sys-motion-expressive-default-effects-duration)
+        var(--m3e-sys-motion-expressive-default-effects-easing),
+      overlay var(--m3e-sys-motion-expressive-default-effects-duration)
+        var(--m3e-sys-motion-expressive-default-effects-easing) allow-discrete;
+  }
+
+  .m3e-dialog[open]::backdrop {
+    opacity: var(--m3e-comp-dialog-scrim-opacity);
+  }
+
+  @starting-style {
+    .m3e-dialog[open]::backdrop {
+      opacity: 0;
+    }
+  }
+
+  .m3e-dialog__icon {
+    align-items: center;
+    color: var(--m3e-comp-dialog-icon-color);
+    display: flex;
+    justify-content: center;
+  }
+
+  .m3e-dialog__icon:not(:last-child) {
+    margin-block-end: var(--m3e-comp-dialog-icon-spacing);
+  }
+
+  .m3e-dialog__icon > .m3e-icon {
+    --m3e-icon-size: var(--m3e-comp-dialog-icon-size);
+  }
+
+  .m3e-dialog__title {
+    color: var(--m3e-comp-dialog-headline-color);
+    font-family: var(--m3e-sys-typescale-baseline-headline-small-font-family);
+    font-size: var(--m3e-sys-typescale-baseline-headline-small-font-size);
+    font-weight: var(--m3e-sys-typescale-baseline-headline-small-font-weight);
+    letter-spacing: var(--m3e-sys-typescale-baseline-headline-small-letter-spacing);
+    line-height: var(--m3e-sys-typescale-baseline-headline-small-line-height);
+    text-align: start;
+  }
+
+  .m3e-dialog__title:not(:last-child) {
+    margin-block-end: var(--m3e-comp-dialog-headline-spacing);
+  }
+
+  /* Centered under an icon, left-aligned otherwise, matching the sourced
+     center-horizontally-vs-start alignment branch. */
+  .m3e-dialog[data-m3e-has-icon="true"] .m3e-dialog__title {
+    text-align: center;
+  }
+
+  .m3e-dialog__content:not(:last-child) {
+    margin-block-end: var(--m3e-comp-dialog-supporting-text-spacing);
+  }
+
+  .m3e-dialog__actions {
+    color: var(--m3e-comp-dialog-action-content-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--m3e-comp-dialog-action-spacing);
+    justify-content: flex-end;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .m3e-dialog,
+    .m3e-dialog::backdrop {
+      transition: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .m3e-dialog {
+      background: Canvas;
+      border: 1px solid CanvasText;
+      box-shadow: none;
+      color: CanvasText;
+      forced-color-adjust: none;
+    }
+
+    .m3e-dialog::backdrop {
+      background-color: Canvas;
+      opacity: 0.5;
+    }
+
+    .m3e-dialog__icon,
+    .m3e-dialog__title {
+      color: CanvasText;
+    }
+
+    .m3e-dialog__actions {
+      color: LinkText;
+    }
+  }
+}

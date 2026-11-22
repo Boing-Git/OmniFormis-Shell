@@ -1,0 +1,208 @@
+@layer m3e.components {
+  .m3e-tabs {
+    display: block;
+  }
+
+  .m3e-tabs__list {
+    background-color: var(--m3e-comp-tabs-container-color);
+    block-size: var(--m3e-comp-tabs-container-height);
+    border-block-end: var(--m3e-comp-tabs-divider-height) solid var(--m3e-comp-tabs-divider-color);
+    box-sizing: border-box;
+    display: flex;
+    position: relative;
+  }
+
+  .m3e-tabs__list[data-m3e-large="true"] {
+    block-size: var(--m3e-comp-tabs-container-height-with-icon-and-label);
+  }
+
+  .m3e-tabs__list[data-m3e-scrollable="false"] .m3e-tabs__tab {
+    flex: 1 1 0%;
+  }
+
+  .m3e-tabs__list[data-m3e-scrollable="true"] {
+    overflow-x: auto;
+    padding-inline-start: var(--m3e-comp-tabs-scrollable-edge-padding);
+    scrollbar-width: thin;
+  }
+
+  .m3e-tabs__list[data-m3e-scrollable="true"] .m3e-tabs__tab {
+    flex: none;
+    min-inline-size: var(--m3e-comp-tabs-scrollable-min-tab-width);
+  }
+
+  .m3e-tabs__tab {
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    font: inherit;
+    justify-content: center;
+    margin: 0;
+    outline: none;
+    padding-block: 0;
+    padding-inline: var(--m3e-comp-tabs-label-inline-padding);
+    position: relative;
+    text-decoration: none;
+  }
+
+  .m3e-tabs__tab::before {
+    background: currentColor;
+    content: "";
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity var(--m3e-sys-motion-expressive-fast-effects-duration)
+      var(--m3e-sys-motion-expressive-fast-effects-easing);
+  }
+
+  @media (hover: hover) {
+    .m3e-tabs__tab:hover:not([aria-disabled="true"])::before {
+      opacity: var(--m3e-sys-state-hover);
+    }
+  }
+
+  .m3e-tabs__tab:active:not([aria-disabled="true"])::before {
+    opacity: var(--m3e-sys-state-pressed);
+  }
+
+  .m3e-tabs__tab:focus-visible::before {
+    opacity: var(--m3e-sys-state-focus);
+  }
+
+  .m3e-tabs__tab-content {
+    align-items: center;
+    display: flex;
+    gap: var(--m3e-comp-tabs-icon-label-gap);
+    justify-content: center;
+  }
+
+  .m3e-tabs__list[data-m3e-large="true"] .m3e-tabs__tab-content {
+    flex-direction: column;
+  }
+
+  .m3e-tabs__tab-icon {
+    align-items: center;
+    display: flex;
+    inline-size: var(--m3e-comp-tabs-icon-size);
+  }
+
+  .m3e-tabs__tab-label {
+    font-family: var(--m3e-sys-typescale-baseline-title-small-font-family);
+    font-size: var(--m3e-sys-typescale-baseline-title-small-font-size);
+    font-weight: var(--m3e-sys-typescale-baseline-title-small-font-weight);
+    letter-spacing: var(--m3e-sys-typescale-baseline-title-small-letter-spacing);
+    line-height: var(--m3e-sys-typescale-baseline-title-small-line-height);
+    white-space: nowrap;
+  }
+
+  .m3e-tabs__list[data-m3e-variant="primary"] .m3e-tabs__tab-label {
+    color: var(--m3e-comp-tabs-primary-inactive-label-color);
+  }
+
+  .m3e-tabs__list[data-m3e-variant="primary"] .m3e-tabs__tab-icon {
+    color: var(--m3e-comp-tabs-primary-inactive-icon-color);
+  }
+
+  .m3e-tabs__list[data-m3e-variant="primary"] .m3e-tabs__tab[data-m3e-selected="true"] .m3e-tabs__tab-label {
+    color: var(--m3e-comp-tabs-primary-active-label-color);
+  }
+
+  .m3e-tabs__list[data-m3e-variant="primary"] .m3e-tabs__tab[data-m3e-selected="true"] .m3e-tabs__tab-icon {
+    color: var(--m3e-comp-tabs-primary-active-icon-color);
+  }
+
+  .m3e-tabs__list[data-m3e-variant="secondary"] .m3e-tabs__tab-label {
+    color: var(--m3e-comp-tabs-secondary-inactive-label-color);
+  }
+
+  .m3e-tabs__list[data-m3e-variant="secondary"] .m3e-tabs__tab-icon {
+    color: var(--m3e-comp-tabs-secondary-inactive-icon-color);
+  }
+
+  .m3e-tabs__list[data-m3e-variant="secondary"] .m3e-tabs__tab[data-m3e-selected="true"] .m3e-tabs__tab-label {
+    color: var(--m3e-comp-tabs-secondary-active-label-color);
+  }
+
+  .m3e-tabs__list[data-m3e-variant="secondary"] .m3e-tabs__tab[data-m3e-selected="true"] .m3e-tabs__tab-icon {
+    color: var(--m3e-comp-tabs-secondary-active-icon-color);
+  }
+
+  .m3e-tabs__tab[aria-disabled="true"] {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .m3e-tabs__tab[aria-disabled="true"] .m3e-tabs__tab-label {
+    color: color-mix(
+      in srgb,
+      var(--m3e-comp-tabs-disabled-label-color) calc(var(--m3e-comp-tabs-disabled-label-opacity) * 100%),
+      transparent
+    );
+  }
+
+  .m3e-tabs__tab[aria-disabled="true"] .m3e-tabs__tab-icon {
+    color: color-mix(
+      in srgb,
+      var(--m3e-comp-tabs-disabled-icon-color) calc(var(--m3e-comp-tabs-disabled-icon-opacity) * 100%),
+      transparent
+    );
+  }
+
+  .m3e-tabs__indicator {
+    background-color: var(--m3e-comp-tabs-indicator-color);
+    block-size: var(--m3e-comp-tabs-indicator-height);
+    inline-size: var(--m3e-comp-tabs-indicator-primary-width);
+    inset-block-end: 0;
+    inset-inline-start: 0;
+    opacity: 0;
+    position: absolute;
+    transform: translateX(0);
+    transition:
+      transform var(--m3e-sys-motion-expressive-default-spatial-duration)
+        var(--m3e-sys-motion-expressive-default-spatial-easing),
+      inline-size var(--m3e-sys-motion-expressive-default-spatial-duration)
+        var(--m3e-sys-motion-expressive-default-spatial-easing);
+  }
+
+  .m3e-tabs__indicator[data-m3e-ready="true"] {
+    opacity: 1;
+  }
+
+  .m3e-tabs__list[data-m3e-variant="primary"] .m3e-tabs__indicator {
+    border-radius: var(--m3e-comp-tabs-indicator-shape);
+  }
+
+  .m3e-tabs__panel {
+    outline: none;
+  }
+
+  .m3e-tabs__panel:focus-visible {
+    outline: 2px solid var(--m3e-comp-tabs-indicator-color);
+    outline-offset: -2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .m3e-tabs__tab::before,
+    .m3e-tabs__indicator {
+      transition: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .m3e-tabs__list {
+      border-block-end-color: CanvasText;
+    }
+
+    .m3e-tabs__indicator {
+      background-color: Highlight;
+      forced-color-adjust: none;
+    }
+
+    .m3e-tabs__tab:focus-visible::before {
+      outline: 2px solid Highlight;
+    }
+  }
+}

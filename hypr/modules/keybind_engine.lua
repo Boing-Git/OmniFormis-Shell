@@ -153,9 +153,15 @@ end
 --- Binds `name` (an entry of modules/keybinds.lua, or a literal combination).
 --- `subs` fills placeholders such as {n}. A bad or empty combination is skipped
 --- and reported, it never stops the rest of the config from loading.
+--- A name missing from keybinds.lua (e.g. its line is commented out) counts as
+--- empty, so commenting an entry disables it. Only a literal combination,
+--- one containing "+", is used as-is.
 function M.bind(name, dispatcher, opts, subs)
     local spec = binds[name]
     if spec == nil then
+        if not name:find("+", 1, true) then
+            return nil
+        end
         spec = name
     end
     if spec == "" then

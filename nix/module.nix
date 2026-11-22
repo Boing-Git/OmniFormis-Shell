@@ -500,7 +500,14 @@ EOF
       (mkIf cfg.starship.enable { "starship.toml".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.config/color-schemes/current/starship.toml"; })
       # color-schemes is NOT Nix-managed — it must be writable for matugen to generate theme files.
       # Static themes (gruvbox, etc.) are deployed by the install script instead.
-      (mkIf cfg.matugen.enable { "matugen".source = ../matugen; })
+      # Live checkout: template edits in the repo take effect on the next matugen run,
+      # instead of matugen rendering a copy frozen at the last Home Manager switch.
+      (mkIf cfg.matugen.enable (
+        if cfg.dotfilesDir != null then
+          { "matugen".source = config.lib.file.mkOutOfStoreSymlink "${cfg.dotfilesDir}/matugen"; }
+        else
+          { "matugen".source = ../matugen; }
+      ))
       (mkIf cfg.qtengine.enable { "qtengine".source = ../qtengine; })
     ];
   };

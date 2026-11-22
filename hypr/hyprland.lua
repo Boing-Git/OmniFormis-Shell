@@ -25,7 +25,7 @@ end
 ------------------
 
 -- 10-bit output only where it's worth it, low-spec machines (usually 6-bit laptop panels) stay 8-bit
-local bitdepth = require("modules.hardware").low_spec and 8 or 10
+local bitdepth = 8
 
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 hl.monitor({
@@ -48,7 +48,7 @@ hl.monitor({
 
 hl.monitor({
     output   = "DP-1",
-    mode     = "preferred",
+    mode     = "preferred@60",
     position = "auto",
     scale    = "1",
     bitdepth = bitdepth,

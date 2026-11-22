@@ -58,14 +58,10 @@ return {
     GroupJumpBind = "$QM + {n}",
 
     -- Workspaces
-    -- Go to a workspace by number
-    WorkspaceGoBind = "$MM + {n}",
-    -- Go to a workspace group by number
-    WorkspaceGoGroupBind = "$QM + $MM + {n}",
-    -- Move the window to a workspace by number
-    WorkspaceMoveBind = "$MM + $QM + {n}",
-    -- Move the window to a workspace group by number
-    WorkspaceMoveGroupBind = "$QM + $MM + $QM + {n}",
+        WorkspaceGoBind        = "$MM + {n}",
+        WorkspaceMoveBind      = "$MM + $QM + {n}",
+        WorkspaceGoGroupBind   = "$MM + $TM + {n}",
+        WorkspaceMoveGroupBind = "$MM + $TM + $QM + {n}",
     -- Go to the previous workspace with the scroll wheel
     WorkspacePrevScrollBind = "$MM + mouse_down",
     -- Go to the next workspace with the scroll wheel
@@ -105,41 +101,55 @@ return {
     -- Send the window to the scratchboard
     ScratchboardSendBind = "$QM + $MM + $TM + $up",
     -- Bring the window back from the scratchboard
-    ScratchboardReturnBind = "$QM + $MM + $TM + $down",
+    ScratchboardReturnBind = "",
     -- Toggle the system info workspace
     SysInfoBind = "$QM + $TM + Escape",
 
     -- Quickshell
     -- Open the launcher
-    QsLauncherBind = "$MM + D",
+    -- QsLauncherBind = "$MM + D",
     -- Open the Quickshell screenshot tool
-    QsScreenshotBind = "$MM + $TM + S",
-    -- Open circle to search
-    QsLensBind = "$MM + $TM + X",
-    -- Open the wallpaper switcher
-    QsWallpaperBind = "$MM + $QM + W",
-    -- Open the color scheme switcher
-    QsColorSchemeBind = "$MM + $QM + T",
-    -- Open the control center
-    QsControlCenterBind = "$MM + C",
-    -- Open the power menu
-    QsPowerMenuBind = "$MM + $TM + P",
-    -- Open the overview
-    QsOverviewBind = "$MM + TAB",
-    -- Open the game library
-    QsGameLibraryBind = "$MM + $TM + G",
-    -- Open the emoji picker
-    QsEmojiPickerBind = "$MM + comma",
-    -- Open the clipboard history
-    QsClipboardBind = "$MM + V",
-    -- Open the keybind cheat sheet
-    QsCheatSheetBind = "$MM + $QM + K",
-    -- Kill the shell
-    ShellKillBind = "$QM + $MM + $TM + R",
-    -- Launch the shell in the background
-    ShellLaunchBind = "$QM + $MM + $QM + R",
-    -- Reload the shell
-    ShellReloadBind = "$MM + $TM + R",
+    -- QsScreenshotBind = "$MM + $TM + S",
+    -- -- Open circle to search
+    -- QsLensBind = "$MM + $TM + X",
+    -- -- Open the wallpaper switcher
+    -- QsWallpaperBind = "$MM + $QM + W",
+    -- -- Open the color scheme switcher
+    -- QsColorSchemeBind = "$MM + $QM + T",
+    -- -- Open the control center
+    -- QsControlCenterBind = "$MM + C",
+    -- -- Open the power menu
+    -- QsPowerMenuBind = "$MM + $TM + P",
+    -- -- Open the overview
+    -- QsOverviewBind = "$MM + TAB",
+    -- -- Open the game library
+    -- QsGameLibraryBind = "$MM + $TM + G",
+    -- -- Open the emoji picker
+    -- QsEmojiPickerBind = "$MM + comma",
+    -- -- Open the clipboard history
+    -- QsClipboardBind = "$MM + V",
+    -- -- Open the keybind cheat sheet
+    -- QsCheatSheetBind = "$MM + $QM + K",
+    -- -- Kill the shell
+    -- ShellKillBind = "$QM + $MM + $TM + R",
+    -- -- Launch the shell in the background
+    -- ShellLaunchBind = "$QM + $MM + $QM + R",
+    -- -- Reload the shell
+    -- ShellReloadBind = "$MM + $TM + R",
+
+    -- Dial-Quickshell (empty = disabled until you pick a key)
+    -- Toggle the wallpaper dial
+    DialWallpaperBind = "$MM + $QM + W",
+    -- Toggle the app launcher dial
+    DialAppsBind = "$MM + D",
+    -- Toggle the control center dial
+    DialCenterBind = "$MM + C",
+    -- Toggle the power menu dial
+    DialPowerBind = "$MM + $TM + P",
+    -- Open the dial's screenshot tool (freeze, pick an area, copy / edit in Satty)
+    DialScreenshotBind = "$MM + $TM + S",
+    -- Lock the screen (the dial shell's lock: it grows out of the power dial's corner)
+    DialLockBind = "$MM + L",
 
     -- Media
     -- Play or pause with the keyboard
@@ -186,8 +196,8 @@ return {
     -- Utilities
     -- Take a full screenshot
     ScreenshotBind = "Print",
-    -- Take a screenshot of an area
-    ScreenshotAreaBind = "$MM + $TM + S",
+    -- Take a screenshot of an area (empty: $MM + $TM + S opens the dial's screenshot tool)
+    ScreenshotAreaBind = "",
     -- Take a screenshot of an area with the extra modifier
     ScreenshotAreaAltBind = "$MM + $TM + $QM + S",
     -- Pick a color from the screen

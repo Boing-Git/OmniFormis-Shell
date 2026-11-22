@@ -4,6 +4,13 @@ local vars = require("modules.variables")
 local hw = require("modules.hardware")
 local colors = Utils.colors
 
+-- Hyprland's blur `contrast` defaults to 0.8916 (an ~11% cut) when left unset, which barely
+-- registers on dark, already-low-luminance surfaces but visibly flattens a light, near-white
+-- translucent panel toward mid-gray — the washed-out card look in light mode. Push contrast back
+-- to neutral specifically when the active scheme is light; dark mode keeps Hyprland's own default
+-- (the same value it was already implicitly using) so its look is unchanged.
+local isLightMode = colors.mode == "light"
+
 local function isFramed()
     local f = io.open(os.getenv("HOME") .. "/Dotfiles/quickshell/theme/variables.js", "r")
     if f then
@@ -43,6 +50,8 @@ hl.config({
         rounding       = (vars.GameMode or isFramed()) and 0 or vars.rounding,
         rounding_power = vars.rounding_power,
 
+        dim_inactive = true,
+        dim_strength = 0.12,
         -- Change transparency of focused and unfocused windows (opaque on low-spec hardware,
         -- where blending every window over the ones behind it is the expensive part)
         active_opacity   = hw.low_spec and 1.0 or vars.active_opacity,
@@ -56,10 +65,12 @@ hl.config({
         }, -- ADDED COMMA
 
         blur = {
-            enabled   = (not vars.GameMode) and (not hw.low_spec) and vars.blur_enabled,
-            size      = vars.blur_size,
-            passes    = vars.blur_passes,
-            vibrancy  = vars.blur_vibrancy, 
+            enabled    = (not vars.GameMode) and (not hw.low_spec) and vars.blur_enabled,
+            size       = vars.blur_size,
+            passes     = vars.blur_passes,
+            vibrancy   = vars.blur_vibrancy,
+            contrast   = isLightMode and 1.0 or 0.8916,
+            brightness = 1.0,
         },
     },
     group = {
@@ -81,7 +92,7 @@ hl.config({
             scrolling = true,           -- Cycle tabs using your mouse wheel over the tab bar
 
             -- Set the curve style for the group bar (2.0 is a circle)
-                gradient_rounding_power = 100,
+                gradient_rounding_power = 10,
                 
             -- Tab Colors (Format: rgba or hex strings)
             ["col.active"] = Utils.hex_to_rgba(Utils.colors.primary, 0.8),          -- Background of the focused tab

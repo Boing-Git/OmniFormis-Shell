@@ -1,0 +1,10 @@
+@layer m3e.components {
+  /* No layout opinion of its own — `display: contents` keeps the wrapper
+     invisible to the consumer's own app-shell layout, such as a CSS Grid
+     expecting the rendered nav element itself as the direct child,
+     matching the "library doesn't impose page layout" boundary every
+     other v1 component already respects. */
+  .m3e-navigation-suite {
+    display: contents;
+  }
+}

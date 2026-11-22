@@ -1,0 +1,74 @@
+@layer m3e.components {
+  .m3e-icon {
+    --m3e-icon-size: var(--m3e-comp-icon-size);
+    --m3e-icon-symbol-fill: var(--m3e-comp-icon-symbol-fill);
+    --m3e-icon-symbol-weight: var(--m3e-comp-icon-symbol-weight);
+    --m3e-icon-symbol-grade: var(--m3e-comp-icon-symbol-grade);
+    --m3e-icon-symbol-optical-size: var(--m3e-comp-icon-symbol-optical-size);
+    --m3e-icon-symbol-roundness: var(--m3e-comp-icon-symbol-roundness);
+
+    align-items: center;
+    block-size: var(--m3e-icon-size);
+    color: inherit;
+    display: inline-flex;
+    flex: none;
+    inline-size: var(--m3e-icon-size);
+    justify-content: center;
+    line-height: 1;
+    vertical-align: middle;
+  }
+
+  .m3e-icon__svg,
+  .m3e-icon__symbol {
+    block-size: 100%;
+    inline-size: 100%;
+  }
+
+  .m3e-icon__svg {
+    color: currentColor;
+    display: block;
+  }
+
+  .m3e-icon__svg:not([fill]) {
+    fill: currentColor;
+  }
+
+  .m3e-icon[data-m3e-symbol-style="outlined"] {
+    --m3e-icon-symbol-family: var(--m3e-comp-icon-symbol-family-outlined);
+  }
+
+  .m3e-icon[data-m3e-symbol-style="rounded"] {
+    --m3e-icon-symbol-family: var(--m3e-comp-icon-symbol-family-rounded);
+  }
+
+  .m3e-icon[data-m3e-symbol-style="sharp"] {
+    --m3e-icon-symbol-family: var(--m3e-comp-icon-symbol-family-sharp);
+  }
+
+  .m3e-icon__symbol {
+    direction: ltr;
+    display: block;
+    font-family: var(--m3e-icon-symbol-family);
+    font-feature-settings: "liga";
+    font-size: var(--m3e-icon-size);
+    font-style: normal;
+    font-variation-settings:
+      "FILL" var(--m3e-icon-symbol-fill),
+      "wght" var(--m3e-icon-symbol-weight),
+      "GRAD" var(--m3e-icon-symbol-grade),
+      "opsz" var(--m3e-icon-symbol-optical-size),
+      "ROND" var(--m3e-icon-symbol-roundness);
+    font-weight: normal;
+    letter-spacing: normal;
+    line-height: 1;
+    overflow: hidden;
+    text-align: center;
+    text-transform: none;
+    white-space: nowrap;
+  }
+
+  .m3e-icon[data-m3e-mirrored="true"]:dir(rtl) .m3e-icon__svg,
+  .m3e-icon[data-m3e-mirrored="true"]:dir(rtl) .m3e-icon__symbol {
+    transform: scaleX(-1);
+  }
+}

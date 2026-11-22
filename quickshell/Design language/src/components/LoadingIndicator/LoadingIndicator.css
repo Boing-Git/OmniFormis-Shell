@@ -1,0 +1,83 @@
+@import './loadingIndicatorKeyframes.css';
+
+@layer m3e.components {
+  .m3e-loading-indicator {
+    display: inline-block;
+    line-height: 0;
+  }
+
+  .m3e-loading-indicator__svg {
+    block-size: var(--m3e-comp-loading-indicator-container-height);
+    display: block;
+    inline-size: var(--m3e-comp-loading-indicator-container-width);
+    overflow: visible;
+  }
+
+  .m3e-loading-indicator__shape {
+    fill: var(--m3e-comp-loading-indicator-active-indicator-color);
+    transform-origin: 50px 50px;
+  }
+
+  .m3e-loading-indicator[data-m3e-determinate="true"] .m3e-loading-indicator__shape {
+    transition:
+      d var(--m3e-sys-motion-expressive-default-spatial-duration)
+        var(--m3e-sys-motion-expressive-default-spatial-easing),
+      transform var(--m3e-sys-motion-expressive-default-spatial-duration)
+        var(--m3e-sys-motion-expressive-default-spatial-easing);
+  }
+
+  /* Composed additively with each segment's own step+spring local rotation
+     (baked into the imported keyframes module above) — the same nested-<g>
+     technique CircularProgress/WavyProgress use for their own indeterminate
+     rotation layers. */
+  .m3e-loading-indicator__global-rotate {
+    animation: m3e-loading-indicator-global-rotate
+      var(--m3e-comp-loading-indicator-global-rotation-duration) linear infinite;
+    transform-box: view-box;
+    transform-origin: 50px 50px;
+  }
+
+  @keyframes m3e-loading-indicator-global-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .m3e-loading-indicator__segment {
+    animation-duration: var(--m3e-comp-loading-indicator-indeterminate-cycle-duration);
+    animation-iteration-count: infinite;
+    opacity: 0;
+  }
+
+  .m3e-loading-indicator__segment-0 { animation-name: m3e-loading-indicator-segment-0; }
+  .m3e-loading-indicator__segment-1 { animation-name: m3e-loading-indicator-segment-1; }
+  .m3e-loading-indicator__segment-2 { animation-name: m3e-loading-indicator-segment-2; }
+  .m3e-loading-indicator__segment-3 { animation-name: m3e-loading-indicator-segment-3; }
+  .m3e-loading-indicator__segment-4 { animation-name: m3e-loading-indicator-segment-4; }
+  .m3e-loading-indicator__segment-5 { animation-name: m3e-loading-indicator-segment-5; }
+  .m3e-loading-indicator__segment-6 { animation-name: m3e-loading-indicator-segment-6; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .m3e-loading-indicator[data-m3e-determinate="true"] .m3e-loading-indicator__shape {
+      transition: none;
+    }
+
+    .m3e-loading-indicator__global-rotate,
+    .m3e-loading-indicator__segment {
+      animation: none;
+    }
+
+    /* A static shape communicates ongoing activity without motion, instead
+       of freezing mid-morph on whatever frame the animation happened to
+       reach. */
+    .m3e-loading-indicator__segment-0 {
+      opacity: 1;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .m3e-loading-indicator__shape {
+      fill: Highlight;
+      forced-color-adjust: none;
+    }
+  }
+}

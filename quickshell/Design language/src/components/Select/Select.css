@@ -1,0 +1,42 @@
+/* Field chrome reuses `.m3e-text-field*` (see TextField's own stylesheet)
+   and the popup listbox reuses `.m3e-menu`/`.m3e-menu__item` (see Menu's
+   own stylesheet) unchanged — this stylesheet only layers the deltas
+   genuinely unique to Select: the width-matched listbox, the chevron, and
+   the active option highlight, matching the T14 TextField/TextArea
+   shared-stylesheet precedent extended to a third component. */
+@layer m3e.components {
+  .m3e-select__chevron {
+    transition: transform var(--m3e-sys-motion-expressive-fast-spatial-duration)
+      var(--m3e-sys-motion-expressive-fast-spatial-easing);
+  }
+
+  /* The chevron lives inside `.m3e-text-field__icon[data-m3e-position=
+     "trailing"]`, a later sibling of the input within the same
+     `.m3e-text-field__field` — see TextFieldChrome's markup — so a plain
+     sibling combinator reaches it directly, the same native-truth
+     precedent (reading `aria-expanded` off the input itself) ADR 0016
+     already established for Dialog. */
+  .m3e-text-field__input[aria-expanded="true"]
+    ~ .m3e-text-field__icon[data-m3e-position="trailing"]
+    .m3e-select__chevron {
+    transform: rotate(180deg);
+  }
+
+  /* `matchAnchorWidth` already sets an inline `width` from
+     `useAnchoredOverlay`; this only lifts `.m3e-menu`'s 112–280px
+     intrinsic-width bounds, which do not apply to a width-matched popup.
+     The compound selector outweighs `.m3e-menu` alone on specificity so
+     this does not depend on stylesheet import order. */
+  .m3e-menu.m3e-select__listbox {
+    max-inline-size: none;
+    min-inline-size: 0;
+  }
+
+  .m3e-select__option {
+    cursor: pointer;
+  }
+
+  .m3e-select__option[data-m3e-active="true"]::before {
+    opacity: var(--m3e-sys-state-focus);
+  }
+}

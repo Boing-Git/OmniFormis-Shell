@@ -1,0 +1,48 @@
+singleton NotificationService 1.0 daemons/NotificationService.qml
+singleton MorphState 1.0 core/MorphState.qml
+TopPills 1.0 panels/TopPills.qml
+NotificationDaemon 1.0 daemons/NotificationDaemon.qml
+NotificationData 1.0 daemons/NotificationData.qml
+ClockPill 1.0 core/primitives/ClockPill.qml
+ClockStrut 1.0 panels/ClockStrut.qml
+ControlCenter 1.0 panels/ControlCenter.qml
+HyprWorkspaces 1.0 windows/HyprWorkspaces.qml
+Launcher 1.0 windows/Launcher.qml
+ScreenShot 1.0 windows/ScreenShot.qml
+StatusBar 1.0 panels/StatusBar.qml
+VolumeOsd 1.0 popups/VolumeOsd.qml
+BrightnessOsd 1.0 popups/BrightnessOsd.qml
+WallpaperSwitcher 1.0 windows/WallpaperSwitcher.qml
+ColorSchemeSwitcher 1.0 windows/ColorSchemeSwitcher.qml
+EmojiPicker 1.0 windows/EmojiPicker.qml
+KeybindCheatSheet 1.0 windows/KeybindCheatSheet.qml
+SettingsApp 1.0 windows/SettingsApp.qml
+SettingsWindow 1.0 windows/SettingsWindow.qml
+
+NotificationCard 1.0 popups/NotificationCard.qml
+NotificationPopup 1.0 popups/NotificationPopup.qml
+PowerMenu 1.0 windows/PowerMenu.qml
+singleton Theme 1.0 theme/Theme.qml
+
+PolkitAuth 1.0 daemons/PolkitAuth.qml
+PolkitDialog 1.0 popups/PolkitDialog.qml
+Overview 1.0 windows/Overview.qml
+GameLibrary 1.0 windows/GameLibrary.qml
+singleton HyprlandData 1.0 daemons/HyprlandData.qml
+ModuleStore 1.0 panels/ControlCenter/ModuleStore.qml
+WallpaperOverlay 1.0 desktop/WallpaperOverlay.qml
+M3Shapes 1.0 core/primitives/M3Shapes.qml
+AnalogClock 1.0 desktop/Widgets/AnalogClock.qml
+DesktopClock 1.0 desktop/Widgets/DesktopClock.qml
+
+DesktopCalender 1.0 desktop/Widgets/DesktopCalender.qml
+DesktopMediaPlayer 1.0 desktop/Widgets/DesktopMediaPlayer.qml
+DesktopSystemVitals 1.0 desktop/Widgets/DesktopSystemVitals.qml
+DesktopAudioVisualizer 1.0 desktop/Widgets/DesktopAudioVisualizer.qml
+DesktopWidgetsLayer 1.0 desktop/DesktopWidgetsLayer.qml
+ScreenFrame 1.0 desktop/ScreenFrame.qml
+InvertedCorner 1.0 core/primitives/InvertedCorner.qml
+SearchBar 1.0 core/primitives/SearchBar.qml
+singleton LockScreen 1.0 LockScreen.qml
+QsText 1.0 core/primitives/QsText.qml
+singleton SettingsApply 1.0 core/SettingsApply.qml

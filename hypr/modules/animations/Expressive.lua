@@ -13,8 +13,8 @@ hl.animation({ leaf = "border",        enabled = true,  speed = 5.39, bezier = "
 
 -- Windows & Popins (Uses Emphasized for maximum expression)
 hl.animation({ leaf = "windows",       enabled = true,  speed = 4.79, bezier = "m3EmphasizedDecel" }) 
-hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 4.1,  bezier = "m3EmphasizedDecel", style = "popin 87%" })
-hl.animation({ leaf = "windowsOut",    enabled = true,  speed = 1.49, bezier = "m3EmphasizedAccel", style = "popin 87%" })
+hl.animation({ leaf = "windowsIn",     enabled = true,  speed = 4.1,  bezier = "m3EmphasizedDecel", style = "popin 89%" })
+hl.animation({ leaf = "windowsOut",    enabled = true,  speed = 1.49, bezier = "m3EmphasizedAccel", style = "popin 92%" })
 
 -- Fades (Uses Standard for simple utility transitions)
 hl.animation({ leaf = "fadeIn",        enabled = true,  speed = 1.73, bezier = "m3StandardDecel" })

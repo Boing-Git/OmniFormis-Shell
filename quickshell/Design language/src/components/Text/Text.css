@@ -1,0 +1,545 @@
+@layer m3e.components {
+  .m3e-text {
+    margin: 0;
+  }
+
+  .m3e-text[data-m3e-variant="displayLarge"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-display-large-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-display-large-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-display-large-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-display-large-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-display-large-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-display-large-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-display-large-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-display-large-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-display-large-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-display-large-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-display-large-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-display-large-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-display-large-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-display-large-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="displayMedium"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-display-medium-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-display-medium-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-display-medium-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-display-medium-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-display-medium-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-display-medium-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-display-medium-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-display-medium-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-display-medium-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-display-medium-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-display-medium-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-display-medium-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-display-medium-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-display-medium-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="displaySmall"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-display-small-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-display-small-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-display-small-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-display-small-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-display-small-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-display-small-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-display-small-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-display-small-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-display-small-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-display-small-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-display-small-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-display-small-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-display-small-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-display-small-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="headlineLarge"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-headline-large-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-headline-large-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-headline-large-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-headline-large-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-headline-large-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-headline-large-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-headline-large-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-headline-large-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-headline-large-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-headline-large-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-headline-large-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-headline-large-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-headline-large-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-headline-large-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="headlineMedium"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-headline-medium-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-headline-medium-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-headline-medium-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-headline-medium-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-headline-medium-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-headline-medium-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-headline-medium-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-headline-medium-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-headline-medium-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-headline-medium-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-headline-medium-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-headline-medium-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-headline-medium-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-headline-medium-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="headlineSmall"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-headline-small-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-headline-small-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-headline-small-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-headline-small-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-headline-small-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-headline-small-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-headline-small-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-headline-small-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-headline-small-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-headline-small-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-headline-small-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-headline-small-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-headline-small-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-headline-small-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="titleLarge"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-title-large-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-title-large-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-title-large-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-title-large-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-title-large-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-title-large-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-title-large-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-title-large-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-title-large-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-title-large-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-title-large-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-title-large-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-title-large-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-title-large-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="titleMedium"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-title-medium-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-title-medium-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-title-medium-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-title-medium-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-title-medium-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-title-medium-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-title-medium-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-title-medium-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-title-medium-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-title-medium-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-title-medium-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-title-medium-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-title-medium-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-title-medium-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="titleSmall"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-title-small-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-title-small-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-title-small-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-title-small-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-title-small-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-title-small-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-title-small-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-title-small-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-title-small-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-title-small-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-title-small-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-title-small-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-title-small-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-title-small-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="bodyLarge"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-body-large-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-body-large-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-body-large-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-body-large-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-body-large-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-body-large-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-body-large-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-body-large-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-body-large-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-body-large-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-body-large-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-body-large-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-body-large-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-body-large-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="bodyMedium"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-body-medium-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-body-medium-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-body-medium-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-body-medium-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-body-medium-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-body-medium-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-body-medium-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-body-medium-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-body-medium-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-body-medium-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-body-medium-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-body-medium-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-body-medium-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-body-medium-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="bodySmall"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-body-small-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-body-small-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-body-small-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-body-small-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-body-small-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-body-small-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-body-small-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-body-small-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-body-small-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-body-small-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-body-small-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-body-small-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-body-small-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-body-small-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="labelLarge"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-label-large-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-label-large-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-label-large-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-label-large-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-label-large-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-label-large-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-label-large-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-label-large-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-label-large-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-label-large-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-label-large-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-label-large-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-label-large-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-label-large-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="labelMedium"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-label-medium-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-label-medium-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-label-medium-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-label-medium-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-label-medium-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-label-medium-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-label-medium-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-label-medium-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-label-medium-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-label-medium-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-label-medium-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-label-medium-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-label-medium-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-label-medium-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="labelSmall"][data-m3e-emphasis="baseline"] {
+    font-family: var(--m3e-sys-typescale-baseline-label-small-font-family);
+    font-weight: var(--m3e-sys-typescale-baseline-label-small-font-weight);
+    font-size: var(--m3e-sys-typescale-baseline-label-small-font-size);
+    line-height: var(--m3e-sys-typescale-baseline-label-small-line-height);
+    letter-spacing: var(--m3e-sys-typescale-baseline-label-small-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-baseline-label-small-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-baseline-label-small-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-baseline-label-small-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-baseline-label-small-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-baseline-label-small-axes-rond),
+      "opsz" var(--m3e-sys-typescale-baseline-label-small-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-baseline-label-small-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-baseline-label-small-axes-wdth),
+      "wght" var(--m3e-sys-typescale-baseline-label-small-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="displayLarge"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-display-large-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-display-large-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-display-large-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-display-large-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-display-large-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-display-large-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-display-large-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-display-large-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-display-large-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-display-large-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-display-large-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-display-large-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-display-large-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-display-large-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="displayMedium"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-display-medium-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-display-medium-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-display-medium-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-display-medium-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-display-medium-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-display-medium-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-display-medium-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-display-medium-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-display-medium-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-display-medium-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-display-medium-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-display-medium-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-display-medium-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-display-medium-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="displaySmall"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-display-small-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-display-small-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-display-small-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-display-small-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-display-small-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-display-small-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-display-small-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-display-small-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-display-small-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-display-small-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-display-small-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-display-small-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-display-small-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-display-small-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="headlineLarge"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-headline-large-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-headline-large-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-headline-large-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-headline-large-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-headline-large-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-headline-large-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-headline-large-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-headline-large-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-headline-large-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-headline-large-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-headline-large-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-headline-large-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-headline-large-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-headline-large-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="headlineMedium"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-headline-medium-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-headline-medium-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-headline-medium-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-headline-medium-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-headline-medium-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-headline-medium-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-headline-medium-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-headline-medium-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-headline-medium-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-headline-medium-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-headline-medium-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-headline-medium-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-headline-medium-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-headline-medium-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="headlineSmall"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-headline-small-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-headline-small-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-headline-small-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-headline-small-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-headline-small-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-headline-small-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-headline-small-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-headline-small-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-headline-small-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-headline-small-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-headline-small-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-headline-small-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-headline-small-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-headline-small-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="titleLarge"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-title-large-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-title-large-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-title-large-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-title-large-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-title-large-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-title-large-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-title-large-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-title-large-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-title-large-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-title-large-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-title-large-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-title-large-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-title-large-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-title-large-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="titleMedium"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-title-medium-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-title-medium-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-title-medium-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-title-medium-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-title-medium-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-title-medium-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-title-medium-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-title-medium-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-title-medium-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-title-medium-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-title-medium-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-title-medium-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-title-medium-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-title-medium-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="titleSmall"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-title-small-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-title-small-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-title-small-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-title-small-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-title-small-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-title-small-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-title-small-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-title-small-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-title-small-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-title-small-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-title-small-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-title-small-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-title-small-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-title-small-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="bodyLarge"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-body-large-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-body-large-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-body-large-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-body-large-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-body-large-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-body-large-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-body-large-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-body-large-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-body-large-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-body-large-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-body-large-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-body-large-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-body-large-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-body-large-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="bodyMedium"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-body-medium-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-body-medium-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-body-medium-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-body-medium-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-body-medium-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-body-medium-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-body-medium-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-body-medium-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-body-medium-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-body-medium-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-body-medium-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-body-medium-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-body-medium-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-body-medium-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="bodySmall"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-body-small-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-body-small-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-body-small-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-body-small-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-body-small-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-body-small-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-body-small-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-body-small-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-body-small-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-body-small-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-body-small-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-body-small-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-body-small-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-body-small-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="labelLarge"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-label-large-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-label-large-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-label-large-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-label-large-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-label-large-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-label-large-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-label-large-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-label-large-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-label-large-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-label-large-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-label-large-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-label-large-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-label-large-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-label-large-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="labelMedium"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-label-medium-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-label-medium-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-label-medium-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-label-medium-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-label-medium-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-label-medium-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-label-medium-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-label-medium-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-label-medium-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-label-medium-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-label-medium-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-label-medium-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-label-medium-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-label-medium-axes-wght);
+  }
+
+  .m3e-text[data-m3e-variant="labelSmall"][data-m3e-emphasis="emphasized"] {
+    font-family: var(--m3e-sys-typescale-emphasized-label-small-font-family);
+    font-weight: var(--m3e-sys-typescale-emphasized-label-small-font-weight);
+    font-size: var(--m3e-sys-typescale-emphasized-label-small-font-size);
+    line-height: var(--m3e-sys-typescale-emphasized-label-small-line-height);
+    letter-spacing: var(--m3e-sys-typescale-emphasized-label-small-letter-spacing);
+    font-variation-settings:
+      "CRSV" var(--m3e-sys-typescale-emphasized-label-small-axes-crsv),
+      "FILL" var(--m3e-sys-typescale-emphasized-label-small-axes-fill),
+      "GRAD" var(--m3e-sys-typescale-emphasized-label-small-axes-grad),
+      "HEXP" var(--m3e-sys-typescale-emphasized-label-small-axes-hexp),
+      "ROND" var(--m3e-sys-typescale-emphasized-label-small-axes-rond),
+      "opsz" var(--m3e-sys-typescale-emphasized-label-small-axes-opsz),
+      "slnt" var(--m3e-sys-typescale-emphasized-label-small-axes-slnt),
+      "wdth" var(--m3e-sys-typescale-emphasized-label-small-axes-wdth),
+      "wght" var(--m3e-sys-typescale-emphasized-label-small-axes-wght);
+  }
+}

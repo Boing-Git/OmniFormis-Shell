@@ -1,0 +1,652 @@
+/* =====================================================================
+   M3E — Material 3 Expressive for Spotify (Spicetify)
+   Built against Spotify 1.2.95. Selectors are verified against xpui.css;
+   Encore classes are version-hashed (e-10451-*) so they are matched with
+   [class*="…"] and the design-system tokens are overridden at the root.
+
+   Tokens from "Design language/src/tokens/defaults/":
+     shape.ts       4 · 8 · 12 · 16 · 20 · 28 · 32 · 48 · full
+     motion.ts      expressive spatial springs (overshoot), effects (none)
+     state.ts       hover .08 · focus .10 · pressed .10
+     typography.ts  brand (titles) / plain (body)
+   Colours: color.ini (matugen) → --spice-<role>
+   ===================================================================== */
+
+:root {
+  /* shape */
+  --m3e-xs: 4px;
+  --m3e-sm: 8px;
+  --m3e-md: 12px;
+  --m3e-lg: 16px;
+  --m3e-lg-inc: 20px;
+  --m3e-xl: 28px;
+  --m3e-xl-inc: 32px;
+  --m3e-full: 9999px;
+  --m3e-pane: var(--m3e-lg-inc);
+
+  /* motion — springs projected to CSS. Spatial overshoots, effects never do */
+  /* overshoot kept small: large overshoot on radius / scale reads as
+     jitter, not bounce */
+  --m3e-ease-spatial-fast: cubic-bezier(0.34, 1.32, 0.4, 1);
+  --m3e-ease-spatial: cubic-bezier(0.3, 1.12, 0.36, 1);
+  --m3e-ease-standard: cubic-bezier(0.27, 1.06, 0.18, 1); /* ζ.9 k700 */
+  --m3e-ease-effects: cubic-bezier(0.31, 0.94, 0.34, 1); /* ζ1 */
+  --m3e-spatial-fast: 300ms var(--m3e-ease-spatial-fast);
+  --m3e-spatial: 400ms var(--m3e-ease-spatial);
+  /* corner morphs: no overshoot (an overshooting radius wobbles) */
+  --m3e-shape: 300ms var(--m3e-ease-standard);
+  --m3e-effects: 150ms var(--m3e-ease-effects);
+
+  /* state layers */
+  --m3e-hover: 0.08;
+  --m3e-focus: 0.1;
+  --m3e-pressed: 0.1;
+
+  /* type */
+  --m3e-font: "Google Sans Flex", "Google Sans", "Roboto Flex", Inter, sans-serif;
+}
+
+/* =====================================================================
+   1 · Encore design tokens → M3E
+   ===================================================================== */
+:root,
+.encore-layout-themes,
+.encore-medium-devices-theme,
+.encore-small-devices-theme {
+  --encore-corner-radius-smaller-2: var(--m3e-xs) !important;
+  --encore-corner-radius-smaller: var(--m3e-xs) !important;
+  --encore-corner-radius-base: var(--m3e-sm) !important;
+  --encore-corner-radius-larger: var(--m3e-md) !important;
+  --encore-corner-radius-larger-2: var(--m3e-lg) !important;
+  --encore-corner-radius-larger-3: var(--m3e-xl) !important;
+  --encore-image-border-radius: var(--m3e-md) !important;
+
+  --encore-productive: var(--m3e-ease-standard) !important;
+  --encore-productive-decelerate: var(--m3e-ease-effects) !important;
+  --encore-button-hover-scale: 1.03 !important;
+
+  --encore-body-font-stack: var(--m3e-font) !important;
+  --encore-title-font-stack: var(--m3e-font) !important;
+  --encore-variable-font-stack: var(--m3e-font) !important;
+}
+
+/* colour sets — !important because Spotify's own rules are .theme .set */
+.encore-dark-theme,
+.encore-dark-theme .encore-base-set,
+.encore-light-theme,
+.encore-light-theme .encore-base-set {
+  --background-base: var(--spice-surface-container-low) !important;
+  --background-highlight: var(--spice-surface-container) !important;
+  --background-press: var(--spice-surface-container-high) !important;
+  --background-elevated-base: var(--spice-surface-container-high) !important;
+  --background-elevated-highlight: var(--spice-surface-container-highest) !important;
+  --background-elevated-press: var(--spice-surface-bright) !important;
+  --background-tinted-base: rgba(var(--spice-rgb-text), 0.08) !important;
+  --background-tinted-highlight: rgba(var(--spice-rgb-text), 0.12) !important;
+  --background-tinted-press: rgba(var(--spice-rgb-text), 0.16) !important;
+  --text-base: var(--spice-text) !important;
+  --text-subdued: var(--spice-on-surface-variant) !important;
+  --text-bright-accent: var(--spice-primary) !important;
+  --text-positive: var(--spice-primary) !important;
+  --text-negative: var(--spice-notification-error) !important;
+  --text-announcement: var(--spice-tertiary) !important;
+  --essential-base: var(--spice-text) !important;
+  --essential-subdued: var(--spice-outline) !important;
+  --essential-bright-accent: var(--spice-primary) !important;
+  --essential-positive: var(--spice-primary) !important;
+  --essential-negative: var(--spice-notification-error) !important;
+  --essential-announcement: var(--spice-tertiary) !important;
+  --decorative-base: var(--spice-text) !important;
+  --decorative-subdued: var(--spice-outline-variant) !important;
+}
+
+/* filled (primary) buttons */
+.encore-dark-theme .encore-bright-accent-set,
+.encore-light-theme .encore-bright-accent-set,
+.encore-bright-accent-set {
+  --background-base: var(--spice-primary) !important;
+  --background-highlight: color-mix(in srgb, var(--spice-primary) 92%, var(--spice-on-primary)) !important;
+  --background-press: color-mix(in srgb, var(--spice-primary) 90%, var(--spice-on-primary)) !important;
+  --background-elevated-base: var(--spice-primary) !important;
+  --background-elevated-highlight: color-mix(in srgb, var(--spice-primary) 92%, var(--spice-on-primary)) !important;
+  --text-base: var(--spice-on-primary) !important;
+  --text-subdued: var(--spice-on-primary) !important;
+  --text-bright-accent: var(--spice-on-primary) !important;
+  --essential-base: var(--spice-on-primary) !important;
+  --essential-bright-accent: var(--spice-on-primary) !important;
+}
+
+/* white "inverted" pills → M3 inverse surface */
+.encore-dark-theme .encore-inverted-light-set,
+.encore-inverted-light-set {
+  --background-base: var(--spice-inverse-surface) !important;
+  --background-highlight: color-mix(in srgb, var(--spice-inverse-surface) 92%, var(--spice-main)) !important;
+  --background-press: color-mix(in srgb, var(--spice-inverse-surface) 88%, var(--spice-main)) !important;
+  --text-base: var(--spice-inverse-on-surface) !important;
+  --essential-base: var(--spice-inverse-on-surface) !important;
+}
+
+/* =====================================================================
+   2 · Type
+   ===================================================================== */
+body {
+  font-family: var(--m3e-font);
+  font-optical-sizing: auto;
+}
+
+.encore-text-headline-large,
+.encore-text-headline-medium,
+.encore-text-title-large,
+.encore-text-title-medium,
+.main-entityHeader-title,
+.main-shelf-title,
+.main-nowPlayingView-sectionHeaderText {
+  font-variation-settings: "ROND" 100;
+  letter-spacing: 0 !important;
+}
+
+.main-entityHeader-title h1,
+.main-entityHeader-title span {
+  font-weight: 800 !important;
+  font-variation-settings: "ROND" 100;
+  letter-spacing: -0.01em !important;
+}
+
+::selection {
+  background: var(--spice-primary-container);
+  color: var(--spice-on-primary-container);
+}
+
+/* =====================================================================
+   3 · Layout — floating panes on the surface ground
+   ===================================================================== */
+body,
+.Root__top-container,
+.Root__now-playing-bar,
+.Root__globalNav {
+  background-color: var(--spice-main) !important;
+}
+
+.Root__nav-bar,
+.Root__main-view,
+.Root__right-sidebar > div,
+.Root__right-sidebar aside {
+  background-color: var(--spice-surface-container-low) !important;
+  border-radius: var(--m3e-pane) !important;
+  overflow: hidden;
+}
+
+.main-view-container__scroll-node-child,
+.main-view-container {
+  background: transparent !important;
+}
+
+/* cover-coloured headers: keep the album's hue (content leads) but tone it
+   into the pane, then fade header → action bar → pane in one continuous
+   ramp. Spotify puts the cover colour inline as --background-base. */
+.main-entityHeader-backgroundColor,
+.main-actionBarBackground-background,
+[class*="actionBarBackground-background"] {
+  --m3e-cover-hi: color-mix(in oklab, var(--background-base) 78%, var(--spice-surface-container-low));
+  --m3e-cover-lo: color-mix(in oklab, var(--background-base) 34%, var(--spice-surface-container-low));
+}
+.main-entityHeader-backgroundColor {
+  background-color: transparent !important;
+  background-image: linear-gradient(var(--m3e-cover-hi), var(--m3e-cover-lo)) !important;
+}
+.main-actionBarBackground-background,
+[class*="actionBarBackground-background"] {
+  background-color: transparent !important;
+  background-image: linear-gradient(var(--m3e-cover-lo), transparent) !important;
+}
+.main-topBar-background {
+  background-color: var(--spice-surface-container) !important;
+}
+
+/* =====================================================================
+   4 · Search — pill field
+   ===================================================================== */
+.main-topBar-searchBar {
+  border-radius: var(--m3e-full) !important;
+  background-color: var(--spice-surface-container-high) !important;
+  box-shadow: none !important;
+  transition: background-color var(--m3e-effects), box-shadow var(--m3e-effects) !important;
+}
+.main-globalNav-searchInputContainer:hover .main-topBar-searchBar {
+  background-color: var(--spice-surface-container-highest) !important;
+}
+.main-topBar-searchBar:focus {
+  background-color: var(--spice-surface-container-highest) !important;
+  box-shadow: inset 0 0 0 2px var(--spice-primary) !important;
+}
+
+/* =====================================================================
+   5 · Icon buttons — state layer, round → squircle on press
+   ===================================================================== */
+/* 50% (not 9999px) so the round → squircle morph interpolates visibly:
+   9999px → 12px stays above half-width until the last frame, so it looks
+   like a circle that snaps square at the end */
+[class*="button-tertiary--icon-only"] {
+  border-radius: 50% !important;
+  transition:
+    border-radius var(--m3e-shape),
+    background-color var(--m3e-effects),
+    color var(--m3e-effects),
+    transform var(--m3e-spatial-fast) !important;
+}
+[class*="button-tertiary--icon-only"]:hover {
+  background-color: rgba(var(--spice-rgb-text), var(--m3e-hover)) !important;
+}
+[class*="button-tertiary--icon-only"]:active {
+  background-color: rgba(var(--spice-rgb-text), calc(var(--m3e-hover) + var(--m3e-pressed))) !important;
+  border-radius: var(--m3e-md) !important;
+  transform: scale(0.92);
+}
+
+/* player transport: square 40px targets, centred (the 44px play button
+   otherwise stretches them into tall pills) */
+[data-testid="player-controls"] [class*="button-tertiary--icon-only"] {
+  inline-size: 40px !important;
+  block-size: 40px !important;
+  align-self: center !important;
+  justify-content: center !important;
+}
+
+/* toggled icon buttons (shuffle / repeat): filled tonal + squared shape.
+   Shuffle has no test id or state attribute in 1.2.95 — its label names the
+   *next* action, so "Enable Smart Shuffle…" / "Disable …" mean it is on.
+   (English UI, same as the play/pause morph.) */
+button:is([aria-label^="Enable Smart Shuffle"], [aria-label^="Disable Smart Shuffle"], [aria-label^="Disable shuffle" i]),
+[data-testid="control-button-shuffle"][aria-checked="true"],
+[data-testid="control-button-repeat"]:is([aria-checked="true"], [aria-checked="mixed"]) {
+  background-color: var(--spice-secondary-container) !important;
+  color: var(--spice-on-secondary-container) !important;
+  border-radius: var(--m3e-md) !important;
+}
+/* Spotify's "active" dot (::after on shuffle, ::before on repeat) — the
+   tonal fill replaces it */
+button:is([aria-label*="huffle"], [data-testid="control-button-repeat"])::before,
+button:is([aria-label*="huffle"], [data-testid="control-button-repeat"])::after {
+  display: none !important;
+}
+
+/* =====================================================================
+   6 · Filled buttons — pill that squares up on press
+   ===================================================================== */
+[class*="button-primary__inner"] {
+  transition:
+    border-radius var(--m3e-shape),
+    background-color var(--m3e-effects),
+    transform var(--m3e-spatial-fast) !important;
+}
+/* pills: a real radius instead of Spotify's 9999px, so pressing morphs
+   smoothly instead of snapping (big play buttons keep their own shape) */
+button:not([data-testid="play-button"]):not(.main-playButton-PlayButton button) > [class*="button-primary__inner"] {
+  border-radius: 24px;
+}
+button:active > [class*="button-primary__inner"] {
+  border-radius: var(--m3e-md) !important;
+}
+
+/* big play buttons (action bar, cards) = FAB: squircle, rounder on hover */
+.main-playButton-PlayButton,
+.main-actionBar-ActionBarPlayButtonContainer,
+[data-testid="play-button"] {
+  --encore-button-corner-radius: var(--m3e-lg);
+}
+.main-playButton-PlayButton [class*="button-primary__inner"],
+[data-testid="play-button"] [class*="button-primary__inner"] {
+  box-shadow: 0 2px 6px rgba(var(--spice-rgb-shadow), 0.3) !important;
+}
+.main-playButton-PlayButton button:hover > [class*="button-primary__inner"],
+[data-testid="play-button"]:hover > [class*="button-primary__inner"] {
+  border-radius: var(--m3e-xl) !important;
+}
+.main-playButton-PlayButton button:active > [class*="button-primary__inner"],
+[data-testid="play-button"]:active > [class*="button-primary__inner"] {
+  border-radius: var(--m3e-sm) !important;
+}
+
+/* =====================================================================
+   7 · Filter chips — M3 8px chips, selected = secondary container
+   ===================================================================== */
+[class*="legacy-chip"],
+[class*="legacy-chip__inner"],
+[class$="-chip"],
+[class*="-chip "] {
+  border-radius: var(--m3e-sm) !important;
+  transition: background-color var(--m3e-effects), border-radius var(--m3e-shape), color var(--m3e-effects) !important;
+}
+[class*="legacy-chip__inner--selected"],
+:is([class$="-chip"], [class*="-chip "]):is([aria-checked="true"], [aria-pressed="true"], [aria-selected="true"]) {
+  background-color: var(--spice-secondary-container) !important;
+  color: var(--spice-on-secondary-container) !important;
+}
+
+/* home shortcut tiles + browse category cards */
+.view-homeShortcutsGrid-shortcut {
+  border-radius: var(--m3e-md) !important;
+  overflow: hidden;
+  transition: background-color var(--m3e-effects) !important;
+}
+.view-homeShortcutsGrid-shortcut:hover {
+  background-color: rgba(var(--spice-rgb-text), 0.14) !important;
+}
+a[href^="/genre/"] > div:first-child {
+  border-radius: var(--m3e-lg-inc) !important;
+  overflow: hidden;
+  transition: border-radius var(--m3e-shape) !important;
+}
+a[href^="/genre/"]:hover > div:first-child {
+  border-radius: var(--m3e-xl) !important;
+}
+
+/* =====================================================================
+   8 · Library
+   ===================================================================== */
+.main-yourLibraryX-listItem :is([class$="-list-row"], [class*="-list-row "]) {
+  border-radius: var(--m3e-md) !important;
+  transition: background-color var(--m3e-effects), border-radius var(--m3e-shape) !important;
+}
+.main-yourLibraryX-listItem:hover :is([class$="-list-row"], [class*="-list-row "]) {
+  background-color: rgba(var(--spice-rgb-text), var(--m3e-hover)) !important;
+}
+.main-yourLibraryX-listItem[aria-selected="true"] :is([class$="-list-row"], [class*="-list-row "]) {
+  background-color: var(--spice-secondary-container) !important;
+  border-radius: var(--m3e-xl) !important;
+  box-shadow: none !important;
+}
+.main-yourLibraryX-listItem[aria-selected="true"] :is([class$="-list-row"], [class*="-list-row "]) * {
+  color: var(--spice-on-secondary-container);
+}
+.main-yourLibraryX-listItem img {
+  border-radius: var(--m3e-sm) !important;
+}
+.main-yourLibraryX-listItem[aria-selected="true"] img:not([class*="circular"]) {
+  border-radius: var(--m3e-lg) !important;
+}
+
+/* =====================================================================
+   9 · Track list
+   ===================================================================== */
+.main-trackList-trackListRow {
+  border-radius: var(--m3e-md) !important;
+  transition: background-color var(--m3e-effects) !important;
+}
+.main-trackList-trackListRow:hover,
+.main-trackList-trackListRow:focus-within {
+  background-color: rgba(var(--spice-rgb-text), var(--m3e-hover)) !important;
+}
+.main-trackList-trackListRow[aria-selected="true"] {
+  background-color: var(--spice-secondary-container) !important;
+  border-radius: var(--m3e-lg-inc) !important;
+}
+html:not(.no-focus-outline) .main-trackList-trackListRow:focus-within {
+  border-color: transparent !important;
+  box-shadow: inset 0 0 0 2px var(--spice-secondary) !important;
+}
+.main-trackList-rowImage {
+  border-radius: var(--m3e-sm) !important;
+}
+.main-trackList-trackListHeader {
+  border-radius: var(--m3e-md) !important;
+}
+
+/* =====================================================================
+   10 · Cards — image corner morph is the hero motion
+   ===================================================================== */
+.main-card-card,
+.main-card-cardContainer {
+  border-radius: var(--m3e-lg-inc) !important;
+  transition: background-color var(--m3e-effects) !important;
+}
+.main-cardImage-imageWrapper,
+.main-cardImage-image {
+  border-radius: var(--m3e-md) !important;
+  transition: border-radius var(--m3e-shape) !important;
+}
+:is(.main-card-card, .main-card-cardContainer):hover :is(.main-cardImage-imageWrapper, .main-cardImage-image):not(.main-cardImage-circular) {
+  border-radius: var(--m3e-xl) !important;
+}
+.main-cardImage-circular,
+.main-cardImage-circular .main-cardImage-image {
+  border-radius: var(--m3e-full) !important;
+}
+.main-card-card:active,
+.main-card-cardContainer:active {
+  transform: scale(0.98);
+  transition: transform var(--m3e-spatial-fast), background-color var(--m3e-effects) !important;
+}
+
+.main-entityHeader-imageContainer,
+.main-entityHeader-image {
+  border-radius: var(--m3e-xl) !important;
+}
+
+/* =====================================================================
+   11 · Now-playing bar — floating toolbar
+   ===================================================================== */
+.main-nowPlayingBar-nowPlayingBar {
+  background-color: var(--spice-surface-container) !important;
+  border-radius: var(--m3e-xl) !important;
+  padding-inline: 8px 16px !important;
+}
+.main-nowPlayingWidget-coverArt,
+.main-nowPlayingWidget-coverArt img,
+.main-nowPlayingWidget-coverArtContainer img {
+  border-radius: var(--m3e-lg-inc) !important; /* concentric: 28 − 8 */
+}
+
+/* play/pause: primary; circle when paused, squircle while playing */
+[data-testid="control-button-playpause"],
+[data-testid="control-button-playpause"] [class*="__inner"] {
+  --background-base: var(--spice-primary) !important;
+  --background-highlight: color-mix(in srgb, var(--spice-primary) 92%, var(--spice-on-primary)) !important;
+  --background-press: color-mix(in srgb, var(--spice-primary) 88%, var(--spice-on-primary)) !important;
+  --text-base: var(--spice-on-primary) !important;
+  --essential-base: var(--spice-on-primary) !important;
+}
+[data-testid="control-button-playpause"] [class*="__inner"] {
+  inline-size: 44px !important;
+  block-size: 44px !important;
+  border-radius: 22px !important; /* exact half-size, see icon buttons */
+  transition:
+    border-radius var(--m3e-shape),
+    background-color var(--m3e-effects),
+    transform var(--m3e-spatial-fast) !important;
+}
+[data-testid="control-button-playpause"][aria-label="Pause"] [class*="__inner"] {
+  border-radius: var(--m3e-lg) !important;
+}
+[data-testid="control-button-playpause"]:active [class*="__inner"] {
+  border-radius: var(--m3e-sm) !important;
+  transform: scale(0.92);
+}
+
+/* =====================================================================
+   12 · Sliders — M3E: thick active track, bar handle with a gap,
+        wavy active track while playing
+   ===================================================================== */
+:is([data-testid="playback-progressbar"], [data-testid="volume-bar"]) .progress-bar {
+  --progress-bar-height: 12px !important;
+  --fg-color: var(--spice-primary) !important;
+  --is-active-fg-color: var(--spice-primary) !important;
+  --mg-color: rgba(var(--spice-rgb-primary), 0.4) !important;
+  overflow: visible !important;
+}
+:is([data-testid="playback-progressbar"], [data-testid="volume-bar"]) .x-progressBar-progressBarBg {
+  background-color: transparent !important;
+}
+/* inactive track: only to the right of the playhead */
+:is([data-testid="playback-progressbar"], [data-testid="volume-bar"]) .x-progressBar-progressBarBg::before {
+  content: "";
+  position: absolute;
+  inset-block: 4px;
+  inset-inline: var(--progress-bar-transform) 0;
+  background-color: var(--spice-secondary-container);
+  border-radius: var(--m3e-full);
+}
+/* active track: flat 4px band (paused / volume) */
+:is([data-testid="playback-progressbar"], [data-testid="volume-bar"]) :is(.x-progressBar-fillColor, .x-progressBar-progressFillColor) {
+  border-radius: 0 !important;
+  -webkit-mask: linear-gradient(transparent 4px, #000 4px, #000 8px, transparent 8px);
+  mask: linear-gradient(transparent 4px, #000 4px, #000 8px, transparent 8px);
+}
+/* while playing: the active track becomes a moving wave */
+/* The wave is a ::before layer slid with transform (GPU-composited);
+   animating mask-position repainted the whole bar every frame */
+.Root__now-playing-bar:has([data-testid="control-button-playpause"][aria-label="Pause"])
+  [data-testid="playback-progressbar"] .x-progressBar-fillColor {
+  -webkit-mask: none;
+  mask: none;
+  position: relative;
+  /* the sliding ::before is 32px wider than the fill and moves right by up
+     to 32px — clip it so the wave ends at the playhead */
+  overflow: clip;
+  background-color: transparent !important;
+}
+.Root__now-playing-bar:has([data-testid="control-button-playpause"][aria-label="Pause"])
+  [data-testid="playback-progressbar"] .x-progressBar-fillColor::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline: -32px 0;
+  background-color: var(--fg-color);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='12'%3E%3Cpath d='M-16 6Q-8 1.6 0 6T16 6T32 6T48 6' fill='none' stroke='%23000' stroke-width='3.5'/%3E%3C/svg%3E") 0 50% / 32px 12px repeat-x;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='12'%3E%3Cpath d='M-16 6Q-8 1.6 0 6T16 6T32 6T48 6' fill='none' stroke='%23000' stroke-width='3.5'/%3E%3C/svg%3E") 0 50% / 32px 12px repeat-x;
+  animation: m3e-wave 1.1s linear infinite;
+  will-change: transform;
+}
+@keyframes m3e-wave {
+  to {
+    transform: translateX(32px);
+  }
+}
+/* handle: tall bar, ring in the container colour makes the gap */
+:is([data-testid="playback-progressbar"], [data-testid="volume-bar"]) .progress-bar__slider {
+  display: flex !important;
+  width: 4px !important;
+  height: 22px !important;
+  margin-left: -2px !important;
+  border-radius: var(--m3e-full) !important;
+  background-color: var(--spice-primary) !important;
+  box-shadow: 0 0 0 4px var(--spice-surface-container) !important;
+  transition: scale var(--m3e-spatial-fast) !important;
+}
+:is([data-testid="playback-progressbar"], [data-testid="volume-bar"]) .progress-bar:hover .progress-bar__slider {
+  scale: 1 1.18;
+}
+:is([data-testid="playback-progressbar"], [data-testid="volume-bar"]) .progress-bar:active .progress-bar__slider {
+  scale: 0.5 1.18;
+}
+[data-testid="playback-position"],
+[data-testid="playback-duration"] {
+  font-variant-numeric: tabular-nums;
+  color: var(--spice-on-surface-variant) !important;
+}
+
+/* =====================================================================
+   13 · Menus, tooltips, dialogs
+   ===================================================================== */
+.main-contextMenu-menu {
+  background-color: var(--spice-surface-container) !important;
+  border-radius: var(--m3e-lg) !important;
+  padding: 4px !important;
+  box-shadow: 0 4px 12px rgba(var(--spice-rgb-shadow), 0.3) !important;
+}
+.main-contextMenu-menuItemButton {
+  border-radius: var(--m3e-md) !important;
+  transition: background-color var(--m3e-effects) !important;
+}
+.main-contextMenu-menuItemButton:hover,
+.main-contextMenu-menuItemButton:focus-visible,
+.main-contextMenu-menuItemButton[aria-expanded="true"] {
+  background-color: rgba(var(--spice-rgb-text), var(--m3e-hover)) !important;
+}
+.main-contextMenu-menuItemButton:active {
+  background-color: rgba(var(--spice-rgb-text), calc(var(--m3e-hover) + var(--m3e-pressed))) !important;
+}
+.main-contextMenu-dividerAfter,
+.main-contextMenu-dividerBefore {
+  border-color: var(--spice-outline-variant) !important;
+}
+
+/* Encore tooltip only (class starts "e-<ver>-tooltip"); a bare *-tooltip
+   match also hit .x-settings-tooltip and boxed the settings "?" icons */
+[class^="e-"]:is([class$="-tooltip"], [class*="-tooltip "]),
+.main-contextMenu-tippy:has([role="tooltip"]) {
+  background-color: var(--spice-inverse-surface) !important;
+  color: var(--spice-inverse-on-surface) !important;
+  border-radius: var(--m3e-xs) !important;
+}
+.main-contextMenu-tippy [role="tooltip"] {
+  color: var(--spice-inverse-on-surface) !important;
+}
+
+:is([class$="-dialog-confirmation"], [class*="-dialog-confirmation "], [class$="-dialog-alert"], [class*="-dialog-alert "]),
+.main-trackCreditsModal-container,
+.main-playlistEditDetailsModal-container,
+.main-embedWidgetGenerator-container {
+  background-color: var(--spice-surface-container-high) !important;
+  border-radius: var(--m3e-xl) !important;
+}
+
+/* =====================================================================
+   14 · Settings switch
+   ===================================================================== */
+.x-toggle-indicatorWrapper {
+  background-color: var(--spice-surface-container-highest) !important;
+  box-shadow: inset 0 0 0 2px var(--spice-outline) !important;
+  transition: background-color var(--m3e-effects), box-shadow var(--m3e-effects) !important;
+}
+.x-toggle-input:checked ~ .x-toggle-indicatorWrapper {
+  background-color: var(--spice-primary) !important;
+  box-shadow: none !important;
+}
+.x-toggle-indicator {
+  background-color: var(--spice-outline) !important;
+  transition: transform var(--m3e-spatial-fast), background-color var(--m3e-effects) !important;
+}
+.x-toggle-input:checked ~ .x-toggle-indicatorWrapper .x-toggle-indicator {
+  background-color: var(--spice-on-primary) !important;
+}
+
+/* =====================================================================
+   15 · Lyrics
+   ===================================================================== */
+.lyrics-lyrics-container,
+.lyrics-lyrics-background {
+  --lyrics-color-active: var(--spice-text) !important;
+  --lyrics-color-inactive: rgba(var(--spice-rgb-text), 0.38) !important;
+  --lyrics-color-passed: var(--spice-on-surface-variant) !important;
+  --lyrics-color-background: var(--spice-surface-container-low) !important;
+  --lyrics-color-messaging: var(--spice-on-surface-variant) !important;
+}
+.lyrics-lyricsContent-lyric {
+  font-variation-settings: "ROND" 100;
+  font-weight: 700 !important;
+}
+
+/* =====================================================================
+   16 · Scrollbars, focus, reduced motion
+   ===================================================================== */
+.os-scrollbar-handle {
+  background-color: var(--spice-outline-variant) !important;
+  border-radius: var(--m3e-full) !important;
+}
+.os-scrollbar-handle:hover {
+  background-color: var(--spice-outline) !important;
+}
+
+:focus-visible {
+  outline-color: var(--spice-secondary) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation: none !important;
+  }
+}

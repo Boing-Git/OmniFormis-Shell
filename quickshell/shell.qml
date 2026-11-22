@@ -1,315 +1,160 @@
-//@ pragma UseQApplication
-import QtQuick
-import "."
 import Quickshell
-import Quickshell.Wayland
+import QtQuick
 import Quickshell.Io
-import Quickshell.Hyprland
-import "theme/variables.js" as Vars
+import Quickshell.Wayland
+import Quickshell.Services.Mpris
+import "primitive"
+import "screenshot"
+import "lock"
+import "variables.js" as Vars
 
-ShellRoot {
+PanelWindow{
     id: root
+    // the screen the shell lives on (Dials.screen): when the monitor goes away and comes
+    // back (a DisplayPort monitor does as it sleeps) the window follows it back
+    screen: Dials.screen
 
-    property bool appInitialized: false
+    anchors {
+        right: true
+        bottom: true
+        top: true
+        left: true
+    }
+    color: "transparent"
 
-    Component.onCompleted: {
-        Qt.application.name = "quickshell";
-        Qt.application.organization = "boing";
-        Qt.application.domain = "boing.quickshell";
-        appInitialized = true;
+    // take the keyboard only while the wallpaper search is being typed in
+    // (OnDemand focus flickers on Hyprland, so typing never arrived)
+    // take the keyboard while the dial is open, so it can be used with keys
+    WlrLayershell.keyboardFocus: wallpaperDial.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    mask: Region {
+        Region { item: wallpaperDial }
     }
 
-    property string globalOsIconPath: ""
-    property var _forceInitLockScreen: LockScreen
+    WallpaperDial {
+        id: wallpaperDial
 
-    Process {
-        id: osCheckProcess
-        command: ["sh", "-c", "cat /etc/os-release | grep '^ID='"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                let text = this.text.trim();
-                if (text.includes("nixos")) {
-                    root.globalOsIconPath = "file:///home/boing/Dotfiles/quickshell/theme/assets/nixos-logo.png";
-                } else if (text.includes("arch")) {
-                    root.globalOsIconPath = "file:///home/boing/Dotfiles/quickshell/theme/assets/arch-logo.png";
-                }
-            }
-        }
+        // M3E roles: surface container dial, outline-variant edge,
+        // a surface step up for the film strip, primary for the loading indicator
+        color: Roles.surface_container
+        borderColor: Roles.outline_variant
+        reelColor: Roles.surface_container_high
+        holeColor: Roles.outline_variant
+        loadingColor: Roles.primary
+        selectedColor: Roles.primary
     }
 
-    property bool launcherVisible: false
-    property bool screenshotVisible: false
-    property bool powerMenuVisible: false
-    property bool overviewVisible: false
-    property bool lensVisible: false
-    property bool gameLibraryVisible: false
+    AppLauncher {}
 
-    function callOnAllPills(methodName) {
-        for (let i = 0; i < topPillsInstantiator.count; i++) {
-            let obj = topPillsInstantiator.objectAt(i);
-            if (obj && typeof obj[methodName] === "function") {
-                obj[methodName]();
-            }
-        }
+    ControlCenter {}
+
+    // the OSDs, each only if it's switched on (osdEnabled in variables.js, or the pop-up
+    // settings in the control center's Settings control): off means no window at all, not
+    // a hidden one
+    // pops up on volume changes
+    Loader { active: Prefs.osdVolume; sourceComponent: AudioOsd {} }
+
+    // pops up on brightness changes
+    Loader { active: Prefs.osdBrightness; sourceComponent: BrightnessOsd {} }
+
+    // pops up in a corner while you move between workspaces
+    Loader { active: Prefs.osdWorkspaces; sourceComponent: WorkspaceOsd {} }
+
+    // a notification arriving: comes out of the control center's spot as a pill (the
+    // shell is the notification server: Notifs.qml)
+    NotifyOsd {}
+
+    // the screenshot tool (screenshot/): from the control center's Dials control, or
+    // qs -p <this folder> ipc call screenshot open
+    ScreenshotTool {}
+
+    // open / close from a keybind:  qs -p <this folder> ipc call wallpaper toggle
+    IpcHandler {
+        target: "wallpaper"
+        function toggle(): void { wallpaperDial.open = !wallpaperDial.open }
+        function open(): void { wallpaperDial.open = true }
+        function close(): void { wallpaperDial.open = false }
     }
 
-    onOverviewVisibleChanged: {
-        if (overviewVisible) {
-            callOnAllPills("closeAll");
-            screenshotVisible = false;
-            gameLibraryVisible = false;
-        }
+    PowerMenu{
+        id:topLeft
     }
 
-    onScreenshotVisibleChanged: {
-        if (screenshotVisible) {
-            callOnAllPills("closeAll");
-            overviewVisible = false;
-            lensVisible = false;
-            gameLibraryVisible = false;
-        }
-    }
+    // the lock screen (lock/): Super + L, the power dial's Lock, hypridle, or
+    // qs ipc call lock lock
+    LockScreen {}
 
-    onLensVisibleChanged: {
-        if (lensVisible) {
-            callOnAllPills("closeAll");
-            overviewVisible = false;
-            screenshotVisible = false;
-            gameLibraryVisible = false;
-        }
-    }
+    // the first-run tour (replay: the Help pill in the control center's Dials control, or
+    // qs ipc call hints tour)
+    Onboarding {}
 
-    onGameLibraryVisibleChanged: {
-        if (gameLibraryVisible) {
-            callOnAllPills("closeAll");
-            overviewVisible = false;
-            screenshotVisible = false;
-            lensVisible = false;
-        }
-    }
-
-    // Global shortcuts route to TopPills
-    GlobalShortcut {
-        name: "launcher"
-        description: "Toggle Launcher"
-        onPressed: callOnAllPills("toggleLauncher")
-    }
-
-    GlobalShortcut {
-        name: "control_center"
-        description: "Toggle Control Center"
-        onPressed: callOnAllPills("toggleControlCenter")
-    }
-
-    GlobalShortcut {
-        name: "screenshot"
-        description: "Toggle Screenshot"
-        onPressed: root.screenshotVisible = !root.screenshotVisible
-    }
-
-    GlobalShortcut {
-        name: "lens"
-        description: "Circle to Search"
-        onPressed: root.lensVisible = !root.lensVisible
-    }
-
-    GlobalShortcut {
-        name: "game_library"
-        description: "Toggle Game Library"
-        onPressed: root.gameLibraryVisible = !root.gameLibraryVisible
-    }
-
-    GlobalShortcut {
-        name: "power_menu"
-        description: "Toggle Power Menu"
-        onPressed: callOnAllPills("togglePowerMenu")
-    }
-
-    GlobalShortcut {
-        name: "wallpaper"
-        description: "Toggle Wallpaper Switcher"
-        onPressed: callOnAllPills("toggleWallpaper")
-    }
-
-    GlobalShortcut {
-        name: "color_scheme"
-        description: "Toggle Color Scheme Switcher"
-        onPressed: callOnAllPills("toggleColorScheme")
-    }
-
-    GlobalShortcut {
-        name: "overview"
-        description: "Toggle Overview"
-        onPressed: root.overviewVisible = !root.overviewVisible
-    }
-
-    GlobalShortcut {
-        name: "emoji_picker"
-        description: "Toggle Emoji Picker"
-        onPressed: callOnAllPills("toggleEmojiPicker")
-    }
-
-    GlobalShortcut {
-        name: "clipboard"
-        description: "Toggle Clipboard"
-        onPressed: callOnAllPills("toggleClipboard")
-    }
-
-    GlobalShortcut {
-        name: "cheat_sheet"
-        description: "Toggle Keybind Cheat Sheet"
-        onPressed: callOnAllPills("toggleCheatSheet")
-    }
-
+    // what the closed corners say (the volume as an arc, a bead per new notification): one
+    // tiny window per spot, only where there's something to say
     Variants {
-        model: root.appInitialized ? Quickshell.screens : []
-        delegate: Component {
-            ScreenShot {
-                required property var modelData
-                screen: modelData
-                visibleState: root.screenshotVisible || root.lensVisible
-                isLensMode: root.lensVisible
-
-                onScreenshotClosed: {
-                    root.screenshotVisible = false;
-                    root.lensVisible = false;
-                }
-            }
+        model: Dials.spots
+        CornerWhisper {
+            required property string modelData
+            spot: modelData
         }
     }
 
-    Variants {
-        model: root.appInitialized ? Quickshell.screens : []
-        delegate: Component {
-            ScreenFrame {
-                required property var modelData
-                screen: modelData
-            }
-        }
+    // something is playing: ticks go quieter and the volume corner waves (Prefs.musicPlaying)
+    Binding {
+        target: Prefs
+        property: "musicPlaying"
+        value: Mpris.players.values.some(p => p.isPlaying)
     }
 
-    Variants {
-        model: root.appInitialized ? Quickshell.screens : []
-        delegate: Component {
-            WallpaperOverlay {
-                required property var modelData
-                screen: modelData
-            }
-        }
+    // what liquid glass sees through itself (Backdrop): the wallpaper on screen, at the
+    // screen's size (this window covers it)
+    Binding { target: Backdrop; property: "wallpaper"; value: wallpaperDial.currentPath }
+    Binding { target: Backdrop; property: "screenSize"; value: Qt.size(root.width, root.height) }
+    Binding { target: Backdrop; property: "dpr"; value: Dials.screen ? Dials.screen.devicePixelRatio : 1 }
+    Binding { target: Backdrop; property: "output"; value: Dials.screen ? Dials.screen.name : "" }
+    Binding { target: Backdrop; property: "dialOpen"; value: { Dials.revision; return Dials.spots.some(s => Dials.busyAt(s)) } }
+
+    Component.onCompleted: Dials.register("wallpaper", wallpaperDial)
+
+    // Quickshell 0.3.2 on Qt 6.12 crashes while showing its own "reloaded"
+    // popup, so don't show it (reloads still happen; the log still says so)
+    Connections {
+        target: Quickshell
+        function onReloadCompleted() { Quickshell.inhibitReloadPopup() }
+        function onReloadFailed(error) { Quickshell.inhibitReloadPopup() }
     }
 
-    Variants {
-        model: root.appInitialized ? Quickshell.screens : []
-        delegate: Component {
-            DesktopClock {
-                required property var modelData
-                screen: modelData
-            }
-        }
+    // A monitor that goes away and comes back (a DisplayPort monitor does as it sleeps)
+    // takes every dial's window with it: the compositor closes them, and a closed layer
+    // window doesn't come back by itself. So once the screens have settled after a change,
+    // the shell rebuilds itself. While the session is locked it waits for the unlock (the
+    // lock makes its own surface for each screen that comes back)
+    property bool screensMoved: false
+    Connections {
+        target: Quickshell
+        function onScreensChanged() { root.screensMoved = true; screensSettle.restart() }
+    }
+    Timer {
+        id: screensSettle
+        interval: 1000
+        onTriggered: root.rebuildForScreens()
+    }
+    function rebuildForScreens() {
+        if (!screensMoved || Quickshell.screens.length === 0) return
+        if (Dials.lock && Dials.lock.locked) return
+        screensMoved = false
+        Quickshell.reload(false)
+    }
+    Connections {
+        target: Dials.lock
+        function onLockedChanged() { if (!Dials.lock.locked) root.rebuildForScreens() }
     }
 
-    Variants {
-        model: root.appInitialized ? Quickshell.screens : []
-        delegate: Component {
-            DesktopCalender {
-                required property var modelData
-                screen: modelData
-            }
-        }
-    }
-
-    Variants {
-        model: root.appInitialized ? Quickshell.screens : []
-        delegate: Component {
-            DesktopMediaPlayer {
-                required property var modelData
-                screen: modelData
-            }
-        }
-    }
-
-    Variants {
-        model: root.appInitialized ? Quickshell.screens : []
-        delegate: Component {
-            DesktopSystemVitals {
-                required property var modelData
-                screen: modelData
-            }
-        }
-    }
-
-    Variants {
-        model: root.appInitialized ? Quickshell.screens : []
-        delegate: Component {
-            DesktopAudioVisualizer {
-                required property var modelData
-                screen: modelData
-            }
-        }
-    }
-
-    // Launcher is now inside TopPills.qml
-    NotificationDaemon {
-        id: notifDaemon
-    }
-
-    // ClockStrut reserves exclusive screen space when Clock Pill is set to Always Visible
-    Variants {
-        model: root.appInitialized ? Quickshell.screens : []
-        delegate: Component {
-            ClockStrut {
-                required property var modelData
-                screen: modelData
-            }
-        }
-    }
-
-    Instantiator {
-        id: topPillsInstantiator
-        model: root.appInitialized ? Quickshell.screens : []
-        delegate: TopPills {
-            required property var modelData
-            screen: modelData
-            onToggleFloatingSettings: if (floatingSettingsLoader.item) floatingSettingsLoader.item.toggle()
-            onPopupOpened: {
-                root.overviewVisible = false;
-                root.screenshotVisible = false;
-                root.lensVisible = false;
-                root.gameLibraryVisible = false;
-            }
-            onOpenOverviewRequested: {
-                console.log("[SHELL] onOpenOverviewRequested received. Setting overviewVisible = true");
-                root.overviewVisible = true;
-            }
-            onOpenGameLibraryRequested: {
-                console.log("[SHELL] onOpenGameLibraryRequested received. Setting gameLibraryVisible = true. Current:", root.gameLibraryVisible);
-                root.gameLibraryVisible = true;
-            }
-        }
-    }
-
-    Loader {
-        id: floatingSettingsLoader
-        active: root.appInitialized
-        sourceComponent: Component {
-            SettingsWindow {
-                onRequestWidgetToggle: callOnAllPills("toggleSettings")
-            }
-        }
-    }
-
-    Overview {
-        visibleState: root.overviewVisible
-        onCloseRequested: {
-            root.overviewVisible = false;
-        }
-    }
-
-    GameLibrary {
-        visibleState: root.gameLibraryVisible
-        onCloseRequested: {
-            root.gameLibraryVisible = false;
-        }
+    // Quickshell only watches .qml files, so saving variables.js wouldn't
+    // reload anything. Watch it ourselves and reload when it changes (not while the
+    // session is locked: the lock holds on through a reload, but nothing should
+    // rebuild the shell under it; save again once unlocked)
+    FileView {
+        path: Qt.resolvedUrl("variables.js").toString().replace(/^file:\/\//, "")
+        watchChanges: true
+        onFileChanged: if (!Dials.lock || !Dials.lock.locked) Quickshell.reload(false)
     }
 }

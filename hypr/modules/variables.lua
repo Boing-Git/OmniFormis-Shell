@@ -16,7 +16,7 @@ local vars = {
     -- Set the system info app
     SysInfo = "btop",
     -- Frees up GPU/CPU for games: no blur, shadows, rounding, border, gaps or window animations, opaque windows, liquid glass and translucency off, lighter panel-corner anti-aliasing, and every desktop widget (clock, calendar, media player, system vitals, audio visualizer) hidden and fully stopped rather than just not animating
-    GameMode = true,
+    GameMode = false,
     -- Low-spec mode for old or weak hardware such as older ThinkPads, turns off blur, shadows, translucency and heavy shell effects ("auto", "on", "off")
     LowSpec = "auto",
     -- Select layout for hyprland
@@ -75,7 +75,7 @@ local vars = {
     -- Set window rounding
     rounding = 8,
     -- Set rounding power (higher = larger area the rounding is applied)
-    rounding_power = 25,
+    rounding_power = 10,
     -- Set active window opacity
     active_opacity = 1.0,
     -- Set inactive window opacity
@@ -109,7 +109,7 @@ local vars = {
 
     -- Liquid Glass
     liquidGlass = false,
-    liquidGlassPreset = "glass",
+    liquidGlassPreset = "apple",
 
     -- Groupbar
     -- Enable group bar
@@ -128,8 +128,10 @@ local vars = {
     disable_hyprland_logo = true,
     -- Enable session lock restore
     allow_session_lock_restore = true,
+    -- Enable session lock xray (the lock screen grows over the desktop and goes back into its corner, instead of over black)
+    session_lock_xray = true,
     -- Set variable refresh rate (0 = off, 1 = on, 2 = fullscreen only)
-    vrr = 1,
+    vrr = 0,
     -- Enable xwayland force zero scaling
     xwayland_force_zero_scaling = true,
     -- Enable xwayland nearest neighbor
@@ -147,7 +149,7 @@ local vars = {
 
     -- Animation Style
     -- Select animation style for hyprland ("expressive", "spring", "jelly", "flyingcards", "snappy", "cinematic", "minimal", "fluid", "aggressive", "elegant", "playful", "elastic", "swift", "relaxed", "slipstream", "standard", "fluent", "custom", "none")
-    AnimateStyle = "minimal",
+    AnimateStyle = "expressive",
     
     -- --- Custom Animation Profile ---
     

@@ -136,15 +136,19 @@ else
 fi
 
 # Update Spicetify Theme
-SPICETIFY_THEME_FILE="$HOME/.config/spicetify/Themes/text/color.ini"
 if [ -f "$CURRENT_DIR/spicetify.ini" ]; then
-    mkdir -p "$(dirname "$SPICETIFY_THEME_FILE")"
-    rm -f "$SPICETIFY_THEME_FILE"
-    ln -sf "$CURRENT_DIR/spicetify.ini" "$SPICETIFY_THEME_FILE"
-    echo "Linked spicetify.ini to ~/.config/spicetify/Themes/text/color.ini"
+    for SPICETIFY_THEME in M3E; do
+        SPICETIFY_THEME_FILE="$HOME/.config/spicetify/Themes/$SPICETIFY_THEME/color.ini"
+        [ -d "$(dirname "$SPICETIFY_THEME_FILE")" ] || continue
+        rm -f "$SPICETIFY_THEME_FILE"
+        ln -sf "$CURRENT_DIR/spicetify.ini" "$SPICETIFY_THEME_FILE"
+    done
+    echo "Linked spicetify.ini into Spicetify themes"
     
-    # Reload Spicetify quietly
-    nohup bash -c "spicetify config current_theme text color_scheme MaterialYou && spicetify apply" >/dev/null 2>&1 &
+    # Reload Spicetify quietly. Set current_theme explicitly: an old matugen post_hook
+    # (from a pre-rebuild Nix-store copy) resets it to the removed "text" theme, and
+    # `spicetify apply` then aborts with 'Theme "text" not found'.
+    nohup bash -c "spicetify config current_theme M3E color_scheme MaterialYou && spicetify apply" >/tmp/spicetify-apply.log 2>&1 &
 fi
 
 # Update AdwSteamGtk Theme
@@ -172,5 +176,30 @@ fi
 hyprctl reload 2>/dev/null || true
 pkill -SIGUSR1 nvim 2>/dev/null || true
 pkill -USR1 cava 2>/dev/null || true
+
+# The dial shell reloads itself after a theme switch and comes back to where you were (its
+# Settings control sets DIAL_SHELL_RELOADS=1), so it is not killed and relaunched from here.
+if [ -n "$DIAL_SHELL_RELOADS" ]; then
+    exit 0
+fi
+
+# Restart quickshell the same careful way scripts/reload.sh does: stop the watchdog and actually
+# wait for it to exit before relaunching, and relaunch through qs-watchdog.sh with the explicit
+# -p path rather than a bare `quickshell &`. A bare launch has no -p flag, so quickshell falls
+# back to its default config search path — which on this machine resolves to a stale, read-only
+# Nix-store copy of the whole shell under ~/.config/quickshell instead of the live
+# ~/Dotfiles/quickshell tree, making every widget look like an old, pre-redesign version until a
+# real reload fixed it. A bare launch also bypasses the watchdog, silently losing crash recovery
+# after every theme switch.
+pkill -TERM -f qs-watchdog.sh
+for i in $(seq 1 50); do
+    pgrep -f qs-watchdog.sh >/dev/null || break
+    sleep 0.1
+done
+pkill -9 -f qs-watchdog.sh 2>/dev/null
+
 pkill -9 quickshell 2>/dev/null || true
-nohup quickshell >/dev/null 2>&1 &
+pkill -9 .quickshell-wra 2>/dev/null || true
+
+nohup bash /home/boing/Dotfiles/quickshell/scripts/qs-watchdog.sh >/dev/null 2>&1 &
+disown

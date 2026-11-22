@@ -1,0 +1,18 @@
+clipboard history
+the hyprland settings are broken
+interative dot matrix for something 
+liquid glass live break after sometime and to fix i have to toggle off and on sees live 
+fix spicetify still the theme and the color.ini is broken because the matugen keep giving the old colors.ini
+the lock dial should also use the same liquid glass settings in the settings for the other dials and also the blur of the wallpaper there should be a option for what to do there blur or liquid glass there also the liquid glass is broken when working with special workspaces switching between or any thing else with special workspaces and also optimize this by only takings the screenshot ot hte area where the dial will open when the dial is opened and also the liquid glass doesn't take the windows deco and use that for the liquid glass fix that and also add the workspace switching animations to the liquid glass because when swicthing between workspaces the liquid glass just changes immediately without animation and also the help menu isn't liquid glass make that too  
+and also create two things see if it worth it or not to create a M3E sddm theme and also create it based on that and also create a video using anything html css , js or qml to create a pymouth for the loading animations that is also M3E styled
+the shell breaks when steam is launched
+add a option for all the same color for all the items in the outer ring in the control center and have three different color for all like it is now 
+create a mascot for every shell and make every shell in the dotfiles switchable and also the switch should also be available in the shell that is running and also every mascot will have a secret easter egg that will introduce something about the shell with text and possible if then voice also the mascot name will be the shell name 
+create a editor extension for editing inline ai edits both local ai and claude your self 
+i have a mascot ready for all just there name and what they are first for the dial shell the mascot is dial-e and it is a round circle with googly eyes and M3E styled and the omniformis shell change that name to puffy and the mascot is a M3E styled pufferfish because it can expand and contract third and last for the circle shell name it droplet and the mascot is a water droplet M3E styled
+Create a lively ux skill that makes boring ux lively the file is in this folder the name lively-ux.md
+and also the matugen is broken when i change my wallpaper the matugen is broken because now the cli asks for the source color fix that and also add a option to choose expressive and etc color scheme  for matugen
+and the active item will be the same size as now but the items not selected will be smaller than now and all of the above features should be a setting in the settings app and also add a option for more deeper settings that will include the settings for the mediaplayer and every setting in the control center folder and the screenshot folder and lock screen settings
+remaster the lock screen it is not good so help me figure out a better solution for the lockscreen by give unique ideas following the skill /gux-expert that will help stay unique and premium 
+i want a preset system that will take all the settings that the user has changed and have into a json file and when that preset is enabled all the settings will come back and the user can create how many presets that the user want and make it global
+the app launcher launches the wrong app when the search and the app is rotating so fix that 

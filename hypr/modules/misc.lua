@@ -9,6 +9,7 @@ hl.config({
     force_default_wallpaper = vars.force_default_wallpaper,
     disable_hyprland_logo = vars.disable_hyprland_logo,
     allow_session_lock_restore = vars.allow_session_lock_restore,
+    session_lock_xray = vars.session_lock_xray,
     vrr = vars.vrr
   },
 

@@ -1,0 +1,311 @@
+@layer m3e.components {
+  .m3e-segmented-button-group {
+    display: inline-flex;
+    max-inline-size: 100%;
+  }
+
+  .m3e-segmented-button {
+    --m3e-segmented-button-container-color: transparent;
+    --m3e-segmented-button-content-color: var(
+      --m3e-comp-segmented-button-group-inactive-content-color
+    );
+
+    align-items: center;
+    background-color: var(--m3e-segmented-button-container-color);
+    border: var(--m3e-comp-segmented-button-group-border-width) solid
+      var(--m3e-comp-segmented-button-group-border-color);
+    box-sizing: border-box;
+    color: var(--m3e-segmented-button-content-color);
+    cursor: pointer;
+    display: flex;
+    flex: 1 0 auto;
+    font-family: var(--m3e-sys-typescale-baseline-label-large-font-family);
+    font-size: var(--m3e-sys-typescale-baseline-label-large-font-size);
+    font-weight: var(--m3e-sys-typescale-baseline-label-large-font-weight);
+    justify-content: center;
+    letter-spacing: var(--m3e-sys-typescale-baseline-label-large-letter-spacing);
+    line-height: var(--m3e-sys-typescale-baseline-label-large-line-height);
+    min-block-size: var(--m3e-comp-segmented-button-group-container-height);
+    min-inline-size: var(--m3e-comp-segmented-button-group-minimum-width);
+    overflow: hidden;
+    padding-block: var(--m3e-comp-segmented-button-group-content-padding-block);
+    padding-inline: var(--m3e-comp-segmented-button-group-content-padding-inline);
+    position: relative;
+    transition:
+      background-color var(--m3e-sys-motion-expressive-default-effects-duration)
+        var(--m3e-sys-motion-expressive-default-effects-easing),
+      color var(--m3e-sys-motion-expressive-default-effects-duration)
+        var(--m3e-sys-motion-expressive-default-effects-easing);
+    z-index: 0;
+  }
+
+  /* Adjacent segments overlap by exactly one border width so shared edges
+     coincide instead of doubling, matching the sourced Row's negative
+     `Arrangement spacedBy` spacing. */
+  .m3e-segmented-button:not(:first-child) {
+    margin-inline-start: calc(-1 * var(--m3e-comp-segmented-button-group-border-width));
+  }
+
+  .m3e-segmented-button[data-m3e-position="only"] {
+    border-radius: var(--m3e-comp-segmented-button-group-container-shape);
+  }
+
+  .m3e-segmented-button[data-m3e-position="start"] {
+    border-end-end-radius: 0;
+    border-end-start-radius: var(--m3e-comp-segmented-button-group-container-shape);
+    border-start-end-radius: 0;
+    border-start-start-radius: var(--m3e-comp-segmented-button-group-container-shape);
+  }
+
+  .m3e-segmented-button[data-m3e-position="middle"] {
+    border-radius: 0;
+  }
+
+  .m3e-segmented-button[data-m3e-position="end"] {
+    border-end-end-radius: var(--m3e-comp-segmented-button-group-container-shape);
+    border-end-start-radius: 0;
+    border-start-end-radius: var(--m3e-comp-segmented-button-group-container-shape);
+    border-start-start-radius: 0;
+  }
+
+  /* Ordinal flattening of the source's
+     `interactionCount + (checked ? CheckedZIndexFactor : 0)` z-index: a
+     checked segment always outranks a merely-interacting neighbor, and a
+     checked, interacting segment outranks both. */
+  .m3e-segmented-button:hover,
+  .m3e-segmented-button:active,
+  .m3e-segmented-button:has(:focus-visible) {
+    z-index: 1;
+  }
+
+  .m3e-segmented-button:has(:checked) {
+    --m3e-segmented-button-container-color: var(
+      --m3e-comp-segmented-button-group-active-container-color
+    );
+    --m3e-segmented-button-content-color: var(
+      --m3e-comp-segmented-button-group-active-content-color
+    );
+    z-index: 2;
+  }
+
+  .m3e-segmented-button:has(:checked):hover,
+  .m3e-segmented-button:has(:checked):active,
+  .m3e-segmented-button:has(:checked):has(:focus-visible) {
+    z-index: 3;
+  }
+
+  .m3e-segmented-button__input {
+    appearance: none;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    padding: 0;
+    position: absolute;
+    z-index: 1;
+  }
+
+  .m3e-segmented-button[data-m3e-disabled="true"] {
+    --m3e-segmented-button-content-color: color-mix(
+      in srgb,
+      var(--m3e-comp-segmented-button-group-disabled-content-color)
+        calc(var(--m3e-comp-segmented-button-group-disabled-content-opacity) * 100%),
+      transparent
+    );
+    border-color: color-mix(
+      in srgb,
+      var(--m3e-comp-segmented-button-group-border-color)
+        calc(var(--m3e-comp-segmented-button-group-disabled-border-opacity) * 100%),
+      transparent
+    );
+    cursor: default;
+  }
+
+  .m3e-segmented-button[data-m3e-disabled="true"] .m3e-segmented-button__input {
+    cursor: default;
+  }
+
+  .m3e-segmented-button::before {
+    background: currentColor;
+    border-radius: inherit;
+    content: "";
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity var(--m3e-sys-motion-expressive-fast-effects-duration)
+      var(--m3e-sys-motion-expressive-fast-effects-easing);
+  }
+
+  @media (hover: hover) {
+    .m3e-segmented-button:hover:not([data-m3e-disabled="true"])::before {
+      opacity: var(--m3e-sys-state-hover);
+    }
+  }
+
+  .m3e-segmented-button:has(:focus-visible) {
+    outline-color: var(--m3e-comp-segmented-button-group-focus-ring-color);
+    outline-offset: var(--m3e-comp-segmented-button-group-focus-ring-offset);
+    outline-style: solid;
+    outline-width: var(--m3e-comp-segmented-button-group-focus-ring-width);
+  }
+
+  .m3e-segmented-button:has(:focus-visible):not([data-m3e-disabled="true"])::before {
+    opacity: var(--m3e-sys-state-focus);
+  }
+
+  .m3e-segmented-button:active:not([data-m3e-disabled="true"])::before {
+    opacity: var(--m3e-sys-state-pressed);
+  }
+
+  .m3e-segmented-button__icon {
+    display: grid;
+    flex: none;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .m3e-segmented-button__icon > * {
+    grid-area: 1 / 1;
+  }
+
+  .m3e-segmented-button__icon-glyph,
+  .m3e-segmented-button__check {
+    color: inherit;
+  }
+
+  .m3e-segmented-button__check {
+    block-size: var(--m3e-comp-segmented-button-group-icon-size);
+    fill: currentColor;
+    inline-size: var(--m3e-comp-segmented-button-group-icon-size);
+  }
+
+  /* No supplied icon: the icon column and the checkmark both start at zero
+     and grow only on selection, matching the sourced `AnimatedVisibility`
+     call's no-op exit transition — an entrance transition with no reverse,
+     so deselecting snaps out instantly instead of animating. */
+  .m3e-segmented-button__icon[data-m3e-has-icon="false"] {
+    inline-size: 0;
+    margin-inline-end: 0;
+    transition: none;
+  }
+
+  .m3e-segmented-button__icon[data-m3e-has-icon="false"] .m3e-segmented-button__check {
+    opacity: 0;
+    transform: scale(0);
+    transform-origin: 0% 100%;
+    transition: none;
+  }
+
+  .m3e-segmented-button__input:checked
+    ~ .m3e-segmented-button__icon[data-m3e-has-icon="false"] {
+    inline-size: var(--m3e-comp-segmented-button-group-icon-size);
+    margin-inline-end: var(--m3e-comp-segmented-button-group-icon-spacing);
+    transition:
+      inline-size var(--m3e-sys-motion-expressive-fast-spatial-duration)
+        var(--m3e-sys-motion-expressive-fast-spatial-easing),
+      margin-inline-end var(--m3e-sys-motion-expressive-fast-spatial-duration)
+        var(--m3e-sys-motion-expressive-fast-spatial-easing);
+  }
+
+  .m3e-segmented-button__input:checked
+    ~ .m3e-segmented-button__icon[data-m3e-has-icon="false"]
+    .m3e-segmented-button__check {
+    opacity: 1;
+    transform: scale(1);
+    transition:
+      opacity var(--m3e-sys-motion-expressive-default-effects-duration)
+        var(--m3e-sys-motion-expressive-default-effects-easing),
+      transform var(--m3e-sys-motion-expressive-fast-spatial-duration)
+        var(--m3e-sys-motion-expressive-fast-spatial-easing);
+  }
+
+  /* A supplied icon: the column stays a constant width and its content
+     crossfades symmetrically with the checkmark, matching `Crossfade`. */
+  .m3e-segmented-button__icon[data-m3e-has-icon="true"] {
+    inline-size: var(--m3e-comp-segmented-button-group-icon-size);
+    margin-inline-end: var(--m3e-comp-segmented-button-group-icon-spacing);
+  }
+
+  .m3e-segmented-button__icon[data-m3e-has-icon="true"] .m3e-segmented-button__icon-glyph,
+  .m3e-segmented-button__icon[data-m3e-has-icon="true"] .m3e-segmented-button__check {
+    opacity: 1;
+    transition: opacity var(--m3e-sys-motion-expressive-default-effects-duration)
+      var(--m3e-sys-motion-expressive-default-effects-easing);
+  }
+
+  .m3e-segmented-button__icon[data-m3e-has-icon="true"] .m3e-segmented-button__check {
+    opacity: 0;
+  }
+
+  .m3e-segmented-button__input:checked
+    ~ .m3e-segmented-button__icon[data-m3e-has-icon="true"]
+    .m3e-segmented-button__icon-glyph {
+    opacity: 0;
+  }
+
+  .m3e-segmented-button__input:checked
+    ~ .m3e-segmented-button__icon[data-m3e-has-icon="true"]
+    .m3e-segmented-button__check {
+    opacity: 1;
+  }
+
+  .m3e-segmented-button__icon-glyph {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
+
+  .m3e-segmented-button__icon-glyph > .m3e-icon {
+    --m3e-icon-size: var(--m3e-comp-segmented-button-group-icon-size);
+  }
+
+  /* The pinned source lays out a segment's label with no defined multiline
+     behavior; segmented buttons are a single-line label control, so the
+     label never wraps and the segment grows to fit it instead. */
+  .m3e-segmented-button__text {
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .m3e-segmented-button,
+    .m3e-segmented-button::before,
+    .m3e-segmented-button__icon,
+    .m3e-segmented-button__check,
+    .m3e-segmented-button__icon-glyph {
+      transition: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .m3e-segmented-button {
+      background: ButtonFace;
+      border-color: ButtonText;
+      color: ButtonText;
+      forced-color-adjust: none;
+    }
+
+    .m3e-segmented-button::before {
+      display: none;
+    }
+
+    .m3e-segmented-button:has(:checked) {
+      background: Highlight;
+      border-color: Highlight;
+      color: HighlightText;
+    }
+
+    .m3e-segmented-button:has(:focus-visible) {
+      outline-color: Highlight;
+    }
+
+    .m3e-segmented-button[data-m3e-disabled="true"] {
+      background: ButtonFace;
+      border-color: GrayText;
+      color: GrayText;
+    }
+  }
+}

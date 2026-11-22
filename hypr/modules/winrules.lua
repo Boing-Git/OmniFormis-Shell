@@ -113,6 +113,14 @@ hl.window_rule({
     center = true
 })
 
+hl.window_rule({
+    name = "nautilus-previewer",
+    match = { class = "org.gnome.NautilusPreviewer" },
+    float = true,
+    size = "50% 60%",
+    center = true,
+})
+
 --------------------------------------------------------------------------------
 -- ## Special Workspaces
 --------------------------------------------------------------------------------

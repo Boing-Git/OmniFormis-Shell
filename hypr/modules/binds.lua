@@ -1,6 +1,8 @@
+
 local vars = require("modules.variables")
 local kb = require("modules.keybind_engine")
 require("modules.quickshellBinds")
+require("modules.dialBinds")
 
 -- Every shortcut is a named entry in modules/keybinds.lua, resolved by the engine
 local bind = kb.bind
@@ -19,16 +21,29 @@ local max_zoom = 3.0
 local min_zoom = 1.0
 
 --------------------------------------------------------------------------------
--- ## Script Logic (Embedded in Lua for Manual Adjustments Later)
+-- ## Script Logic
+--
+-- These helpers RETURN a dispatcher object. They never dispatch on their own, so
+-- they are safe to pass straight into bind(). (Calling hl.dispatch() or
+-- hl.dsp.window.move() while the config loads would run it once at startup and
+-- hand nil to the bind, which is what caused the popup errors.)
 --------------------------------------------------------------------------------
-local function workspace_action(action_type, target_ws, is_group)
-    -- This handles the old wsaction.fish logic locally in pure Lua
-    local prefix = is_group and "group:" or ""
-    if action_type == "workspace" then
-        hl.dispatch(hl.dsp.focus({ workspace = prefix .. target_ws }))
-    elseif action_type == "movetoworkspace" then
-        hl.dispatch(hl.dsp.window.move({ workspace = prefix .. target_ws }))
-    end
+
+-- A "workspace group" is a block of GROUP_SIZE workspaces: group 1 = 1..10,
+-- group 2 = 11..20 and so on. Jumping to a group lands on its first workspace.
+-- Change GROUP_SIZE if your groups are a different size.
+local GROUP_SIZE = 10
+
+local function group_first_ws(group)
+    return (group - 1) * GROUP_SIZE + 1
+end
+
+local function go_to(ws)
+    return hl.dsp.focus({ workspace = ws })
+end
+
+local function move_to(ws, follow)
+    return hl.dsp.window.move({ workspace = ws, follow = follow ~= false })
 end
 
 --------------------------------------------------------------------------------
@@ -58,27 +73,28 @@ bind("ShellLaunchBind", hl.dsp.exec_cmd("omniformis launch -d"))
 bind("ShellReloadBind", hl.dsp.exec_cmd("omniformis reload"))
 
 --------------------------------------------------------------------------------
--- ## Workspaces Loops (Programmatic & Scriptless)
+-- ## Workspaces Loops
 --------------------------------------------------------------------------------
 
 for i = 0, 9 do
     local n = { n = tostring(i) }
-    local ws = (i == 0) and 10 or i
+    local ws = (i == 0) and 10 or i        -- key 0 = workspace / group 10
+    local group_ws = group_first_ws(ws)
 
     -- Go to workspace #
-    bind("WorkspaceGoBind", function() workspace_action("workspace", ws, false) end, nil, n)
+    bind("WorkspaceGoBind", go_to(ws), nil, n)
 
     -- Go to workspace group #
-    bind("WorkspaceGoGroupBind", function() workspace_action("workspace", ws, true) end, nil, n)
+    bind("WorkspaceGoGroupBind", go_to(group_ws), nil, n)
 
-    -- Move window to workspace #
-    bind("WorkspaceMoveBind", function() workspace_action("movetoworkspace", ws, false) end, nil, n)
+    -- Move window to workspace # (and follow it)
+    bind("WorkspaceMoveBind", move_to(ws, true), nil, n)
 
-    -- Move window to workspace group #
-    bind("WorkspaceMoveGroupBind", function() workspace_action("movetoworkspace", ws, true) end, nil, n)
+    -- Move window to workspace group # (and follow it)
+    bind("WorkspaceMoveGroupBind", move_to(group_ws, true), nil, n)
 end
 
--- Go to workspace -1/+1 directional navigation (Swapped to monitor-relative 'm' to stop boundary errors)
+-- Go to workspace -1/+1 (monitor-relative 'm' to stop boundary errors)
 bind("WorkspacePrevScrollBind", hl.dsp.focus({ workspace = "m-1" }))
 bind("WorkspaceNextScrollBind", hl.dsp.focus({ workspace = "m+1" }))
 bind("WorkspacePrevPageBind", hl.dsp.focus({ workspace = "m-1" }))
@@ -95,17 +111,18 @@ bind("WorkspaceGroupNextScrollBind", hl.dsp.focus({ workspace = "r+10" }))
 -- ## Move Window Utilities
 --------------------------------------------------------------------------------
 
-bind("MoveWindowPrevPageBind", hl.dsp.window.move({ workspace = "m-1" }))
-bind("MoveWindowNextPageBind", hl.dsp.window.move({ workspace = "m+1" }))
-bind("MoveWindowPrevScrollBind", hl.dsp.window.move({ workspace = "m-1" }))
-bind("MoveWindowNextScrollBind", hl.dsp.window.move({ workspace = "m+1" }))
-bind("MoveWindowNextBind", hl.dsp.window.move({ workspace = "m+1" }))
-bind("MoveWindowPrevBind", hl.dsp.window.move({ workspace = "m-1" }))
+bind("MoveWindowPrevPageBind", move_to("m-1", true))
+bind("MoveWindowNextPageBind", move_to("m+1", true))
+bind("MoveWindowPrevScrollBind", move_to("m-1", true))
+bind("MoveWindowNextScrollBind", move_to("m+1", true))
+bind("MoveWindowNextBind", move_to("m+1", true))
+bind("MoveWindowPrevBind", move_to("m-1", true))
 
 -- Move window to/from special workspace
-bind("ScratchboardSendBind", hl.dsp.window.move({ workspace = "special:scratchboard" }))
-bind("ScratchboardReturnBind", hl.dsp.window.move({ workspace = "+0" }))
-bind("ScratchboardMoveBind", hl.dsp.window.move({ workspace = "special:scratchboard" }))
+bind("ScratchboardSendBind", move_to("special:scratchboard", false))
+-- "e+0" = the current workspace, which pulls the window out of the special one
+bind("ScratchboardReturnBind", move_to("e+0", true))
+bind("ScratchboardMoveBind", move_to("special:scratchboard", false))
 
 --------------------------------------------------------------------------------
 -- ## Window Groups
@@ -115,20 +132,18 @@ bind("GroupNextBind", hl.dsp.group.next())
 bind("GroupPrevBind", hl.dsp.group.prev())
 for i = 0, 5 do
     -- Maps 0 to tab 5, otherwise matches the index number
-    local ws = (i == 0) and 5 or i
+    local tab = (i == 0) and 5 or i
 
     -- Switch to a specific window inside the group by its index (1-based)
-    bind("GroupJumpBind", hl.dsp.group.active({ index = ws }), { desc = "Jump to group tab " .. ws }, { n = tostring(i) })
+    bind("GroupJumpBind", hl.dsp.group.active({ index = tab }), { desc = "Jump to group tab " .. tab }, { n = tostring(i) })
 end
 
--- Replaced hyprctl string with native dispatch
-bind("GroupBackBind", function()
-    hl.dispatch("changegroupactive", "b")
-end)
+-- Go back one tab (same as GroupPrevBind, so keep one of them disabled in keybinds.lua)
+bind("GroupBackBind", hl.dsp.group.prev())
 bind("GroupToggleBind", hl.dsp.group.toggle())
 
 -- Move the active window out of its current group
-bind("GroupMoveOutBind", hl.dsp.window.move({ out_of_group = true, window = "active" }))
+bind("GroupMoveOutBind", hl.dsp.window.move({ out_of_group = true }))
 
 --------------------------------------------------------------------------------
 -- ## Window Actions (Focus, Resize, Management)
@@ -141,17 +156,19 @@ bind("WindowResizeBind", hl.dsp.window.resize(), { mouse = true })
 -- Alignment and Toggles
 bind("WindowCenterBind", hl.dsp.window.center())
 
--- Replaced hyprctl strings with native dispatch logic
-bind("WindowCenterResizeBind", function()
-    hl.dispatch("resizeactive", "exact 55% 70%")
-    hl.dispatch("centerwindow", "1")
-end)
+-- Resize to 55% x 70% and center. hl.dispatch() only accepts dispatcher objects,
+-- not ("name", "args") strings, so the percentage resize goes through hyprctl.
+-- If this does nothing on your build, replace it with a pixel size:
+--   hl.dsp.window.resize({ x = 1056, y = 756, relative = false })
+bind("WindowCenterResizeBind", hl.dsp.exec_cmd(
+    "hyprctl dispatch resizeactive exact 55% 70% ; hyprctl dispatch centerwindow 1"
+))
 
 bind("WindowPinBind", hl.dsp.window.pin())
-bind("WindowFullscreenBind", hl.dsp.window.fullscreen({mode = "fullscreen"}))
-bind("WindowMaximizeBind", hl.dsp.window.fullscreen({mode = "maximized"}))
-bind("WindowFloatBind", hl.dsp.window.float("active"))
-bind("WindowCloseBind", hl.dsp.window.close("active"))
+bind("WindowFullscreenBind", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
+bind("WindowMaximizeBind", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
+bind("WindowFloatBind", hl.dsp.window.float({ action = "toggle" }))
+bind("WindowCloseBind", hl.dsp.window.close())
 
 --------------------------------------------------------------------------------
 -- ## Special System Workspace Targets
@@ -161,7 +178,7 @@ bind("MusicWorkspaceBind", hl.dsp.workspace.toggle_special("music"))
 bind("ScratchboardBind", hl.dsp.workspace.toggle_special("scratchboard"))
 
 -- Toggle SysInfo workspace and launch the dynamic app via app2unit
--- Removed hyprctl client check. Singleton logic should be handled by app2unit script.
+-- Singleton logic should be handled by the app2unit script.
 bind("SysInfoBind", function()
     hl.dispatch(hl.dsp.workspace.toggle_special("sysinfo"))
     hl.dispatch(hl.dsp.exec_cmd("app2unit -- " .. Term .. " -e " .. SysInfo))
@@ -187,6 +204,7 @@ bind("ColorPickerBind", hl.dsp.exec_cmd("hyprpicker -a"))
 
 -- OmniAction Context Menu (Triggers on currently copied file)
 bind("OmniActionBind", hl.dsp.exec_cmd("'/run/media/boing/Games/pc backup/SideProjects/OmniMenu/omniaction_clip.sh'"))
+
 --------------------------------------------------------------------------------
 -- ## System Volume Inputs
 --------------------------------------------------------------------------------
@@ -194,8 +212,8 @@ bind("OmniActionBind", hl.dsp.exec_cmd("'/run/media/boing/Games/pc backup/SidePr
 bind("MicMuteBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"))
 bind("VolumeMuteKeyBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
 bind("VolumeMuteBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"))
-bind("VolumeUpBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"))
-bind("VolumeDownBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"))
+bind("VolumeUpBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 1%+"))
+bind("VolumeDownBind", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume @DEFAULT_AUDIO_SINK@ 1%-"))
 
 --------------------------------------------------------------------------------
 -- ## Display Brightness Inputs (laptop backlight, then DDC/CI)
@@ -218,11 +236,11 @@ bind("BrightnessDownKeyBind", brightness("-"))
 -- ## Power Management
 --------------------------------------------------------------------------------
 
-bind("SuspendBind", hl.dsp.exec_cmd("systemctl suspend-then-hibernate"))
+bind("SuspendBind", hl.dsp.exec_cmd("systemctl suspend"))
 
 --------------------------------------------------------------------------------
---- ## Misc 
--------------------------------------------------------------------------------
+-- ## Misc
+--------------------------------------------------------------------------------
 
 -- Function to update the zoom globally
 local function set_zoom(value)
@@ -238,12 +256,10 @@ end
 -- ## Zoom Key Bindings
 --------------------------------------------------------------------------------
 
--- FIXED: Combined modifiers and key into a single string format
 bind("ZoomResetBind", function()
     set_zoom(1.0)
 end)
 
--- FIXED: Combined modifier and mouse actions into single strings
 bind("ZoomInBind", function()
     set_zoom(current_zoom + step)
 end)

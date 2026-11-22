@@ -1,0 +1,134 @@
+@layer m3e.components {
+  .m3e-snackbar {
+    align-items: center;
+    background-color: var(--m3e-comp-snackbar-container-color);
+    border-radius: var(--m3e-comp-snackbar-container-shape);
+    box-shadow: var(--m3e-comp-snackbar-container-shadow);
+    box-sizing: border-box;
+    color: var(--m3e-comp-snackbar-supporting-text-color);
+    display: flex;
+    font-family: var(--m3e-sys-typescale-baseline-body-medium-font-family);
+    font-size: var(--m3e-sys-typescale-baseline-body-medium-font-size);
+    font-weight: var(--m3e-sys-typescale-baseline-body-medium-font-weight);
+    gap: var(--m3e-comp-snackbar-container-padding-inline-button-side);
+    /* 24px is a plain implementation constant, not a claimed Material
+       token: the pinned source leaves screen-edge placement to a
+       consuming Scaffold, and no cross-validation source (material-web
+       ships no snackbar implementation, only token files) defines one
+       either — see ADR 0018. */
+    inset-block-end: 24px;
+    inset-inline-start: 50%;
+    letter-spacing: var(--m3e-sys-typescale-baseline-body-medium-letter-spacing);
+    line-height: var(--m3e-sys-typescale-baseline-body-medium-line-height);
+    max-inline-size: min(
+      var(--m3e-comp-snackbar-container-max-width),
+      calc(100vw - 48px)
+    );
+    min-block-size: var(--m3e-comp-snackbar-container-min-height);
+    opacity: 0;
+    outline: none;
+    padding-block: var(--m3e-comp-snackbar-container-padding-block);
+    padding-inline-end: var(--m3e-comp-snackbar-container-padding-inline);
+    padding-inline-start: var(--m3e-comp-snackbar-container-padding-inline);
+    position: fixed;
+    transform: translateX(-50%) scale(0.8);
+    transform-origin: bottom center;
+    transition:
+      opacity var(--m3e-sys-motion-expressive-fast-effects-duration)
+        var(--m3e-sys-motion-expressive-fast-effects-easing),
+      transform var(--m3e-sys-motion-expressive-fast-spatial-duration)
+        var(--m3e-sys-motion-expressive-fast-spatial-easing);
+    inline-size: max-content;
+    z-index: 1100;
+  }
+
+  .m3e-snackbar:has(.m3e-snackbar__action, .m3e-snackbar__dismiss) {
+    padding-inline-end: var(--m3e-comp-snackbar-container-padding-inline-button-side);
+  }
+
+  .m3e-snackbar[data-m3e-open="true"] {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+
+  .m3e-snackbar__message {
+    flex: 1;
+  }
+
+  .m3e-snackbar__action,
+  .m3e-snackbar__dismiss {
+    background: none;
+    border: none;
+    border-radius: var(--m3e-comp-snackbar-container-shape);
+    cursor: pointer;
+    display: inline-flex;
+    flex: none;
+    font: inherit;
+    margin: 0;
+    padding: 8px;
+    position: relative;
+  }
+
+  .m3e-snackbar__action {
+    color: var(--m3e-comp-snackbar-action-label-color);
+    font-family: var(--m3e-sys-typescale-baseline-label-large-font-family);
+    font-size: var(--m3e-sys-typescale-baseline-label-large-font-size);
+    font-weight: var(--m3e-sys-typescale-baseline-label-large-font-weight);
+    letter-spacing: var(--m3e-sys-typescale-baseline-label-large-letter-spacing);
+  }
+
+  .m3e-snackbar__dismiss {
+    align-items: center;
+    color: var(--m3e-comp-snackbar-dismiss-icon-color);
+    justify-content: center;
+  }
+
+  .m3e-snackbar__dismiss svg {
+    block-size: var(--m3e-comp-snackbar-icon-size);
+    inline-size: var(--m3e-comp-snackbar-icon-size);
+  }
+
+  .m3e-snackbar__action::before,
+  .m3e-snackbar__dismiss::before {
+    background: currentColor;
+    border-radius: inherit;
+    content: "";
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity var(--m3e-sys-motion-expressive-fast-effects-duration)
+      var(--m3e-sys-motion-expressive-fast-effects-easing);
+  }
+
+  @media (hover: hover) {
+    .m3e-snackbar__action:hover::before,
+    .m3e-snackbar__dismiss:hover::before {
+      opacity: var(--m3e-sys-state-hover);
+    }
+  }
+
+  .m3e-snackbar__action:active::before,
+  .m3e-snackbar__dismiss:active::before {
+    opacity: var(--m3e-sys-state-pressed);
+  }
+
+  .m3e-snackbar__action:focus-visible::before,
+  .m3e-snackbar__dismiss:focus-visible::before {
+    opacity: var(--m3e-sys-state-focus);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .m3e-snackbar,
+    .m3e-snackbar__action::before,
+    .m3e-snackbar__dismiss::before {
+      transition: none;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .m3e-snackbar {
+      border: 1px solid CanvasText;
+    }
+  }
+}
