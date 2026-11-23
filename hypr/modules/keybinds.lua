@@ -150,6 +150,8 @@ return {
     DialScreenshotBind = "$MM + $TM + S",
     -- Lock the screen (the dial shell's lock: it grows out of the power dial's corner)
     DialLockBind = "$MM + L",
+    -- Ask the local AI (the assistant: its bar comes down from the top edge)
+    AssistantBind = "$MM + A",
 
     -- Media
     -- Play or pause with the keyboard

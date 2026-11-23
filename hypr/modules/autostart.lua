@@ -18,6 +18,8 @@ local vars = require("modules.variables")
     hl.exec_cmd("sleep 1 && awww restore")
     -- the chosen shell (Dial-E, Puffy or Droplet): scripts/shell remembers which
     hl.exec_cmd("~/Dotfiles/scripts/shell start")
+    -- the assistant (pull a drop down from the top edge, or Super + A): next to any shell
+    hl.exec_cmd("env -u QML_IMPORT_PATH qs -p ~/Dotfiles/assistant")
     hl.exec_cmd("hypridle")
  end)
 

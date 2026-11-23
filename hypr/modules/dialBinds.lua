@@ -9,3 +9,6 @@ bind("DialCenterBind", hl.dsp.exec_cmd(dial .. "center toggle"), { description =
 bind("DialPowerBind", hl.dsp.exec_cmd(dial .. "power toggle"), { description = "Power Menu Dial" })
 bind("DialScreenshotBind", hl.dsp.exec_cmd(dial .. "screenshot open"), { description = "Screenshot Tool" })
 bind("DialLockBind", hl.dsp.exec_cmd(dial .. "lock lock"), { description = "Lock Screen" })
+
+-- the assistant runs as its own instance too (~/Dotfiles/assistant), next to any shell
+bind("AssistantBind", hl.dsp.exec_cmd("qs -p ~/Dotfiles/assistant ipc call assistant toggle"), { description = "Ask the local AI" })
