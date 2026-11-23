@@ -337,6 +337,9 @@ const clipboard = {
     cacheDir: "/home/boing/.cache/dial-quickshell/clipboard"
 };
 
+// the switcher every shell starts through (Settings → Shell runs `<it> switch <name>`)
+const shellSwitcher = "/home/boing/Dotfiles/scripts/shell";
+
 // the presets (Presets.qml): one JSON file each, so they can be copied in and out, or kept in git
 const presetsPath = "/home/boing/.config/dial-quickshell/presets";
 

@@ -99,6 +99,21 @@ Item {
         }
     }
 
+    // ── the shell ── which of the dotfiles' shells runs (scripts/shell): picking another starts
+    // it, and this one goes once the new one answers
+    property string shellNow: "dial-e"
+    Process {
+        running: true
+        command: [Vars.shellSwitcher, "current"]
+        stdout: StdioCollector { onStreamFinished: if (text.trim() !== "") settings.shellNow = text.trim() }
+    }
+    readonly property var shellSettings: [
+        { source: "shell", key: "shell", label: "Shell", title: "Which shell", icon: "swap_horiz", type: "choice",
+          help: "Dial-E: these dials. Puffy: the panels and bar it grew from. Droplet: circles you drag onto circles. The new one starts before this one goes.",
+          value: shellNow, shown: ({ "dial-e": "Dial-E", puffy: "Puffy", droplet: "Droplet" })[shellNow] || shellNow, changed: false,
+          options: [{ value: "dial-e", label: "Dial-E" }, { value: "puffy", label: "Puffy" }, { value: "droplet", label: "Droplet" }] }
+    ]
+
     // ── Presets ── (Presets.qml) apply one (Before last apply is the undo), or save what you
     // have now under a name you type
     readonly property var presetSettings: [
@@ -213,6 +228,7 @@ Item {
                 items: hypr.vars.filter(v => v.category === c).map(hyprSetting)
             }))
         })
+        top.push({ label: "Shell", icon: "swap_horiz", items: shellSettings })
         top.push({ label: "Presets", icon: "bookmarks", items: presetSettings })
         top.push({ label: "Advanced", icon: "tune", children: advancedGroups() })
         return top
@@ -266,6 +282,10 @@ Item {
         if (s.source === "prefs") return Prefs.set(s.key, value)
         if (s.source === "advanced") return Advanced.set(s.object, s.key, value)
         if (s.source === "preset") return s.key === "apply" ? Presets.apply(String(value)) : Presets.save(String(value))
+        if (s.source === "shell") {
+            if (value !== shellNow) Quickshell.execDetached([Vars.shellSwitcher, "switch", String(value)])
+            return ""
+        }
         if (s.source === "theme") {
             if (s.key === "mode") hypr.setTheme(hypr.scheme, String(value))
             else hypr.setTheme(String(value), hypr.mode)
