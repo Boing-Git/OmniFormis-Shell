@@ -69,6 +69,7 @@ Singleton {
             group("Workspaces", "space_dashboard", workspaces),
             group("Tools", "construction", tools),
             Settings.screenTime ? group("Screen time", "hourglass_top", screenTime, { note: pretty(total(0)) + " today" }) : null,
+            Settings.automations ? group("Automations", "bolt", automations, { note: automationList.length + (automationList.length === 1 ? " automation" : " automations") }) : null,
             group("Settings", "settings", settings),
             group("Shells", "swap_horiz", shells),
             group("Power", "power_settings_new", power)
@@ -90,10 +91,26 @@ Singleton {
         command: [root.script("screentime.py"), "json", "7"]
         stdout: StdioCollector { onStreamFinished: { try { root.usage = JSON.parse(text) } catch (e) {} } }
     }
-    // opening the shell reads what can change meanwhile: today's screen time, and the
-    // wallpapers the first time
+    // ══════════════════════════════ automations ═══════════════════════════════
+    // Runs of steps kept in ~/.config/automations (scripts/automate/automate.py, a tool of its
+    // own that works in any shell): dropping onto one runs it, on its own (it outlives Droplet)
+    property var automationList: []
+    Process {
+        id: automationLister
+        command: ["python3", root.script("automate/automate.py"), "list", "--json"]
+        stdout: StdioCollector { onStreamFinished: { try { root.automationList = JSON.parse(text) } catch (e) {} } }
+    }
+    function automations() {
+        const runs = automationList.map(a => task(a.name, a.icon || "bolt", "Running " + a.name,
+            () => Quickshell.execDetached(["python3", root.script("automate/automate.py"), "run", a.id]), { note: a.steps + " steps" }))
+        return runs.length ? runs : [task("None yet: ask the AI to make one", "bolt", "Nothing to run", () => {}, { stay: true })]
+    }
+
+    // opening the shell reads what can change meanwhile: today's screen time, the automations,
+    // and the wallpapers the first time
     onOpenChanged: {
         if (!open) return
+        if (Settings.automations) automationLister.running = true
         if (Settings.screenTime) usageReader.running = true
         if (wallpaperFiles.length === 0) wallLister.running = true
     }

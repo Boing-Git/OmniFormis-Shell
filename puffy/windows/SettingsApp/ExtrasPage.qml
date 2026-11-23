@@ -9,6 +9,7 @@ import "../../core/primitives" as Primitives
 // Settings → Extras: the switches for Puffy's extras, and today's screen time.
 //   Ask the AI    the launcher's /ask mode (Super + A); variables.js `assistant`
 //   Mascot        Puffy hiding in plain sight; variables.js `mascots`
+//   Automations   the launcher's /run mode; variables.js `automations`
 //   Screen time   the switch every shell shares (../scripts/screentime.py on | off), and
 //                 under it the apps used today, longest first, each with its bar
 Item {
@@ -89,6 +90,8 @@ Item {
                       on: Vars.assistant !== false, flip: () => extras.setVar("assistant", !(Vars.assistant !== false)) },
                     { icon: "sentiment_satisfied", title: "Mascot", sub: "Puffy hides in plain sight. Find it.",
                       on: Vars.mascots !== false, flip: () => extras.setVar("mascots", !(Vars.mascots !== false)) },
+                    { icon: "bolt", title: "Automations", sub: "The launcher's /run mode: runs of steps (open Steam and Spotify, play, open a game…) kept in ~/.config/automations.",
+                      on: Vars.automations !== false, flip: () => extras.setVar("automations", !(Vars.automations !== false)) },
                     { icon: "hourglass_top", title: "Screen time", sub: "Counts how long each app is used. One switch for every shell: off stops the counting.",
                       on: extras.usage.on, flip: () => switcher.exec([extras.screenTimeScript, extras.usage.on ? "off" : "on"]) }
                 ]

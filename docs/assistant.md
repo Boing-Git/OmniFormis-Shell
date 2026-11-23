@@ -18,7 +18,7 @@ All three run the same `scripts/assistant/assistant.py`.
 
 ## What it can do, and only that
 
-`scripts/assistant/tools.py` is the whole list (23 commands). The model can call nothing else,
+`scripts/assistant/tools.py` is the whole list (26 commands). The model can call nothing else,
 and every command runs as a plain argument list, never through a shell.
 
 - **Settings**: every Dial-E setting, and all ~300 of its Advanced ones (every size, timing
@@ -38,6 +38,9 @@ and every command runs as a plain argument list, never through a shell.
 - **Look**: wallpaper (and the colours from it), light / dark.
 - **Apps and files**: opens apps by name; finds files and folders in your home folder; opens
   a file in its app or a folder in your file manager. It never deletes or moves anything.
+- **Automations**: runs one ("run game night"), lists them, and saves a new one from what you
+  describe ("make an automation that opens Spotify and plays"); the steps are checked before
+  anything is saved (`scripts/automate/`, see its README).
 - **Media, volume, workspaces, status.**
 - **Power**: lock and suspend at once; log out, restart and shut down ask you first (Yes / No
   on the card).

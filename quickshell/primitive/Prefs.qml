@@ -83,6 +83,7 @@ QtObject {
     property bool assistant: Vars.assistant
     property bool screenTime: Vars.screenTime
     property bool mascots: Vars.mascots
+    property bool automations: Vars.automations
     // (screen time's switch is shared with the other shells: the truth is the tracker's own)
     property Process _screenTimeState: Process {
         running: true
@@ -363,6 +364,8 @@ QtObject {
           help: "Counts how long each app is used, per day, and shows it in the Screen time control. One switch for every shell: off stops the counting too." },
         { key: "mascots", group: "Extras", label: "Mascots", icon: "sentiment_satisfied", type: "bool",
           help: "Dial-E hides in plain sight: in an empty corner of the control center and on the lock screen. Find it." },
+        { key: "automations", group: "Extras", label: "Automations", icon: "bolt", type: "bool",
+          help: "The Automations control: runs of steps (open Steam and Spotify, play, open a game…) kept in ~/.config/automations. Ask the AI to make one." },
         { key: "dnd", group: "Notify", label: "Do not disturb", icon: "notifications_off", type: "bool",
           help: "Notifications arrive silently: nothing pops out, they wait in the control center." },
         { key: "notifyHold", group: "Notify", label: "Stay", icon: "timer", type: "number", min: 2, max: 20, step: 1, unit: " s",

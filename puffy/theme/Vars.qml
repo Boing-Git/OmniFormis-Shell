@@ -40,9 +40,11 @@ QtObject {
     property real blurAmount: RawVars.blurAmount !== undefined ? RawVars.blurAmount : 0
     property real panelOpacity: RawVars.panelOpacity !== undefined ? RawVars.panelOpacity : 0
     property real componentOpacity: RawVars.componentOpacity !== undefined ? RawVars.componentOpacity : 0
-    // the extras (Settings → Extras): the launcher's /ask mode, and Puffy's mascot
+    // the extras (Settings → Extras): the launcher's /ask mode, Puffy's mascot, and the
+    // launcher's /run mode (automations)
     property bool assistant: RawVars.assistant !== undefined ? RawVars.assistant : true
     property bool mascots: RawVars.mascots !== undefined ? RawVars.mascots : true
+    property bool automations: RawVars.automations !== undefined ? RawVars.automations : true
     property real currentBrightness: RawVars.currentBrightness !== undefined ? RawVars.currentBrightness : 0
     property real overviewGridRows: RawVars.overviewGridRows !== undefined ? RawVars.overviewGridRows : 0
     property real overviewGridColumns: RawVars.overviewGridColumns !== undefined ? RawVars.overviewGridColumns : 0
@@ -178,6 +180,7 @@ QtObject {
         if (root.componentOpacity !== RawVars.componentOpacity) root.componentOpacity = RawVars.componentOpacity;
         if (root.assistant !== RawVars.assistant) root.assistant = RawVars.assistant;
         if (root.mascots !== RawVars.mascots) root.mascots = RawVars.mascots;
+        if (root.automations !== RawVars.automations) root.automations = RawVars.automations;
         if (root.currentBrightness !== RawVars.currentBrightness) root.currentBrightness = RawVars.currentBrightness;
         if (root.overviewGridRows !== RawVars.overviewGridRows) root.overviewGridRows = RawVars.overviewGridRows;
         if (root.overviewGridColumns !== RawVars.overviewGridColumns) root.overviewGridColumns = RawVars.overviewGridColumns;

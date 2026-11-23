@@ -5,6 +5,7 @@ var _translucent = true;
 var animationDuration = 240;
 var assistant = true;
 var mascots = true;
+var automations = true;
 var reduceMotion = false;
 var reduceTransparency = false;
 var blurAmount = 17;

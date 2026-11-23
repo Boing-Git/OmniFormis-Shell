@@ -18,6 +18,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 HOME = Path.home()
@@ -29,6 +30,8 @@ CACHE = Path(os.environ.get("XDG_CACHE_HOME", HOME / ".cache")) / "dots-assistan
 DIAL_SETTINGS = STATE / "dial-quickshell" / "settings.json"
 DIAL_SCHEMA = CACHE / "dial-e-settings.json"
 DIAL_DIR = DOTS / "quickshell"
+# automations (scripts/automate/automate.py: JSON files in ~/.config/automations)
+AUTOMATE = DOTS / "scripts" / "automate" / "automate.py"
 # window rules the AI adds (hypr/modules/winrules.lua loads them); DOTS_USER_RULES for tests
 USER_RULES = Path(os.environ.get("DOTS_USER_RULES", DOTS / "hypr" / "modules" / "userRules.lua"))
 
@@ -544,6 +547,44 @@ def window_rule_remove(name):
     return f"removed {name}"
 
 
+# ── automations ── (scripts/automate/automate.py)
+def automations():
+    # (read only: runs in dry-run mode too)
+    out = subprocess.run([sys.executable, AUTOMATE, "list", "--json"], capture_output=True, text=True, timeout=20).stdout
+    try:
+        rows = json.loads(out or "[]")
+    except ValueError:
+        raise ToolError("automate.py gave no list")
+    return [{"id": r["id"], "name": r["name"], "steps": r["steps"]} for r in rows] or "none yet"
+
+
+# starts one (by id or name), detached: it keeps going on its own
+def automation_run(name):
+    rows = automations()
+    q = name.lower().strip()
+    hit = next((r for r in rows if q in (r["id"], r["name"].lower())), None) if isinstance(rows, list) else None
+    if not hit:
+        raise ToolError(f"no automation called {name} (automations lists them)")
+    detach([sys.executable, AUTOMATE, "run", hit["id"]])
+    return f"started {hit['name']}"
+
+
+# saves a new one (or replaces one with the same name); automate.py checks the steps
+def automation_save(name, steps):
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:40] or "automation"
+    body = json.dumps({"name": name, "steps": steps})
+    cmd = [sys.executable, AUTOMATE, "save", slug, body]
+    if DRY:
+        # checked, not saved
+        with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
+            f.write(body)
+        cmd = [sys.executable, AUTOMATE, "check", f.name]
+    p = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+    if p.returncode != 0:
+        raise ToolError("those steps don't work: " + (p.stderr or p.stdout).strip())
+    return f"saved {name} ({slug}); run it with automation_run"
+
+
 SKIP = {".cache", ".local", ".nix-defexpr", ".nix-profile", "node_modules", ".git", ".cargo", ".rustup", ".mozilla", ".steam"}
 
 
@@ -672,6 +713,12 @@ TOOLS = {
                          "opacity": p("string", "0 to 1"), "pin": p("boolean", "show on every workspace (floating)"), "fullscreen": p("boolean", "open fullscreen"),
                          "monitor": p("string", "a monitor's name")}, ["app"], False),
     "window_rule_remove": (window_rule_remove, "Remove a window rule added with window_rule_add, by its name (window_rules lists them).", {"name": p("string", "the rule's name")}, ["name"], False),
+    "automations": (automations, "The automations: saved runs of steps (open apps, wait for windows, play music, open links...).", {}, [], False),
+    "automation_run": (automation_run, "Run an automation, by its name or id.", {"name": p("string", "its name or id")}, ["name"], False),
+    "automation_save": (automation_save, "Save a new automation. Each step is an object with one of: open (an app's name), uri (a link, e.g. steam://rungameid/<appid>), "
+                        "run (a command as a list of words), wait ({\"window\": \"<app>\"} or {\"player\": \"spotify\"}, with timeout seconds), media (play, pause, next...; player optional), sleep (seconds), notify (text). "
+                        "Example: [{\"open\": \"spotify\"}, {\"wait\": {\"player\": \"spotify\"}, \"timeout\": 40}, {\"media\": \"play\", \"player\": \"spotify\"}].",
+                        {"name": p("string", "what to call it, e.g. Game night"), "steps": {"type": "array", "items": {"type": "object"}, "description": "the steps, in order"}}, ["name", "steps"], False),
     "screen_time": (screen_time, "How long each app (by window class) was used: today, or the last few days.",
                     {"days": p("integer", "1 is today, 7 the last week")}, [], False),
     "status": (status, "What the desktop is doing now: shell, volume, media, workspace.", {}, [], False),

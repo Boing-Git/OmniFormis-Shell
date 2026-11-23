@@ -12,12 +12,14 @@ Singleton {
     property bool assistant: true   // the AI: pull a drop down out of the top edge (Super + A)
     property bool mascot: true      // Droplet's mascot, hiding in plain sight
     property bool screenTime: true  // the Screen time circle, and the tracking itself
+    property bool automations: true // the Automations circle (scripts/automate/automate.py)
 
     // what the Settings circle lists
     readonly property var all: [
         { key: "assistant", label: "Ask the AI", icon: "auto_awesome" },
         { key: "mascot", label: "Mascot", icon: "water_drop" },
-        { key: "screenTime", label: "Screen time", icon: "hourglass_top" }
+        { key: "screenTime", label: "Screen time", icon: "hourglass_top" },
+        { key: "automations", label: "Automations", icon: "bolt" }
     ]
 
     function toggle(key) {
@@ -38,6 +40,7 @@ Singleton {
                 const o = JSON.parse(text())
                 if (typeof o.assistant === "boolean") root.assistant = o.assistant
                 if (typeof o.mascot === "boolean") root.mascot = o.mascot
+                if (typeof o.automations === "boolean") root.automations = o.automations
             } catch (e) { /* none yet, or broken: the defaults */ }
         }
     }
@@ -51,6 +54,6 @@ Singleton {
     Process { id: writer }
     function _write() {
         writer.exec(["sh", "-c", 'mkdir -p "$(dirname "$1")" && printf "%s\\n" "$2" > "$1.tmp" && mv "$1.tmp" "$1"',
-                     "sh", root.path, JSON.stringify({ assistant: root.assistant, mascot: root.mascot }, null, 2)])
+                     "sh", root.path, JSON.stringify({ assistant: root.assistant, mascot: root.mascot, automations: root.automations }, null, 2)])
     }
 }

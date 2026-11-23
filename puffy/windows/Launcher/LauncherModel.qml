@@ -450,11 +450,74 @@ Item {
         return rows;
     }
 
-    // (and opening /ask wakes the model)
+    // ── /run ── automations (../scripts/automate/automate.py: steps kept in
+    // ~/.config/automations): a row per automation, Enter runs it; how far a run has got comes
+    // in as rows. One run at a time
+    property var automations: []
+    property string runId: ""
+    property string runDoing: ""
+    property string runEnded: ""
+    readonly property string automateScript: Quickshell.shellDir + "/../scripts/automate/automate.py"
+    Process {
+        id: automationLister
+        command: ["python3", rootModel.automateScript, "list", "--json"]
+        stdout: StdioCollector { onStreamFinished: { try { rootModel.automations = JSON.parse(text); } catch (e) {} } }
+    }
+    function runAutomation(id) {
+        if (runId !== "")
+            return;
+        runId = id;
+        runDoing = "Starting";
+        runEnded = "";
+        // in a session of its own: a run outlives Puffy restarting (it carries on unheard)
+        automationRunner.command = ["setsid", "-w", "python3", automateScript, "run", id];
+        automationRunner.running = true;
+    }
+    Process {
+        id: automationRunner
+        stdout: SplitParser {
+            onRead: line => {
+                try {
+                    var e = JSON.parse(line);
+                    if (e.doing !== undefined) rootModel.runDoing = "Step " + e.step + " of " + e.of + ": " + e.doing;
+                    else if (e.done !== undefined) rootModel.runEnded = e.done ? "Done: " + e.name : (e.error || "It stopped");
+                } catch (err) {}
+            }
+        }
+        onExited: {
+            if (rootModel.runEnded === "") rootModel.runEnded = "It stopped";
+            rootModel.runId = "";
+        }
+    }
+    onAutomationsChanged: scheduleSync()
+    onRunDoingChanged: scheduleSync()
+    onRunEndedChanged: scheduleSync()
+    onRunIdChanged: scheduleSync()
+    function runRows(words) {
+        if (Vars.automations === false)
+            return [askRow("Automations are off (Settings → Extras)", ["INTERNAL:NOOP"], "block")];
+        var rows = [];
+        if (runId !== "")
+            rows.push(askRow(runDoing, ["INTERNAL:NOOP"], "hourglass_top"));
+        else if (runEnded !== "")
+            rows.push(askRow(runEnded, ["INTERNAL:NOOP"], runEnded.indexOf("Done") === 0 ? "check_circle" : "error"));
+        for (var i = 0; i < automations.length; i++) {
+            var a = automations[i];
+            if (words === "" || Vars.fuzzyMatch(words, a.name))
+                rows.push(askRow("Run: " + a.name + "  (" + a.steps + (a.steps === 1 ? " step)" : " steps)"), ["INTERNAL:RUN", a.id], a.icon || "bolt"));
+        }
+        if (automations.length === 0)
+            rows.push(askRow("None yet: ask the AI (\"/ask make an automation that…\") or add one to ~/.config/automations", ["INTERNAL:NOOP"], "bolt"));
+        return rows;
+    }
+
+    // (and opening /ask wakes the model; opening /run reads the automations again)
     onFilterTextChanged: {
         scheduleSync();
         if (filterText.startsWith("/ask"))
             askWake();
+        if (filterText === "/run" || filterText === "/run ")
+            automationLister.running = true;
     }
     onEmojiModelChanged: scheduleSync()
     onFileModelChanged: scheduleSync()
@@ -496,6 +559,7 @@ Item {
 
         var settingsOptions = [
             askRow("Ask the AI", ["INTERNAL:ASK_MODE"], "auto_awesome"),
+            askRow("Automations", ["INTERNAL:RUN_MODE"], "bolt"),
             {
                 name: "Settings",
                 command: ["INTERNAL:SETTINGS"],
@@ -567,6 +631,8 @@ Item {
                     }
                 ];
             }
+            if (query.startsWith("run"))
+                return runRows(query.substring(3).trim());
             if (query.startsWith("ask")) {
                 // the question as typed (the query above is lowercased)
                 return askRows(rootModel.filterText.trim().substring(4).trim());

@@ -411,6 +411,16 @@ ListView {
                 root.focusSearchBar();
                 return;
             }
+            // /run: automations (LauncherModel.qml); the launcher stays open to show the run
+            if (cmdArray[0] === "INTERNAL:RUN_MODE") {
+                root.requestSearchText("/run ");
+                root.focusSearchBar();
+                return;
+            }
+            if (cmdArray[0] === "INTERNAL:RUN") {
+                if (root.launcherModel) root.launcherModel.runAutomation(cmdArray[1]);
+                return;
+            }
             if (cmdArray[0] === "INTERNAL:ASK") {
                 if (root.launcherModel) root.launcherModel.ask(cmdArray[1]);
                 return;

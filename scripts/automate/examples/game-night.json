@@ -1,0 +1,14 @@
+{
+  "name": "Game night",
+  "icon": "sports_esports",
+  "steps": [
+    {"open": "steam"},
+    {"open": "spotify"},
+    {"wait": {"player": "spotify"}, "timeout": 40},
+    {"media": "play", "player": "spotify"},
+    {"wait": {"window": "steam"}, "timeout": 120},
+    {"uri": "steam://nav/games/details/2073850"},
+    {"sleep": 2},
+    {"uri": "steam://rungameid/2073850"}
+  ]
+}
