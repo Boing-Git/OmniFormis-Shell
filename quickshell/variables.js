@@ -388,7 +388,13 @@ const presets = {
         }, liquidApple) }
     ],
     Liquid: [
-        { value: "apple", label: "Apple", values: liquidApple }
+        { value: "apple", label: "Apple", values: liquidApple },
+        // no shader at all: solid dials, rings a touch see-through, and Hyprland's blur behind
+        // the shell (frost) showing at their soft edges as a liquid rim
+        { value: "frost", label: "Frost", values: {
+            liquidGlass: "off", glassDials: 1, glassRings: 0.95, glassPopups: 1, glassLock: 1,
+            frostDials: true, frostPopups: true, frostOver: "everything"
+        } }
     ]
 };
 

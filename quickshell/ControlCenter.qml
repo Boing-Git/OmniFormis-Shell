@@ -725,7 +725,12 @@ PanelWindow {
         SettingsControl { id: settingsControl; dial: center.dialItem; bar: valueBar }
         AskControl { id: askControl; dial: center.dialItem; bar: valueBar }
         ScreenTimeControl { id: screenTimeControl; dial: center.dialItem }
-        AutomationsControl { id: automationsControl; dial: center.dialItem }
+        AutomationsControl {
+            id: automationsControl
+            dial: center.dialItem
+            // shortcut: opens Ask on this dial only; with Ask moved out to a dial of its own it does nothing
+            onMakeOne: if (dial.controls.some(c => c.key === "ask")) { dial.showControl("ask"); askControl.startTyping("make an automation that ") }
+        }
 
         // closes this dial and opens another one (an OSD pops up, see popUp in AudioOsd /
         // WorkspaceOsd)

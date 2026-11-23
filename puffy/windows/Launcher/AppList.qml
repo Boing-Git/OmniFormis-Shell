@@ -406,8 +406,9 @@ ListView {
                 return;
             }
             // /ask: the launcher stays open while the AI works (LauncherModel.qml)
+            // (a second word starts the question: "make an automation that ")
             if (cmdArray[0] === "INTERNAL:ASK_MODE") {
-                root.requestSearchText("/ask ");
+                root.requestSearchText("/ask " + (cmdArray[1] || ""));
                 root.focusSearchBar();
                 return;
             }

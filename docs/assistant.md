@@ -18,8 +18,10 @@ All three run the same `scripts/assistant/assistant.py`.
 
 ## What it can do, and only that
 
-`scripts/assistant/tools.py` is the whole list (26 commands). The model can call nothing else,
-and every command runs as a plain argument list, never through a shell.
+`scripts/assistant/tools.py` is the whole list (30 commands). The model can call nothing else,
+and every command runs as a plain argument list, never through a shell. What it knows of this
+desktop (where everything is, which tool to use first, how to write an automation) is
+`scripts/assistant/context.md`, read into every question: edit it to teach it more.
 
 - **Settings**: every Dial-E setting, and all ~300 of its Advanced ones (every size, timing
   and shape of the control center, media player, screenshot tool and lock: read from the
@@ -33,6 +35,13 @@ and every command runs as a plain argument list, never through a shell.
   are found for it), lists and removes the rules it added. They live one per line in
   `hypr/modules/userRules.lua` (loaded by `winrules.lua`), apply at once to windows that open
   from then on, and stay after a reload.
+- **Anything in the dotfiles**: Hyprland's whole config, matugen's templates, the shells, every
+  app's config. It finds (by words, in names and lines), reads, and changes one exact piece at
+  a time; only files inside the dotfiles, and never its own (`scripts/assistant/`) or `.git`.
+  Each change keeps the file as it was (`~/.local/state/dots-assistant/backups/`, "undo that"
+  puts it back). A Hyprland change reloads Hyprland, and is put back by itself if Hyprland
+  reports a new config error; a matugen template change makes the theme again; a Nix change
+  waits for your rebuild (it says so).
 - **Shells**: switches between them; runs any action the running shell offers over IPC
   (except Dial-E's "reset all settings").
 - **Look**: wallpaper (and the colours from it), light / dark.
@@ -40,7 +49,8 @@ and every command runs as a plain argument list, never through a shell.
   a file in its app or a folder in your file manager. It never deletes or moves anything.
 - **Automations**: runs one ("run game night"), lists them, and saves a new one from what you
   describe ("make an automation that opens Spotify and plays"); the steps are checked before
-  anything is saved (`scripts/automate/`, see its README).
+  anything is saved (`scripts/automate/`, see its README). Each shell's automation list ends
+  with Make one, which opens the AI with "make an automation that " begun.
 - **Media, volume, workspaces, status.**
 - **Power**: lock and suspend at once; log out, restart and shut down ask you first (Yes / No
   on the card).

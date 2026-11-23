@@ -29,13 +29,18 @@ import tools  # noqa: E402
 MODEL = os.environ.get("DOTS_AI_MODEL", "qwen3:8b")
 URL = os.environ.get("DOTS_AI_URL", "http://127.0.0.1:11434").rstrip("/")
 MAX_STEPS = 8
+# tokens the model may see at once: the tools and context.md alone take ~6k (Ollama's default is 4k)
+CONTEXT = int(os.environ.get("DOTS_AI_CONTEXT", "16384"))
 
 SYSTEM = """You run this Linux desktop (NixOS, Hyprland) for its user through tools, and nothing else.
 - To change a setting: settings_search first, then setting_set with the exact source and key it gave.
 - Use only what a tool returned; never invent keys, paths or values.
 - After acting, answer in one short sentence in plain words: what changed. No markdown.
+- Say something changed only when a tool said so; if a tool failed and you couldn't fix it, say it didn't work and why.
 - If nothing fits, say so in one sentence.
-The running shell is {shell}."""
+The running shell is {shell}.
+
+""" + (Path(__file__).resolve().parent / "context.md").read_text()
 
 
 # one event as a JSON line, flushed at once so the overlay sees it as it happens
@@ -46,7 +51,7 @@ def emit(**event):
 # one round with the model: the conversation so far and the tools in, its message out
 def chat(messages):
     body = json.dumps({"model": MODEL, "messages": messages, "tools": tools.ollama_tools(),
-                       "stream": False, "think": False, "options": {"temperature": 0.2}}).encode()
+                       "stream": False, "think": False, "options": {"temperature": 0.2, "num_ctx": CONTEXT}}).encode()
     req = urllib.request.Request(URL + "/api/chat", body, {"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=180) as r:
         return json.loads(r.read())["message"]
@@ -72,7 +77,8 @@ def warm():
     if why:
         emit(type="error", text=why)
         return 1
-    body = json.dumps({"model": MODEL, "keep_alive": "15m"}).encode()
+    # (the same num_ctx as chat: another would load the model again)
+    body = json.dumps({"model": MODEL, "keep_alive": "15m", "options": {"num_ctx": CONTEXT}}).encode()
     try:
         urllib.request.urlopen(urllib.request.Request(URL + "/api/generate", body, {"Content-Type": "application/json"}), timeout=120).read()
     except (urllib.error.URLError, TimeoutError) as e:
@@ -83,7 +89,7 @@ def warm():
 
 
 def ask(prompt):
-    messages = [{"role": "system", "content": SYSTEM.format(shell=tools.current_shell() or "unknown")},
+    messages = [{"role": "system", "content": SYSTEM.replace("{shell}", tools.current_shell() or "unknown")},
                 {"role": "user", "content": prompt}]
     for _ in range(MAX_STEPS):
         emit(type="thinking")

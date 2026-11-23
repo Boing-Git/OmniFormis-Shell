@@ -19,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from datetime import datetime
 from pathlib import Path
 
 HOME = Path.home()
@@ -585,7 +586,178 @@ def automation_save(name, steps):
     return f"saved {name} ({slug}); run it with automation_run"
 
 
-SKIP = {".cache", ".local", ".nix-defexpr", ".nix-profile", "node_modules", ".git", ".cargo", ".rustup", ".mozilla", ".steam"}
+# ── the dotfiles ── any file in the repo (context.md says what is where): find, read, change
+# one exact piece, undo. Each edit keeps the file as it was in BACKUPS; a Hyprland edit that
+# Hyprland refuses is put back; a matugen edit themes everything again
+FILES = Path(os.environ.get("DOTS_FILES_ROOT", DOTS))
+BACKUPS = STATE / "dots-assistant" / "backups"
+# its own hands and the history stay as they are
+OFF_LIMITS = (".git", "scripts/assistant")
+
+
+# (the file, its path in the repo); refuses anything outside the repo, and changes off limits
+def dotfile(path, change=False):
+    root = FILES.resolve()
+    p = Path(path).expanduser()
+    p = (p if p.is_absolute() else root / p).resolve()
+    if p != root and root not in p.parents:
+        raise ToolError(f"{path} is not in the dotfiles ({root})")
+    rel = p.relative_to(root).as_posix()
+    if change and any(rel == o or rel.startswith(o + "/") for o in OFF_LIMITS):
+        raise ToolError(f"{rel} can't be changed from here")
+    return p, rel
+
+
+def text_files():
+    for dirpath, dirnames, filenames in os.walk(FILES):
+        dirnames[:] = sorted(d for d in dirnames if not d.startswith(".") and d not in ("node_modules", "__pycache__", "stubs"))
+        for n in sorted(filenames):
+            yield Path(dirpath) / n
+
+
+# words of a query or a line: lower case, `_`, `-` and `.` as spaces
+def words_of(text):
+    return re.sub(r"[_\-.]+", " ", text.lower()).split()
+
+
+# lines (and paths) holding the most of the words (30 at most): all of them, or at least two
+# when nothing holds all
+def dotfiles_find(query):
+    want = set(words_of(query))
+    if not want:
+        raise ToolError("say what to look for")
+    found = []
+    for f in text_files():
+        rel = f.relative_to(FILES).as_posix()
+        found.append((len(want & set(words_of(rel))), rel))
+        try:
+            if f.stat().st_size > 512_000:
+                continue
+            lines = f.read_text(errors="strict").splitlines()
+        except (OSError, UnicodeDecodeError):
+            continue
+        for i, line in enumerate(lines, 1):
+            have = " ".join(words_of(line))
+            n = sum(w in have for w in want)
+            if n:
+                found.append((n, f"{rel}:{i}: {line.strip()[:160]}"))
+    best = max((n for n, _ in found), default=0)
+    if best < min(2, len(want)):
+        return f"nothing in the dotfiles holds '{query}': try other words, or the setting's own name"
+    hits = [h for n, h in found if n == best]
+    return hits[:30] + (["(more: say more of what to look for)"] if len(hits) > 30 else [])
+
+
+# 120 lines of a file from `line`, numbered
+def dotfile_read(path, line=1):
+    p, rel = dotfile(path)
+    if not p.is_file():
+        raise ToolError(f"no file {rel}")
+    lines = p.read_text(errors="replace").splitlines()
+    start = max(1, int(line))
+    shown = [f"{i}: {s}" for i, s in enumerate(lines[start - 1:start + 119], start)]
+    return {"file": rel, "lines": len(lines), "text": "\n".join(shown)}
+
+
+# Hyprland's config errors now, as a set of lines
+def hypr_errors():
+    out = run(["hyprctl", "configerrors"], check=False)
+    return {line for line in out.splitlines() if line.strip()}
+
+
+# makes a changed file count: Hyprland reloads (and errors it didn't have `before` the change
+# put `old` back), matugen themes again
+def take_effect(p, rel, old, before):
+    if rel.startswith("hypr/"):
+        run(["hyprctl", "reload"], check=False)
+        new = hypr_errors() - before
+        if new:
+            if not DRY:
+                p.write_text(old)
+            run(["hyprctl", "reload"], check=False)
+            raise ToolError("Hyprland refused it, so it was put back: " + "; ".join(sorted(new))[:400])
+        return "Hyprland reloaded"
+    if rel.startswith("matugen/"):
+        done = STATE / "theme-apply" / "done"
+        try:
+            image, scheme, source = done.read_text().splitlines()[:3]
+        except (OSError, ValueError):
+            return "it takes effect with the next wallpaper"
+        if not DRY:
+            done.unlink(missing_ok=True)
+        detach([DOTS / "scripts" / "theme-apply.sh", image, scheme, source])
+        return "the theme is being made again"
+    if rel.startswith("nix/") or rel == "flake.nix":
+        return "it applies after the user rebuilds NixOS"
+    return "saved"
+
+
+# `old` with `find` (there exactly once) made `replace`, or None. A model often gets the
+# indentation wrong: then whole lines are matched without it, and `replace` is moved to
+# where the file's lines stand
+def replaced(old, find, replace):
+    if not find.strip():
+        return None
+    if old.count(find) == 1:
+        return old.replace(find, replace, 1)
+    lines, want = old.splitlines(keepends=True), [l.strip() for l in find.strip("\n").splitlines()]
+    at = [i for i in range(len(lines) - len(want) + 1) if [l.strip() for l in lines[i:i + len(want)]] == want]
+    if len(at) != 1:
+        return None
+    i = at[0]
+    first = next(l for l in find.splitlines() if l.strip())
+    shift = (len(lines[i]) - len(lines[i].lstrip())) - (len(first) - len(first.lstrip()))
+    fixed = [(" " * shift + l if shift > 0 else l[min(-shift, len(l) - len(l.lstrip())):]) if l.strip() else l
+             for l in replace.strip("\n").splitlines()]
+    end = "\n" if lines[i + len(want) - 1].endswith("\n") else ""
+    return "".join(lines[:i]) + "\n".join(fixed) + end + "".join(lines[i + len(want):])
+
+
+# replaces `find` (exactly once in the file) with `replace`; the old file is kept for undo
+def dotfile_edit(path, find, replace):
+    p, rel = dotfile(path, change=True)
+    if not p.is_file():
+        raise ToolError(f"no file {rel}")
+    old = p.read_text()
+    new = replaced(old, find, replace)
+    if new is None:
+        raise ToolError(f"that text isn't in {rel} exactly once (copy it from dotfile_read, without the line numbers)")
+    before = hypr_errors() if rel.startswith("hypr/") else set()
+    if DRY:
+        print(f"DRY edit {rel}: {find!r} -> {replace!r}", file=sys.stderr)
+    else:
+        keep = BACKUPS / f"{rel}.{datetime.now():%Y%m%d-%H%M%S-%f}"
+        keep.parent.mkdir(parents=True, exist_ok=True)
+        keep.write_text(old)
+        p.write_text(new)
+    try:
+        return f"changed {rel}; " + take_effect(p, rel, old, before)
+    except ToolError:
+        # put back: nothing of it to undo
+        if not DRY:
+            keep.unlink(missing_ok=True)
+        raise
+
+
+# puts the file back as it was before its last edit from here
+def dotfile_undo(path):
+    p, rel = dotfile(path, change=True)
+    kept = sorted((BACKUPS / rel).parent.glob(Path(rel).name + ".*")) if (BACKUPS / rel).parent.is_dir() else []
+    if not kept:
+        raise ToolError(f"nothing to undo in {rel}")
+    old = p.read_text() if p.is_file() else ""
+    before = hypr_errors() if rel.startswith("hypr/") else set()
+    if DRY:
+        print(f"DRY undo {rel} from {kept[-1]}", file=sys.stderr)
+    else:
+        p.write_text(kept[-1].read_text())
+    said = take_effect(p, rel, old, before)
+    if not DRY:
+        kept[-1].unlink()
+    return f"put {rel} back; " + said
+
+
+SKIP = {".cache",".local", ".nix-defexpr", ".nix-profile", "node_modules", ".git", ".cargo", ".rustup", ".mozilla", ".steam"}
 
 
 # names under a folder holding the words (15 at most), hidden folders and caches skipped
@@ -719,6 +891,13 @@ TOOLS = {
                         "run (a command as a list of words), wait ({\"window\": \"<app>\"} or {\"player\": \"spotify\"}, with timeout seconds), media (play, pause, next...; player optional), sleep (seconds), notify (text). "
                         "Example: [{\"open\": \"spotify\"}, {\"wait\": {\"player\": \"spotify\"}, \"timeout\": 40}, {\"media\": \"play\", \"player\": \"spotify\"}].",
                         {"name": p("string", "what to call it, e.g. Game night"), "steps": {"type": "array", "items": {"type": "object"}, "description": "the steps, in order"}}, ["name", "steps"], False),
+    "dotfiles_find": (dotfiles_find, "Find files in the dotfiles (Hyprland's config, matugen's templates, the shells, every app's config) whose name or lines hold the words. Use it when no other tool fits.",
+                      {"query": p("string", "words to look for, e.g. 'gaps_in' or 'special:music'")}, ["query"], False),
+    "dotfile_read": (dotfile_read, "Read 120 numbered lines of a dotfiles file, from a line on.",
+                     {"path": p("string", "its path in the dotfiles, e.g. hypr/modules/input.lua"), "line": p("integer", "the first line, default 1")}, ["path"], False),
+    "dotfile_edit": (dotfile_edit, "Change one piece of a dotfiles file: `find` must be in it exactly once, copied from dotfile_read (without the line numbers); it becomes `replace`. Takes effect at once (Hyprland reloads; a matugen template themes again). dotfile_undo puts it back.",
+                     {"path": p("string", "its path in the dotfiles"), "find": p("string", "the exact text there now"), "replace": p("string", "the new text")}, ["path", "find", "replace"], False),
+    "dotfile_undo": (dotfile_undo, "Put a dotfiles file back as it was before its last dotfile_edit.", {"path": p("string", "its path in the dotfiles")}, ["path"], False),
     "screen_time": (screen_time, "How long each app (by window class) was used: today, or the last few days.",
                     {"days": p("integer", "1 is today, 7 the last week")}, [], False),
     "status": (status, "What the desktop is doing now: shell, volume, media, workspace.", {}, [], False),

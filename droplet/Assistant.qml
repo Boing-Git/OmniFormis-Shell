@@ -106,12 +106,21 @@ Scope {
         onExited: root.busy = false
     }
 
+    function begin(text) { open(); input.text = text; input.cursorPosition = text.length }
+    // Tree's "Make one" (Automations)
+    Connections {
+        target: Tree
+        function onStartAsk(text) { root.begin(text) }
+    }
+
     IpcHandler {
         target: "assistant"
         function toggle(): void { root.toggle() }
         function open(): void { root.open() }
         function close(): void { root.close() }
         function ask(text: string): void { root.open(); input.text = text; root.ask(text) }
+        // opens with the question begun, for you to finish
+        function start(text: string): void { root.begin(text) }
     }
 
     PanelWindow {

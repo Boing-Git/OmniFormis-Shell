@@ -506,8 +506,12 @@ Item {
             if (words === "" || Vars.fuzzyMatch(words, a.name))
                 rows.push(askRow("Run: " + a.name + "  (" + a.steps + (a.steps === 1 ? " step)" : " steps)"), ["INTERNAL:RUN", a.id], a.icon || "bolt"));
         }
-        if (automations.length === 0)
-            rows.push(askRow("None yet: ask the AI (\"/ask make an automation that…\") or add one to ~/.config/automations", ["INTERNAL:NOOP"], "bolt"));
+        // always last: how to make one (Enter starts the question for the AI)
+        var none = automations.length === 0 ? "None yet. " : "";
+        if (Vars.assistant !== false)
+            rows.push(askRow(none + "Make one: tell the AI \"make an automation that…\"", ["INTERNAL:ASK_MODE", "make an automation that "], "auto_awesome"));
+        else
+            rows.push(askRow(none + "Make one: a file in ~/.config/automations (or turn on Ask the AI in Settings → Extras)", ["INTERNAL:NOOP"], "bolt"));
         return rows;
     }
 

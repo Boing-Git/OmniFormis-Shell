@@ -9,7 +9,8 @@ import "../variables.js" as Vars
 // ~/.config/automations (../scripts/automate/automate.py, which works in any shell or none).
 // The inner ring has a pill per automation (a click runs it; it spins while it runs); the card
 // in the middle says the one at the mark: its steps, or how far a run has got. The tile reads
-// the files again. Make one by asking the AI ("make an automation that…") or with a file.
+// the files again. The last pill, Make one, opens Ask with "make an automation that " begun;
+// or put a file in the folder.
 // Settings → Extras → Automations hides it. ControlCenter.qml uses `control`.
 Item {
     id: auto
@@ -68,7 +69,11 @@ Item {
         }
     }
 
+    // "Make one" (the last pill): ControlCenter.qml opens Ask with the question begun
+    signal makeOne()
+
     readonly property var atMark: active ? (list[dial.innerIndex] || null) : null
+    readonly property bool atMakeOne: active && Prefs.assistant && dial.innerIndex === list.length
 
     property Component corner: Component {
         ReaderCard {
@@ -80,11 +85,12 @@ Item {
             shape: running ? "SoftBurst" : a ? "Sunny" : "Circle"
             fill: finished && auto.ended !== "Done" ? Roles.error_container : a ? Roles.tertiary_container : Roles.surface_container_high
             ink: finished && auto.ended !== "Done" ? Roles.on_error_container : a ? Roles.on_tertiary_container : Roles.on_surface_variant
-            symbol: running ? "hourglass_top" : a ? (a.icon || "bolt") : "bolt"
+            symbol: running ? "hourglass_top" : a ? (a.icon || "bolt") : auto.atMakeOne ? "auto_awesome" : "bolt"
             note: running ? "Step " + auto.step + " of " + auto.of : finished ? auto.ended : a ? a.steps + (a.steps === 1 ? " step" : " steps") : ""
-            title: a ? a.name : "Automations"
+            title: a ? a.name : auto.atMakeOne ? "Make one" : "Automations"
             body: running ? auto.doing
                 : a ? (a.ok ? a.says.join("\n") : "Something in its file is wrong: automate.py check " + a.id)
+                : auto.atMakeOne ? "Click, then tell the AI what it should do: \"make an automation that opens Spotify and plays\". It shows up here."
                 : auto.list.length === 0 ? "None yet. Ask the AI: \"make an automation that opens Spotify and plays\", or put one in ~/.config/automations."
                 : "Turn to one; a click runs it."
         }
@@ -113,6 +119,13 @@ Item {
             on: auto.endedId === a.id && auto.ended === "Done",
             status: auto.runningId === a.id ? "loading" : "none",
             activate: () => auto.start(a.id)
-        }))
+        })).concat(Prefs.assistant ? [{
+            label: "Make one",
+            icon: "auto_awesome",
+            shape: "Circle",
+            on: false,
+            status: "none",
+            activate: () => auto.makeOne()
+        }] : [])
     })
 }

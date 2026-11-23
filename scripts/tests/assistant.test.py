@@ -103,4 +103,29 @@ with tempfile.TemporaryDirectory() as d:
     assert tools.call("window_rule_add", {"app": "vscodium"})[0] == "error"
     assert tools.call("window_rule_remove", {"name": "ai-vscodium-workspace"})[0] == "ok" and tools.read_rules() == []
 
+# dotfile edits: one exact piece, kept for undo; Hyprland refusing one puts it back; nothing
+# outside the repo, and not the assistant's own files
+with tempfile.TemporaryDirectory() as d:
+    tools.FILES, tools.BACKUPS = Path(d) / "dots", Path(d) / "backups"
+    lua = tools.FILES / "hypr/modules/variables.lua"
+    lua.parent.mkdir(parents=True)
+    lua.write_text("gaps_in = 5,\ngaps_out = 5,\n")
+    errors = []
+    tools.run = lambda cmd, **kw: "\n".join(errors) if cmd[1] == "configerrors" else ""
+    assert tools.call("dotfiles_find", {"query": "gaps_out"})[1] == ["hypr/modules/variables.lua:2: gaps_out = 5,"]
+    assert tools.call("dotfile_edit", {"path": "hypr/modules/variables.lua", "find": "= 5,", "replace": "= 9,"})[0] == "error"  # twice
+    assert tools.call("dotfile_edit", {"path": "hypr/modules/variables.lua", "find": "gaps_in = 5,", "replace": "gaps_in = 9,"})[0] == "ok"
+    assert lua.read_text() == "gaps_in = 9,\ngaps_out = 5,\n"
+    tools.run = lambda cmd, **kw: ("bad line 2" if lua.read_text().startswith("gaps_in = 9,\ngaps_out = x") else "") if cmd[1] == "configerrors" else ""
+    kind, why = tools.call("dotfile_edit", {"path": "hypr/modules/variables.lua", "find": "gaps_out = 5,", "replace": "gaps_out = x,"})
+    assert kind == "error" and "bad line 2" in why and lua.read_text() == "gaps_in = 9,\ngaps_out = 5,\n", why
+    assert tools.call("dotfile_undo", {"path": "hypr/modules/variables.lua"})[0] == "ok"
+    assert lua.read_text() == "gaps_in = 5,\ngaps_out = 5,\n"
+    assert tools.call("dotfile_read", {"path": "/etc/passwd"})[0] == "error"
+    # words in any order, `_` as a space; the indentation a model gets wrong is put right
+    assert tools.call("dotfiles_find", {"query": "keyboard gaps out"})[1] == ["hypr/modules/variables.lua:2: gaps_out = 5,"]
+    assert tools.replaced("a = {\n    b = 1,\n    c = 2,\n}\n", "     c = 2,\n", "     c = 3,\n") == "a = {\n    b = 1,\n    c = 3,\n}\n"
+    assert tools.replaced("x = 1\nx = 1\n", "x = 1", "x = 2") is None
+    assert tools.call("dotfile_edit", {"path": "scripts/assistant/tools.py", "find": "a", "replace": "b"})[0] == "error"
+
 print("assistant: all passed")

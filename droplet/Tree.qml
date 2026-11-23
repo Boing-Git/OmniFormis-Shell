@@ -95,6 +95,8 @@ Singleton {
     // Runs of steps kept in ~/.config/automations (scripts/automate/automate.py, a tool of its
     // own that works in any shell): dropping onto one runs it, on its own (it outlives Droplet)
     property var automationList: []
+    // opens the AI with a question begun (Assistant.qml listens)
+    signal startAsk(string text)
     Process {
         id: automationLister
         command: ["python3", root.script("automate/automate.py"), "list", "--json"]
@@ -103,7 +105,12 @@ Singleton {
     function automations() {
         const runs = automationList.map(a => task(a.name, a.icon || "bolt", "Running " + a.name,
             () => Quickshell.execDetached(["python3", root.script("automate/automate.py"), "run", a.id]), { note: a.steps + " steps" }))
-        return runs.length ? runs : [task("None yet: ask the AI to make one", "bolt", "Nothing to run", () => {}, { stay: true })]
+        // always last: how to make one (the AI opens with the question begun)
+        const none = runs.length ? "" : "None yet. "
+        return runs.concat(Settings.assistant
+            ? [task(none + "Make one: tell the AI", "auto_awesome", "Finish the sentence for the AI",
+                    () => root.startAsk("make an automation that "))]
+            : [task(none + "Make one: a file in ~/.config/automations", "bolt", "Nothing to run", () => {}, { stay: true })])
     }
 
     // opening the shell reads what can change meanwhile: today's screen time, the automations,
