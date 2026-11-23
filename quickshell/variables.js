@@ -328,6 +328,9 @@ const settingsPath = "/home/boing/.local/state/dial-quickshell/settings.json";
 // where Settings → Advanced keeps the values changed in the settings files (primitive/Advanced.qml)
 const advancedPath = "/home/boing/.local/state/dial-quickshell/advanced.json";
 
+// the presets (Presets.qml): one JSON file each, so they can be copied in and out, or kept in git
+const presetsPath = "/home/boing/.config/dial-quickshell/presets";
+
 // How far a dial overshoots as it opens, 0 (none) to 10, and how quickly it opens and
 // closes, 1 to 10. Bounce 2 / speed 6 is M3E's standard default spring (0.9 / 700): opening
 // is the most frequent thing a dial does, so it gets the quick, calm one. Bounce 6 / speed 3

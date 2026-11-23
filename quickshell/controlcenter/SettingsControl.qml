@@ -99,6 +99,18 @@ Item {
         }
     }
 
+    // ── Presets ── (Presets.qml) apply one (Before last apply is the undo), or save what you
+    // have now under a name you type
+    readonly property var presetSettings: [
+        { source: "preset", key: "apply", label: "Apply", title: "Apply a preset", icon: "bookmark", type: "choice",
+          help: "Puts back everything a preset holds: settings, Advanced, the dials' spots, the wallpaper and its colours, Hyprland's variables. " + Presets.undoName + " undoes the last one.",
+          value: Presets.current, shown: Presets.current || "none", changed: false,
+          options: Presets.list.map(p => ({ value: p.name, label: p.name })) },
+        { source: "preset", key: "save", label: "Save as", title: "Save a preset", icon: "bookmark_add", type: "text",
+          help: "Type a name: everything as it is now becomes a preset (the same name replaces it). They are files in " + Vars.presetsPath + ".",
+          value: "", shown: "", changed: false }
+    ]
+
     // ── Advanced ── every plain setting of the settings files (Advanced.qml), by file and by
     // each file's own sections; the comment above it in the file is its help
     function advancedSetting(type, e) {
@@ -201,6 +213,7 @@ Item {
                 items: hypr.vars.filter(v => v.category === c).map(hyprSetting)
             }))
         })
+        top.push({ label: "Presets", icon: "bookmarks", items: presetSettings })
         top.push({ label: "Advanced", icon: "tune", children: advancedGroups() })
         return top
     }
@@ -252,6 +265,7 @@ Item {
         if (!s) return "nothing selected"
         if (s.source === "prefs") return Prefs.set(s.key, value)
         if (s.source === "advanced") return Advanced.set(s.object, s.key, value)
+        if (s.source === "preset") return s.key === "apply" ? Presets.apply(String(value)) : Presets.save(String(value))
         if (s.source === "theme") {
             if (s.key === "mode") hypr.setTheme(hypr.scheme, String(value))
             else hypr.setTheme(String(value), hypr.mode)
