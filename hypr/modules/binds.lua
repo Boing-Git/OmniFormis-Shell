@@ -278,3 +278,7 @@ end)
 hl.define_submap("omniformis_capture", function()
     hl.bind("CTRL + ALT + SHIFT + SUPER + F12", hl.dsp.submap("reset"))
 end)
+
+-- the AI in whichever shell runs (each has its own: Dial-E's Ask control, Puffy's panel,
+-- Droplet's drop from the top edge), through scripts/shell
+bind("AssistantBind", hl.dsp.exec_cmd("~/Dotfiles/scripts/shell ipc call assistant toggle"), { description = "Ask the local AI" })

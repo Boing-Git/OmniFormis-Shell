@@ -3,17 +3,16 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 
-// Ask the local AI. Pull a drop of liquid down out of the middle of the top edge (or press
-// Super + A): it stretches, pinches off and spreads into the bar you type in. Your words go to
-// ../scripts/assistant/assistant.py (Ollama, with the desktop's commands as its tools); what it
-// does drips out of the bar as a second drop that opens into the answer card. Esc, a click
-// outside or pushing the bar back up sends it all back into the edge.
+// Droplet's way to ask the local AI. Pull a drop of liquid down out of the middle of the top
+// edge (or press Super + A): it stretches, pinches off and spreads into the bar you type in.
+// Your words go to ../scripts/assistant/assistant.py (Ollama, with the desktop's commands as
+// its tools); what it does drips out of the bar as a second drop that opens into the answer
+// card. Esc, a click outside or pushing the bar back up sends it all back into the edge.
+// The Settings circle's "Ask the AI" switches it off (shell.qml doesn't load it then).
 //
-// It runs next to whichever shell runs (Dial-E, Puffy or Droplet), as its own instance:
-//   qs -p <this folder>                                   run it
 //   qs -p <this folder> ipc call assistant toggle         open / close (Super + A)
 //   qs -p <this folder> ipc call assistant ask "<text>"   ask without typing
-ShellRoot {
+Scope {
     id: root
 
     // ── settings ── sizes are px, times ms
@@ -22,11 +21,10 @@ ShellRoot {
     readonly property real stripHeight: 4
     readonly property real dropR: 22
 
-    // the body of liquid behind the edge, how far it swells out as the drop is pulled, and
-    // how far down the drop must be pulled to come free
+    // the body of liquid behind the edge (it never swells), and how far down the drop must
+    // be pulled to come free (the neck lets go right there), as at Droplet's right edge
     readonly property real edgeR: 60
-    readonly property real swell: 18
-    readonly property real pullOut: 118
+    readonly property real pullOut: 80
 
     // the bar it becomes: width (at most this share of the screen), height, and where it rests
     readonly property real barWidth: 620
@@ -122,7 +120,7 @@ ShellRoot {
         anchors { top: true; bottom: true; left: true; right: true }
         color: "transparent"
         exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.namespace: "dots-assistant"
+        WlrLayershell.namespace: "droplet-assistant"
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: root.phase === "open" ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
@@ -174,10 +172,8 @@ ShellRoot {
         Goo {
             anchors.fill: parent
             visible: dy.value > -root.dropR && spread.value < 0.3
-            property real bulge: root.phase === "pull" ? Math.min(root.swell, Math.max(0, dy.value) * 0.25) : 0
-            Behavior on bulge { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
             ax: dx.value
-            ay: -root.edgeR + bulge
+            ay: -root.edgeR
             ar: root.edgeR
             bodyA: true
             bx: dx.value
@@ -185,7 +181,7 @@ ShellRoot {
             br: root.dropR
             color: bar.color
             spread: 0.7
-            snapAt: (root.pullOut + root.edgeR - root.swell + root.dropR) / (root.edgeR + root.dropR)
+            snapAt: (root.pullOut - root.dropR + root.edgeR + 4) / (root.edgeR + root.dropR)
         }
 
         // the drop out of the bar's underside into the answer card, the same way

@@ -684,4 +684,10 @@ Scope {
 
     // the lock screen (hypridle, the Lock circle): Droplet's own
     Lock {}
+
+    // the AI, pulled down out of the top edge (Settings: Ask the AI)
+    LazyLoader {
+        active: Settings.assistant
+        Assistant {}
+    }
 }

@@ -1,1 +1,0 @@
-/home/boing/.config/color-schemes/current/quickTheme.qml
