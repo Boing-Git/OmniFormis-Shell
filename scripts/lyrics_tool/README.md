@@ -22,25 +22,11 @@ lookups are instant and offline-friendly.
 
 ## Install
 
-### Quick — no install, just run it
-```bash
-pip install --user httpx typer rich
-./lyrics_fetcher.py "Radiohead" "Karma Police"
-```
+The Nix module installs it as `lyrics-fetcher` (nix/lyrics-fetcher.nix). Without Nix:
 
-### On NixOS, in a throwaway shell
 ```bash
-nix-shell -p 'python3.withPackages (ps: with ps; [ httpx typer rich ])'
-python lyrics_fetcher.py "Radiohead" "Karma Police"
-```
-
-### As a proper command (pipx / uv)
-```bash
-pipx install .
-# or
-uv tool install .
-
-lyrics-fetch "Radiohead" "Karma Police"
+cargo build --release
+./target/release/lyrics-fetcher "Radiohead" "Karma Police"
 ```
 
 To enable the Genius fallback, also install the optional extra:

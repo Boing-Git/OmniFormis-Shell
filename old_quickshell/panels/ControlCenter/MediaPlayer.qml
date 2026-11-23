@@ -123,7 +123,7 @@ Rectangle {
         
         var cleanedTitle = cleanTrackTitle(title);
 
-        var cmdArray = ["/home/boing/Dotfiles/scripts/lyrics_tool/target/release/lyrics-fetcher", artist, cleanedTitle || title, "--raw"];
+        var cmdArray = ["lyrics-fetcher", artist, cleanedTitle || title, "--raw"];
         var cmd = JSON.stringify(cmdArray);
         var qmlString = 'import QtQuick; import Quickshell.Io; Process { ' +
                         'command: ' + cmd + '; ' +
