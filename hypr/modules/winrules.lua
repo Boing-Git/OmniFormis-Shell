@@ -310,3 +310,14 @@ hl.layer_rule({
     blur_popups = true,
     ignore_alpha = 0.1
 })
+
+--------------------------------------------------------------------------------
+-- ## Rules added from the shells' AI
+--------------------------------------------------------------------------------
+
+-- userRules.lua (scripts/assistant/tools.py: window_rule_add), loaded so that a broken line
+-- there can't take the rest of the config down with it
+local ok, user_rules = pcall(require, "modules.userRules")
+if ok and type(user_rules) == "table" then
+    for _, rule in ipairs(user_rules) do hl.window_rule(rule) end
+end

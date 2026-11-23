@@ -90,4 +90,17 @@ with tempfile.TemporaryDirectory() as d:
     kind, why = tools.call("setting_set", {"source": "dial-e-advanced", "key": "LockSettings.ringRadius", "value": "9999"})
     assert kind == "error" and "goes from" in why
 
+# window rules: written one per line, read back, a bad value refused before anything is written
+with tempfile.TemporaryDirectory() as d:
+    tools.USER_RULES = Path(d) / "userRules.lua"
+    tools.app_classes = lambda app: ["codium", "vscodium"]
+    tools.DRY = False
+    tools.run = lambda cmd, **kw: ""
+    kind, said = tools.call("window_rule_add", {"app": "vscodium", "workspace": "special:scratchpad"})
+    assert kind == "ok" and "special:scratchpad" in said, said
+    assert tools.read_rules() == [{"name": "ai-vscodium-workspace", "match": {"class": "(?i)^(codium|vscodium)$"}, "workspace": "special:scratchpad"}]
+    assert tools.call("window_rule_add", {"app": "vscodium", "size": "huge"})[0] == "error"
+    assert tools.call("window_rule_add", {"app": "vscodium"})[0] == "error"
+    assert tools.call("window_rule_remove", {"name": "ai-vscodium-workspace"})[0] == "ok" and tools.read_rules() == []
+
 print("assistant: all passed")

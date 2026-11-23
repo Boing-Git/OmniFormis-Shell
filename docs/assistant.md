@@ -18,7 +18,7 @@ All three run the same `scripts/assistant/assistant.py`.
 
 ## What it can do, and only that
 
-`scripts/assistant/tools.py` is the whole list (19 commands). The model can call nothing else,
+`scripts/assistant/tools.py` is the whole list (23 commands). The model can call nothing else,
 and every command runs as a plain argument list, never through a shell.
 
 - **Settings**: every Dial-E setting, and all ~300 of its Advanced ones (every size, timing
@@ -28,6 +28,11 @@ and every command runs as a plain argument list, never through a shell.
   mode), every Puffy setting. It searches before it sets, and values are checked (ranges,
   choices) before anything is written.
 - **Shortcuts**: finds them by what they do or by key.
+- **Windows and window rules**: lists the open windows; adds a rule for an app's windows
+  ("every VSCodium window goes to the special workspace scratchpad": the app's window classes
+  are found for it), lists and removes the rules it added. They live one per line in
+  `hypr/modules/userRules.lua` (loaded by `winrules.lua`), apply at once to windows that open
+  from then on, and stay after a reload.
 - **Shells**: switches between them; runs any action the running shell offers over IPC
   (except Dial-E's "reset all settings").
 - **Look**: wallpaper (and the colours from it), light / dark.

@@ -29,6 +29,8 @@ CACHE = Path(os.environ.get("XDG_CACHE_HOME", HOME / ".cache")) / "dots-assistan
 DIAL_SETTINGS = STATE / "dial-quickshell" / "settings.json"
 DIAL_SCHEMA = CACHE / "dial-e-settings.json"
 DIAL_DIR = DOTS / "quickshell"
+# window rules the AI adds (hypr/modules/winrules.lua loads them); DOTS_USER_RULES for tests
+USER_RULES = Path(os.environ.get("DOTS_USER_RULES", DOTS / "hypr" / "modules" / "userRules.lua"))
 
 
 # a tool's own failure, said in plain words: goes back to the model as the tool's result
@@ -401,6 +403,147 @@ def app_open(name):
     return f"opened {entries[best[0]]}"
 
 
+# ── windows and window rules ──
+# the windows open now: class, title, workspace
+def windows():
+    out = run(["hyprctl", "clients", "-j"], check=False) if not DRY else "[]"
+    try:
+        clients = json.loads(out or "[]")
+    except ValueError:
+        raise ToolError("hyprctl gave no window list")
+    return [{"class": c.get("class", ""), "title": c.get("title", "")[:60], "workspace": c.get("workspace", {}).get("name", "")}
+            for c in clients] or "no windows open"
+
+
+# the window classes an app's windows have: the open windows whose class holds the name, and
+# the app's desktop entry (its id, its program, StartupWMClass); the name itself if nothing knows it
+def app_classes(app):
+    q = app.lower().strip()
+    found = set()
+    if not DRY:
+        try:
+            for c in json.loads(run(["hyprctl", "clients", "-j"], check=False) or "[]"):
+                for k in ("class", "initialClass"):
+                    if q and q in c.get(k, "").lower():
+                        found.add(c[k])
+        except ValueError:
+            pass
+    dirs = [HOME / ".local/share/applications"] + [Path(d) / "applications" for d in
+            os.environ.get("XDG_DATA_DIRS", "/run/current-system/sw/share").split(":")]
+    for d in dirs:
+        for f in d.glob("*.desktop") if d.is_dir() else []:
+            text = f.read_text(errors="ignore")
+            name = re.search(r"^Name=(.+)$", text, re.M)
+            if q not in f.stem.lower() and not (name and q in name.group(1).lower()):
+                continue
+            found.add(f.stem)
+            wm = re.search(r"^StartupWMClass=(.+)$", text, re.M)
+            if wm:
+                found.add(wm.group(1).strip())
+            exe = re.search(r"^Exec=(\S+)", text, re.M)
+            if exe:
+                found.add(Path(exe.group(1)).name)
+    return sorted(found, key=str.lower) or [app.strip()]
+
+
+# a value as Lua: a string (JSON's escaping is Lua's for these), true / false, a number
+def lua(v):
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, (int, float)):
+        return str(v)
+    v = str(v)
+    if any(ord(ch) < 32 for ch in v):
+        raise ToolError("no control characters in a rule")
+    return json.dumps(v, ensure_ascii=False)
+
+
+# one rule as the single line userRules.lua keeps it on
+def rule_line(r):
+    match = ", ".join(f"{k} = {lua(v)}" for k, v in r["match"].items())
+    rest = "".join(f", {k} = {lua(v)}" for k, v in r.items() if k not in ("name", "match"))
+    return f"    {{ name = {lua(r['name'])}, match = {{ {match} }}{rest} }},"
+
+
+VALUE = r'("(?:[^"\\]|\\.)*"|true|false|-?\d+(?:\.\d+)?)'
+
+
+# the rules in userRules.lua (only lines written as rule_line writes them)
+def read_rules():
+    rules = []
+    text = USER_RULES.read_text() if USER_RULES.exists() else ""
+    for line in text.splitlines():
+        m = re.match(r'\s*\{ name = ("(?:[^"\\]|\\.)*"), match = \{ (.*?) \}(.*) \},\s*$', line)
+        if not m:
+            continue
+        pairs = lambda part: {k: json.loads(v) for k, v in re.findall(r"(\w+) = " + VALUE, part)}
+        rules.append({"name": json.loads(m.group(1)), "match": pairs(m.group(2)), **pairs(m.group(3))})
+    return rules
+
+
+def write_rules(rules):
+    text = ("-- Window rules added from the shells' AI (scripts/assistant/tools.py: window_rule_add),\n"
+            "-- one per line; hypr/modules/winrules.lua loads them. Edit or delete lines freely.\n"
+            "return {\n" + "".join(rule_line(r) + "\n" for r in rules) + "}\n")
+    USER_RULES.write_text(text)
+
+
+RULE_EFFECTS = {"workspace": "string", "float": "boolean", "center": "boolean", "size": "string",
+                "opacity": "string", "pin": "boolean", "fullscreen": "boolean", "monitor": "string"}
+
+
+def window_rules():
+    rules = read_rules()
+    return {"added": [{"name": r["name"], "class": r["match"].get("class", ""),
+                       "does": {k: v for k, v in r.items() if k not in ("name", "match")}} for r in rules] or "none yet",
+            "built_in": "the rest are in hypr/modules/winrules.lua"}
+
+
+# a rule for an app's windows: which workspace they open on (a number, a name, or
+# "special:<name>" for a special workspace), floating, size, opacity...; applied at once to
+# windows that open from now on, and kept (userRules.lua)
+def window_rule_add(app, **effects):
+    effects = {k: v for k, v in effects.items() if v not in (None, "")}
+    if not effects:
+        raise ToolError("say what the rule does: workspace, float, size, opacity, pin, fullscreen, monitor or center")
+    ws = effects.get("workspace")
+    if ws is not None:
+        ws = str(ws).strip()
+        if not re.fullmatch(r"(special:)?[\w.-]+", ws):
+            raise ToolError("workspace is a number, a name, or special:<name>")
+        effects["workspace"] = ws
+    if "size" in effects and not re.fullmatch(r"\d+%? \d+%?", str(effects["size"]).strip()):
+        raise ToolError("size is 'width height', e.g. '1200 800' or '60% 70%'")
+    if "opacity" in effects and not re.fullmatch(r"(0(\.\d+)?|1(\.0+)?)( (0(\.\d+)?|1(\.0+)?))?", str(effects["opacity"]).strip()):
+        raise ToolError("opacity is 0 to 1, e.g. '0.9'")
+    classes = app_classes(app)
+    pattern = "(?i)^(" + "|".join(re.escape(c) for c in classes) + ")$"
+    slug = lambda t: re.sub(r"[^a-z0-9]+", "-", str(t).lower()).strip("-")
+    rule = {"name": "ai-" + slug(app) + "-" + "-".join(slug(k) for k in sorted(effects)), "match": {"class": pattern}, **effects}
+    rule_line(rule)  # checks every value is writable before anything changes
+    rules = [r for r in read_rules() if r["name"] != rule["name"]] + [rule]
+    if DRY:
+        print("DRY write " + str(USER_RULES) + ": " + rule_line(rule).strip(), file=sys.stderr)
+    else:
+        write_rules(rules)
+    run(["hyprctl", "eval", "hl.window_rule(" + rule_line(rule).strip().rstrip(",") + ")"])
+    return f"rule {rule['name']} for windows of class {', '.join(classes)}: {effects}. It applies to windows that open from now on; windows already open stay where they are."
+
+
+# removes a rule window_rule_add made, by name; Hyprland reloads its config so it's gone now
+def window_rule_remove(name):
+    rules = read_rules()
+    keep = [r for r in rules if r["name"] != name]
+    if len(keep) == len(rules):
+        raise ToolError(f"no rule called {name} (window_rules lists them)")
+    if DRY:
+        print("DRY remove " + name + " from " + str(USER_RULES), file=sys.stderr)
+    else:
+        write_rules(keep)
+    run(["hyprctl", "reload"])
+    return f"removed {name}"
+
+
 SKIP = {".cache", ".local", ".nix-defexpr", ".nix-profile", "node_modules", ".git", ".cargo", ".rustup", ".mozilla", ".steam"}
 
 
@@ -521,6 +664,14 @@ TOOLS = {
     "workspace": (workspace, "Go to a workspace.", {"number": p("integer", "the workspace number")}, ["number"], False),
     "power": (power, "Lock, suspend, log out, restart or shut down. Log out, restart and shut down ask the user first.",
               {"action": p("string", "what to do", ["lock", "suspend", "logout", "reboot", "shutdown"])}, ["action"], False),
+    "windows": (windows, "The windows open now: their class (what window rules match), title and workspace.", {}, [], False),
+    "window_rules": (window_rules, "The window rules added with window_rule_add.", {}, [], False),
+    "window_rule_add": (window_rule_add, "Add a window rule for an app: every window of it opens on a workspace (a number, a name, or special:<name> for a special workspace, e.g. special:scratchpad), floats, gets a size or opacity, is pinned, fullscreen or on a monitor. Give the app's name (e.g. 'vscodium', 'firefox'); its window class is found for you. Kept, and applied at once to windows that open from now on.",
+                        {"app": p("string", "the app's name or window class"), "workspace": p("string", "a number, a name, or special:<name>"),
+                         "float": p("boolean", "float its windows"), "center": p("boolean", "center them (floating)"), "size": p("string", "'width height', px or %"),
+                         "opacity": p("string", "0 to 1"), "pin": p("boolean", "show on every workspace (floating)"), "fullscreen": p("boolean", "open fullscreen"),
+                         "monitor": p("string", "a monitor's name")}, ["app"], False),
+    "window_rule_remove": (window_rule_remove, "Remove a window rule added with window_rule_add, by its name (window_rules lists them).", {"name": p("string", "the rule's name")}, ["name"], False),
     "screen_time": (screen_time, "How long each app (by window class) was used: today, or the last few days.",
                     {"days": p("integer", "1 is today, 7 the last week")}, [], False),
     "status": (status, "What the desktop is doing now: shell, volume, media, workspace.", {}, [], False),
