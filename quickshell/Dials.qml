@@ -94,8 +94,29 @@ QtObject {
         workspaces: Vars.workspaceOsdPosition
     })
 
+    // the control center's controls moved out to dials of their own (Edit: a tile dropped on a
+    // free spot): "cc-<key>", each living on its spot like any dial with a hot corner, kept with
+    // the other spots (positions.json). Dropping one's pill on the control center's spot puts it back
+    readonly property var detached: Object.keys(moved).filter(n => n.indexOf("cc-") === 0 && spots.indexOf(moved[n]) >= 0)
+    function isDetached(key) { return detached.indexOf("cc-" + key) >= 0 }
+    function detach(key, spot) {
+        if (spots.indexOf(spot) < 0 || dialAt(spot) !== "") return false
+        const next = Object.assign({}, moved)
+        next["cc-" + key] = spot
+        moved = next
+        save()
+        return true
+    }
+    function attach(name) {
+        if (!(name in moved)) return
+        const next = Object.assign({}, moved)
+        delete next[name]
+        moved = next
+        save()
+    }
+
     // the dials with a hot corner: one per spot, so moving one onto another swaps them
-    readonly property var homes: ["center", "wallpaper", "apps", "power"]
+    readonly property var homes: ["center", "wallpaper", "apps", "power"].concat(detached)
 
     // the OSDs: they only pop up for a moment, so they share a spot with anything. Only
     // the ones the shell loads (osdEnabled in variables.js, or the pop-up settings)

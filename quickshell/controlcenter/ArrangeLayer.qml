@@ -51,7 +51,8 @@ Item {
     // "dial": a dial pill (drop it on a spot);  "screenshot": the Screenshot pill (drop it
     // anywhere off the dial);  "device": a device pill (drop it on an outer-ring tile it
     // has an action for, `dropOn`, or fling it off: `fling`);  "tile": an outer-ring tile
-    // while arranging (drop it on another tile to move it there);  "": nothing held
+    // while arranging (drop it on another tile to move it there, or off the dial on a free
+    // spot: the control moves out to a dial of its own there);  "": nothing held
     property string kind: ""
     readonly property bool active: kind !== ""
 
@@ -178,6 +179,28 @@ Item {
             flight.restart()
             return
         }
+
+        // a tile let go on a free spot: its control moves out to a dial of its own there
+        if (kind === "tile") {
+            const key = dial.controls[itemIndex].key
+            landSpot = spot
+            landPoint = spotIconPoint(spot, cfg.spotHotRadius)
+            landed = "cc-" + key
+            Dials.detach(key, spot)
+            phase = "land"
+            flight.restart()
+            return
+        }
+
+        // a control's own dial let go on the control center's spot: it goes back in
+        if (goingBack) {
+            landSpot = spot
+            landPoint = spotIconPoint(spot, cfg.spotHotRadius)
+            Dials.attach(dialName)
+            phase = "land"
+            flight.restart()
+            return
+        }
         landSpot = spot
         landPoint = spotIconPoint(spot, cfg.spotHotRadius)
         swapped = Dials.swapWith(dialName, spot)
@@ -192,6 +215,9 @@ Item {
 
     // the move is waiting for the landing (it moves the control center)
     property bool deferred: false
+
+    // the dial a tile just became (it peeks out of its spot once the icon has landed)
+    property string landed: ""
 
     // the drag was called off (e.g. the window lost the mouse): fly back
     function cancel() {
@@ -217,6 +243,11 @@ Item {
         id: flight
         interval: Prefs.defaultSpatial.duration
         onTriggered: {
+            if (root.phase === "land" && root.kind === "tile" && root.landed !== "") {
+                const c = Dials.dials[root.landed]
+                if (c && c.peek) c.peek()
+                root.landed = ""
+            }
             if (root.phase === "land" && root.kind === "dial") {
                 if (root.deferred) {
                     root.dial.snapClose()
@@ -281,8 +312,14 @@ Item {
 
     // the spot under the held dial, and whether dropping it there moves it (its own spot
     // changes nothing)
-    readonly property string hotSpot: kind === "dial" && phase === "drag" ? spotNear(cursorX, cursorY) : ""
-    readonly property bool canLand: hotSpot !== "" && hotSpot !== Dials.spotOf(dialName)
+    readonly property string hotSpot: phase === "drag" && (kind === "dial" || kind === "tile" && offDial) ? spotNear(cursorX, cursorY) : ""
+    readonly property bool canLand: hotSpot !== "" && (kind === "tile" ? tileCanLeave && Dials.dialAt(hotSpot) === "" : hotSpot !== Dials.spotOf(dialName))
+
+    // the held pill is a control's own dial over the control center's spot: it would go back in
+    readonly property bool goingBack: kind === "dial" && dialName.indexOf("cc-") === 0 && hotSpot !== "" && hotSpot === Dials.spotOf("center")
+
+    // the held tile's control can move out to a dial of its own (all but Dials: Edit lives there)
+    readonly property bool tileCanLeave: kind === "tile" && itemIndex >= 0 && !!dial.controls[itemIndex] && dial.controls[itemIndex].key !== "dials"
 
     // the held icon is off the dial (the Screenshot pill drops there)
     readonly property real dialCX: dial.x + dial.pivotX
@@ -324,7 +361,7 @@ Item {
     // the held icon is over somewhere it can be dropped
     readonly property bool hot: kind === "dial" ? canLand
         : kind === "screenshot" ? offDial
-        : dropTile >= 0
+        : dropTile >= 0 || kind === "tile" && canLand
 
     Repeater {
         model: Dials.spots
@@ -346,7 +383,8 @@ Item {
             readonly property string resident: occupant !== "" ? occupant : osds.length > 0 ? osds[0] : ""
 
             // the held dial would swap with this one if dropped on the spot under it
-            readonly property string swapIn: root.canLand ? Dials.swapWith(root.dialName, root.hotSpot) : ""
+            // (a control's own dial going back into the control center swaps with nothing)
+            readonly property string swapIn: root.canLand && root.kind === "dial" && !root.goingBack ? Dials.swapWith(root.dialName, root.hotSpot) : ""
 
             // the held dial would land here; the held dial lives here; it's flying in here
             readonly property bool hot: root.hotSpot === spot && root.canLand
@@ -363,8 +401,9 @@ Item {
             // the OSDs that also pop up here, small under the main icon (not the held one)
             readonly property var extras: osds.filter(n => n !== resident && n !== root.dialName && !!root.info[n])
 
-            // shown while a dial is held (or landing), popping in one after another, clockwise
-            readonly property bool wanted: root.kind === "dial" && root.phase !== "back"
+            // shown while a dial is held (or landing), or a tile that can move out is off the
+            // dial, popping in one after another, clockwise
+            readonly property bool wanted: (root.kind === "dial" || root.kind === "tile" && root.tileCanLeave && (root.offDial || root.phase === "land")) && root.phase !== "back"
             property bool shown: false
             onWantedChanged: {
                 if (wanted) appear.restart()

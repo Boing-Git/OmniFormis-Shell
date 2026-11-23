@@ -47,6 +47,16 @@ PanelWindow{
 
     ControlCenter {}
 
+    // the control center's controls moved out to dials of their own (Edit in its Dials
+    // control: drag a tile off the dial onto a free spot), one each
+    Variants {
+        model: Dials.detached.map(n => n.substring(3))
+        ControlCenter {
+            required property var modelData
+            only: modelData
+        }
+    }
+
     // the OSDs, each only if it's switched on (osdEnabled in variables.js, or the pop-up
     // settings in the control center's Settings control): off means no window at all, not
     // a hidden one

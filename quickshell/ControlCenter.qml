@@ -18,6 +18,15 @@ PanelWindow {
     // back (a DisplayPort monitor does as it sleeps) the window follows it back
     screen: Dials.screen
 
+    // "": the control center. A control's key: that control moved out to a dial of its own
+    // (Edit: its tile dropped on a free spot; shell.qml makes one per Dials.detached), with
+    // only it on the ring, living on its own spot as "cc-<key>"
+    property string only: ""
+    readonly property string dialName: only === "" ? "center" : "cc-" + only
+
+    // a dial of one control whose control is off (e.g. Ask with Ask the AI off) isn't there
+    visible: only === "" || dial.controls.length > 0
+
 
     // the dial, under a name the controlcenter/ parts can be given (inside them `dial: dial`
     // would point at their own `dial` property)
@@ -49,22 +58,31 @@ PanelWindow {
     //   (wifi | bluetooth | audio | dials | media | notify | settings)
     IpcHandler {
         target: "center"
+        enabled: center.only === ""
         function toggle(): void { dial.open = !dial.open }
         function open(): void { dial.open = true }
         function close(): void { dial.open = false }
-        function go(key: string): void { dial.showControl(key) }
+        function go(key: string): void {
+            // a control that lives on a dial of its own opens there
+            const own = Dials.dials["cc-" + key]
+            if (Dials.isDetached(key) && own) own.open = true
+            else dial.showControl(key)
+        }
     }
 
     // Super + A (scripts/shell ipc call assistant toggle): the control center on Ask, ready to
     // type (Settings → Extras → Ask the AI)
     IpcHandler {
         target: "assistant"
+        // the dial that has Ask on it answers
+        enabled: center.only === "" ? !Dials.isDetached("ask") : center.only === "ask"
         function toggle(): void { if (Prefs.assistant) askControl.summon() }
         function ask(text: string): void { if (Prefs.assistant) { dial.showControl("ask"); askControl.askNow(text) } }
     }
 
     // so other dials can find it (Dials.qml)
-    Component.onCompleted: Dials.register("center", dial)
+    Component.onCompleted: Dials.register(center.dialName, dial)
+    Component.onDestruction: Dials.unregister(center.dialName, dial)
 
     // a click anywhere off the dial while arranging: done, and the control center closes
     // (under the dial, so clicks on the dial still reach it)
@@ -89,7 +107,7 @@ PanelWindow {
 
     DialDelegate {
         id: dial
-        corner: Dials.spotOf("center")
+        corner: Dials.spotOf(center.dialName)
 
         // ★ settings: controlcenter/ControlCenterSettings.qml (dial, outer ring, knobs, date
         //   badge…, the inner ring too), MediaSettings.qml (the media player) and
@@ -292,12 +310,15 @@ PanelWindow {
         readonly property bool overTimeline: hasTimeline && hovered && hoverRadius >= timelineIn && hoverRadius < timelineOut
         readonly property bool overInner: hovered && hoverRadius < (hasTimeline ? timelineIn : innerZone)
 
+        // a dial of one control has nothing to turn on its outer ring: turning it turns the
+        // inner one
+        readonly property var outerSpin: center.only === "" ? spin : spin2
         onScrolled: dir => (outerBusy ? spin
             : overTimeline ? spin3
             : overValue ? valuePart
             : overVolume ? volumeKnob
             : overBrightness ? brightnessKnob
-            : overInner ? spin2 : spin).scrollBy(dir)
+            : overInner ? spin2 : outerSpin).scrollBy(dir)
 
         // drag / flick: the ring under the press follows the mouse, and glides on when thrown
         property var dragSpin: spin
@@ -305,7 +326,7 @@ PanelWindow {
             : overValue ? valuePart.spin
             : overVolume ? volumeKnob.spin
             : overBrightness ? brightnessKnob.spin
-            : overInner ? spin2 : spin
+            : overInner ? spin2 : outerSpin
 
         // the knob being dragged (null: a ring of items, or the timeline)
         readonly property var dragKnob: dragSpin === valueKnob.spin ? valueKnob
@@ -600,7 +621,7 @@ PanelWindow {
                     dial.dialPill("apps"),
                     dial.dialPill("power"),
                     dial.dialPill("center")
-                ].concat(Dials.popups.map(n => dial.dialPill(n))).concat([
+                ].concat(Dials.detached.filter(n => !!dial.dialInfo[n]).map(n => dial.dialPill(n)), Dials.popups.map(n => dial.dialPill(n))).concat([
                     {
                         label: "Screenshot", icon: "screenshot_region", shape: "Circle", on: false, status: "none",
                         drag: "screenshot",
@@ -644,7 +665,10 @@ PanelWindow {
         property var controlOrder: []
         readonly property var controls: {
             const rank = k => { const i = controlOrder.indexOf(k); return i < 0 ? 1000 + baseControls.findIndex(c => c.key === k) : i }
-            return baseControls.slice().sort((a, b) => rank(a.key) - rank(b.key))
+            // the control center leaves out the controls moved out to their own dials; such a
+            // dial has only its own
+            const mine = baseControls.filter(c => center.only === "" ? !Dials.isDetached(c.key) : c.key === center.only)
+            return mine.sort((a, b) => rank(a.key) - rank(b.key))
         }
 
         // opens the dial on the control called `key`, turning the outer ring to it the
@@ -733,17 +757,22 @@ PanelWindow {
         // the pill lifted off the inner ring right now (-1: none), for DevicePill
         readonly property int liftedIndex: arranger.active && arranger.kind !== "tile" ? arranger.itemIndex : -1
 
-        // every dial that has a spot: its name and icon (its pill, and the spots)
-        readonly property var dialInfo: ({
-            wallpaper: { label: "Wallpaper", icon: "wallpaper" },
-            apps: { label: "Apps", icon: "apps" },
-            power: { label: "Power", icon: "power_settings_new" },
-            center: { label: "Control center", icon: "tune" },
-            volume: { label: "Volume", icon: "volume_up" },
-            brightness: { label: "Brightness", icon: "brightness_6" },
-            workspaces: { label: "Workspaces", icon: "space_dashboard" },
-            notify: { label: "Alerts", icon: "notifications" }
-        })
+        // every dial that has a spot: its name and icon (its pill, and the spots), and the
+        // controls moved out to dials of their own
+        readonly property var dialInfo: {
+            const info = {
+                wallpaper: { label: "Wallpaper", icon: "wallpaper" },
+                apps: { label: "Apps", icon: "apps" },
+                power: { label: "Power", icon: "power_settings_new" },
+                center: { label: "Control center", icon: "tune" },
+                volume: { label: "Volume", icon: "volume_up" },
+                brightness: { label: "Brightness", icon: "brightness_6" },
+                workspaces: { label: "Workspaces", icon: "space_dashboard" },
+                notify: { label: "Alerts", icon: "notifications" }
+            }
+            for (const c of baseControls) if (Dials.isDetached(c.key)) info["cc-" + c.key] = { label: c.label, icon: c.icon }
+            return info
+        }
 
         // the arrow pointing at a spot (on the badge of a dial's pill: where it lives)
         readonly property var spotArrows: ({
@@ -914,6 +943,10 @@ PanelWindow {
                 itemHeight: dial.settings.tileSize
 
                 delegate: ControlTile {
+                    // a dial of one control: its one tile, at the mark (the ring repeats a
+                    // short list round itself; the ring sets listIndex)
+                    property int listIndex: 0
+                    visible: center.only === "" || listIndex === 0
                     controls: dial.controls
                     dropHot: arranger.dropTile === itemIndex
                     lifted: arranger.kind === "tile" && arranger.itemIndex === itemIndex
@@ -1111,7 +1144,10 @@ PanelWindow {
             happyColor: Roles.tertiary_container
             sadColor: Roles.secondary_container
             angryColor: Roles.error_container
-            visible: Prefs.mascots && opacity > 0
+            // only where the disc has room: the controls without the corner's date badge (the
+            // big ones with a card); in the small ones the badge has that corner
+            readonly property bool roomy: !!dial.currentControl && dial.currentControl.dateIcon === false
+            visible: Prefs.mascots && center.only === "" && roomy && opacity > 0
             opacity: dial.open && dial.currentSize >= dial.expandedSize * 0.9 && !dial.arranging ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Vars.expressiveDefaultEffects.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.expressiveDefaultEffects.bezier } }
 
