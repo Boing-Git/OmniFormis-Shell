@@ -1,12 +1,20 @@
 # The assistant: a local AI that runs the desktop
 
-Pull a drop down out of the middle of the top edge (or press **Super + A**). It stretches,
-pinches off and spreads into a bar. Type what you want ("bigger gaps", "open Downloads",
-"dark mode", "next song", "switch to Puffy") and press Enter. What it did drips out of the
-bar as a card. Esc, a click outside or pushing the bar back up sends it home.
+Each shell has it in its own design, and **Super + A** opens it in whichever shell runs
+(`scripts/shell ipc call assistant toggle`). Type what you want ("bigger gaps", "open
+Downloads", "dark mode", "next song", "how long was I in Firefox today") and press Enter.
 
-It works the same under Dial-E, Puffy and Droplet: it is its own small Quickshell instance
-(`assistant/`), started at login next to the shell.
+- **Dial-E**: the **Ask** control of the control center. With it at the mark, just type: the
+  words go on the curved bar between the rings. The card in the middle says the steps and the
+  answer; the inner ring has the questions asked before and a few to try (Yes / No there for
+  a step that asks first). Settings → Extras → Ask the AI.
+- **Puffy**: the launcher's **/ask** mode (also in its `/` menu). Enter on "Ask: …"; the
+  answer and each step come in as the launcher's own rows. Settings → Extras.
+- **Droplet**: pull a drop down out of the middle of the **top edge**. It stretches, pinches
+  off and spreads into a bar; what it did drips out of the bar as a card; Esc, a click outside
+  or pushing the bar back up sends it home. Settings circle → Ask the AI.
+
+All three run the same `scripts/assistant/assistant.py`.
 
 ## What it can do, and only that
 
@@ -53,6 +61,15 @@ server). Without Ollama the bar opens and says it can't reach the AI.
 ## Test
 
 `python3 scripts/tests/assistant.test.py` (a fake Ollama; commands in dry-run mode).
+
+## Screen time
+
+`scripts/screentime.py` (started at login) counts how long each app has the focus, per day,
+not while you're away (2 minutes without input) or asleep; `screen_time` is one of the AI's
+commands. Each shell shows it: Dial-E's Screen time control, Puffy's Settings → Extras,
+Droplet's Screen time circle (and its Apps are ordered by it). One switch for every shell
+(`screentime.py on | off`, or any shell's Screen time setting). Kept in
+`~/.local/state/screentime/<date>.json`; nothing leaves the machine.
 
 ## Not yet
 
