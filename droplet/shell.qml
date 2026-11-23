@@ -64,12 +64,11 @@ PanelWindow {
     readonly property real strip: 10
     readonly property real cornerClear: 110
 
-    // how far the drop must be pulled to come free, the size of the body of liquid behind
-    // the edge it is drawn from, and how far that body swells out of the edge at most as
-    // the drop is pulled
-    readonly property real pullOut: 130
+    // how far the drop must be pulled to come free (it pinches off right there), and the size
+    // of the body of liquid behind the edge it is drawn from (it stays that size: pulling
+    // never swells the edge)
+    readonly property real pullOut: 80
     readonly property real edgeR: 58
-    readonly property real swell: 22
 
     // how far the next circles come out from the one they belong to, the room each needs
     // along their arc (two radii plus this gap), and the widest that arc may fan (degrees)
@@ -510,16 +509,12 @@ PanelWindow {
         // ── the liquid ── under the circles
         // the seed's neck to the edge: it stretches as the drop is pulled out, and pinches
         // off about where the drop comes free. The body of liquid it is drawn from sits
-        // behind the edge, level with the drop, and swells out of the edge as the drop is
-        // pulled (it is filled too, so the neck runs into the edge with no gap)
+        // behind the edge, level with the drop, and stays there whatever the pull (it is
+        // filled too, so the neck runs into the edge with no gap)
         Goo {
             anchors.fill: parent
             visible: seed.out > 1
-
-            // (only while the drop is being pulled: once it is free the edge settles flat again)
-            property real bulge: web.phase === "pull" ? Math.min(win.swell, Math.max(0, seed.out) * 0.3) : 0
-            Behavior on bulge { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
-            ax: win.width + win.edgeR - bulge
+            ax: win.width + win.edgeR
             ay: seed.cy
             ar: win.edgeR
             bodyA: true
@@ -528,7 +523,8 @@ PanelWindow {
             br: seed.r * seed.size
             color: seed.fill
             spread: 0.7
-            snapAt: (win.pullOut + win.edgeR - win.swell + 14) / (win.edgeR + win.seedR)
+            // the neck lets go as the drop comes free, not after
+            snapAt: (win.pullOut + win.edgeR + 4) / (win.edgeR + win.seedR)
         }
 
         // ── the circles ──
