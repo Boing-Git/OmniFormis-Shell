@@ -73,8 +73,8 @@ Scope {
 
         // how far the next circles come out from the one they belong to, the room each needs
         // along their arc (two radii plus this gap), and the widest that arc may fan (degrees)
-        readonly property real step: 170
-        readonly property real gap: 52
+        readonly property real step: 120
+        readonly property real gap: 44
         readonly property real fanMax: 230
 
         // the fan would rather go further out than open wider than this (degrees): a fan
@@ -239,7 +239,7 @@ Scope {
                 }
                 const one = Math.PI / 90
                 let dist = win.step, from = base, to = base, spacing = need / dist
-                for (; dist <= win.step * 4; dist += 30) {
+                for (; dist <= win.step * 6; dist += 30) {
                     // the nearest angle to `base` that is on the screen, then as far each way as it stays on
                     let mid = NaN
                     for (let k = 0; k <= 90 && isNaN(mid); k++) {
