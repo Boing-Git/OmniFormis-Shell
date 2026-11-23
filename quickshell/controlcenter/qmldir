@@ -24,3 +24,4 @@ OptionRing 1.0 OptionRing.qml
 KeyChips 1.0 KeyChips.qml
 ClipboardControl 1.0 ClipboardControl.qml
 AskControl 1.0 AskControl.qml
+ScreenTimeControl 1.0 ScreenTimeControl.qml

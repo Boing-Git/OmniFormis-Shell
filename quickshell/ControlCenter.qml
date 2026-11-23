@@ -627,7 +627,7 @@ PanelWindow {
             notify.control,
             clipboardControl.control,
             settingsControl.control
-        ].concat(Prefs.assistant ? [askControl.control] : [])
+        ].concat(Prefs.assistant ? [askControl.control] : [], Prefs.screenTime ? [screenTimeControl.control] : [])
 
         // the Help pill: the tour again (it closes this dial so the tour can point at it)
         function showHelp() {
@@ -698,6 +698,7 @@ PanelWindow {
         ClipboardControl { id: clipboardControl; dial: center.dialItem }
         SettingsControl { id: settingsControl; dial: center.dialItem; bar: valueBar }
         AskControl { id: askControl; dial: center.dialItem; bar: valueBar }
+        ScreenTimeControl { id: screenTimeControl; dial: center.dialItem }
 
         // closes this dial and opens another one (an OSD pops up, see popUp in AudioOsd /
         // WorkspaceOsd)
