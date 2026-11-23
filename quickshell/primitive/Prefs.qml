@@ -80,6 +80,15 @@ QtObject {
 
     // ── notifications ──
     property bool dnd: false
+    property bool assistant: Vars.assistant
+    property bool screenTime: Vars.screenTime
+    property bool mascots: Vars.mascots
+    // (screen time's switch is shared with the other shells: the truth is the tracker's own)
+    property Process _screenTimeState: Process {
+        running: true
+        command: [Quickshell.shellDir + "/../scripts/screentime.py", "status"]
+        stdout: StdioCollector { onStreamFinished: root.screenTime = text.trim() !== "off" }
+    }
     property int notifyHold: Vars.notifyHold
 
     // ── dials ──
@@ -348,6 +357,12 @@ QtObject {
           help: "What the volume's closed corner shows: the level, a wave only while music plays, or the level that waves with music." },
         { key: "cornerUnread", group: "Corners", label: "Unread", icon: "mark_chat_unread", type: "bool",
           help: "The control center's closed corner shows a bead per waiting notification." },
+        { key: "assistant", group: "Extras", label: "Ask the AI", icon: "auto_awesome", type: "bool",
+          help: "The Ask control: type a question or a wish on the dial (\"bigger gaps\", \"open Downloads\"); the local AI does it with the desktop's own commands. Super + A opens it." },
+        { key: "screenTime", group: "Extras", label: "Screen time", icon: "hourglass_top", type: "bool",
+          help: "Counts how long each app is used, per day, and shows it in the Screen time control. One switch for every shell: off stops the counting too." },
+        { key: "mascots", group: "Extras", label: "Mascots", icon: "sentiment_satisfied", type: "bool",
+          help: "Dial-E hides in plain sight: in an empty corner of the control center and on the lock screen. Find it." },
         { key: "dnd", group: "Notify", label: "Do not disturb", icon: "notifications_off", type: "bool",
           help: "Notifications arrive silently: nothing pops out, they wait in the control center." },
         { key: "notifyHold", group: "Notify", label: "Stay", icon: "timer", type: "number", min: 2, max: 20, step: 1, unit: " s",
@@ -606,6 +621,9 @@ QtObject {
             // a new scheme or source recolours the desktop now, from the wallpaper on screen
             // (here, not on the property: loading the saved settings must not re-theme)
             if (key === "themeScheme" || key === "themeSource") applyTheme(Backdrop.wallpaper)
+
+            // screen time's switch is the shared one (every shell's): the counting follows it
+            if (key === "screenTime") Quickshell.execDetached([Quickshell.shellDir + "/../scripts/screentime.py", r.value ? "on" : "off"])
             if (key === "themeSource") _previewTheme()
         }
         return ""

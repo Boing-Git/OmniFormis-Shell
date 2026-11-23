@@ -146,6 +146,14 @@ const lockBackground = "blur";
 // a wrong password sends them back, the right one sends them off to the dials)
 const lockFace = "dial";
 
+// the extras, each on its own switch (Settings → Extras): the Ask control (the local AI,
+// ../scripts/assistant), the Screen time control (../scripts/screentime.py: this switch is the
+// one every shell shares, so it also starts and stops the counting), and the shells' mascots
+// hiding in plain sight (the control center, the lock)
+const assistant = true;
+const screenTime = true;
+const mascots = true;
+
 // Liquid glass: the liquid glass library (Dotfiles/liquidglass-main) on every glass
 // container of the shell: the dials and pop-ups, the bands and search bars on them, the
 // lock's dial. Each bends, fringes and frosts the wallpaper behind it (a layer window can't

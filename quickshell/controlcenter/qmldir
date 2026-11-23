@@ -23,3 +23,4 @@ HyprSettings 1.0 HyprSettings.qml
 OptionRing 1.0 OptionRing.qml
 KeyChips 1.0 KeyChips.qml
 ClipboardControl 1.0 ClipboardControl.qml
+AskControl 1.0 AskControl.qml

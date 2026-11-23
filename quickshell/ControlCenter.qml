@@ -55,6 +55,14 @@ PanelWindow {
         function go(key: string): void { dial.showControl(key) }
     }
 
+    // Super + A (scripts/shell ipc call assistant toggle): the control center on Ask, ready to
+    // type (Settings → Extras → Ask the AI)
+    IpcHandler {
+        target: "assistant"
+        function toggle(): void { if (Prefs.assistant) askControl.summon() }
+        function ask(text: string): void { if (Prefs.assistant) { dial.showControl("ask"); askControl.askNow(text) } }
+    }
+
     // so other dials can find it (Dials.qml)
     Component.onCompleted: Dials.register("center", dial)
 
@@ -619,7 +627,7 @@ PanelWindow {
             notify.control,
             clipboardControl.control,
             settingsControl.control
-        ]
+        ].concat(Prefs.assistant ? [askControl.control] : [])
 
         // the Help pill: the tour again (it closes this dial so the tour can point at it)
         function showHelp() {
@@ -689,6 +697,7 @@ PanelWindow {
         NotifyControl { id: notify; dial: center.dialItem }
         ClipboardControl { id: clipboardControl; dial: center.dialItem }
         SettingsControl { id: settingsControl; dial: center.dialItem; bar: valueBar }
+        AskControl { id: askControl; dial: center.dialItem; bar: valueBar }
 
         // closes this dial and opens another one (an OSD pops up, see popUp in AudioOsd /
         // WorkspaceOsd)
@@ -1033,7 +1042,7 @@ PanelWindow {
             radius: dial.settings.knobsMid
             sweep: Math.min(110, dial.sweepDeg - 20)
             fromDeg: dial.midDeg - sweep / 2
-            placeholder: "Type a value, then Enter"
+            placeholder: askControl.typing ? "Ask anything, then Enter" : "Type a value, then Enter"
             barColor: Roles.surface_container_high
             borderColor: Roles.primary
             letterColor: Roles.on_surface
@@ -1041,17 +1050,18 @@ PanelWindow {
             blobColor: Roles.primary
             blobLetterColor: Roles.on_primary
             counterColor: Roles.on_surface_variant
-            searching: settingsControl.typing
-            matched: settingsControl.typedOk
-            opacity: settingsControl.typing ? 1 : 0
+            searching: settingsControl.typing || askControl.typing
+            matched: askControl.typing || settingsControl.typedOk
+            opacity: settingsControl.typing || askControl.typing ? 1 : 0
             visible: opacity > 0
             Behavior on opacity { NumberAnimation { duration: Vars.expressiveFastEffects.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.expressiveFastEffects.bezier } }
-            onAccepted: settingsControl.typed(true)
-            onCancelled: settingsControl.typed(false)
+            onAccepted: askControl.typing ? askControl.typed(true) : settingsControl.typed(true)
+            onCancelled: askControl.typing ? askControl.typed(false) : settingsControl.typed(false)
         }
 
         // typing while a setting that takes typing is at the mark starts typing its value
-        onTyped: text => { if (inSettings) settingsControl.startTyping(text) }
+        // (and with Ask at the mark, typing starts the question)
+        onTyped: text => { if (inSettings) settingsControl.startTyping(text); else if (askControl.active && !askControl.typing) askControl.startTyping(text) }
 
         // ── the corner card of the selected control (`corner`), faded in and out ──
         Loader {
