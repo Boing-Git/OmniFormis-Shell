@@ -3,3 +3,9 @@
 
 # Rust build output
 **/target/
+
+# Python caches (scripts/assistant)
+__pycache__/
+
+# made by Quickshell while a shell runs (a link into its runtime folder)
+.qmlls.ini
