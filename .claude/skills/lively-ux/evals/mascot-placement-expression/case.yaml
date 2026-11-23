@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: mascot-placement-expression
+expected_outcome: |
+  Moves the mascot off the ring into the empty space inside it (a hamster in its wheel: running as the ring turns) with the content keeping clear; expresses each feeling with its shape, colour and size as well as its face; and lets the user pick it up, with a few secrets found by play.

@@ -1,6 +1,6 @@
 ---
 name: lively-ux
-description: Makes boring, dead-feeling interfaces lively with motion, feedback, reactions and a bit of personality, and audits a UI for where it feels static or unresponsive. Use it whenever the user says a UI feels boring, dead, flat, static, stiff, lifeless, robotic or "not alive", asks for animation, bounce, springs, overshoot, squash and stretch, micro-interactions, hover or press feedback, juice, delight, playful or fun, transitions, or wants empty, loading, error and success states that feel alive. Use it too for any mascot, character, avatar or face in a UI (where it looks, how it reacts to typing, a password, a wrong or right answer, a ring or slider being turned), or when one "feels like a sticker" or decoration. Also use it when building or changing any interactive UI (Quickshell/QML, web, GTK, a game menu), even if the user doesn't say "lively". It covers motion and feedback; for uniqueness, brand and premium feel it hands over to gux-expert, and for game feel to game-expert.
+description: Makes boring, dead-feeling interfaces lively with motion, feedback, reactions and a bit of personality, and audits a UI for where it feels static or unresponsive. Use it whenever the user says a UI feels boring, dead, flat, static, stiff, lifeless, robotic or "not alive", asks for animation, bounce, springs, overshoot, squash and stretch, micro-interactions, hover or press feedback, juice, delight, playful or fun, transitions, or wants empty, loading, error and success states that feel alive. Use it too for any mascot, character, avatar or face in a UI (where it looks, where it sits, how it reacts to typing, a password, a wrong or right answer, a ring or slider being turned, how it shows emotion, dragging it, easter eggs), or when one "feels like a sticker" or decoration. Also use it when building or changing any interactive UI (Quickshell/QML, web, GTK, a game menu), even if the user doesn't say "lively". It covers motion and feedback; for uniqueness, brand and premium feel it hands over to gux-expert, and for game feel to game-expert.
 ---
 
 # Lively UX
@@ -55,9 +55,12 @@ Everything below serves those two, with a third that keeps them from turning int
   Hitting a wall silently is the most common dead spot.
 - **States are alive**: loading moves (and moves *towards* something), success celebrates
   briefly, error shakes once, empty states say something warm and point to the next action.
-- **Characters are actors, not stickers**: a mascot or face tracks continuous input every frame
-  (the pointer, a turning ring), meets the user's eyes when they're idle, looks away while a
-  secret is typed, and answers every key. Read `references/characters.md` before touching one.
+- **Characters are actors, not stickers**: a mascot or face lives in empty space (inside a ring
+  like a hamster in its wheel, never on the content), tracks continuous input every frame (the
+  pointer, a turning ring, the letters being typed), meets the user's eyes when they're idle,
+  looks away while a secret is typed, shows each feeling with its shape, colour and size as well
+  as its face, can be picked up, and hides a few secrets. Read `references/characters.md`
+  before touching one.
 - **Idle life only where it means something**: a breathing "live" dot, a slow drift on a playing
   track. An idle animation that means nothing is decoration and tires the eye.
 - **Sound and haptics** (if the platform has them) sized to the event: a tick per detent, nothing
