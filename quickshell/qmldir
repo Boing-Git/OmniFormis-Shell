@@ -18,6 +18,7 @@ DateStatusIcon 1.0 DateStatusIcon.qml
 AudioOsd 1.0 AudioOsd.qml
 WorkspaceOsd 1.0 WorkspaceOsd.qml
 Onboarding 1.0 Onboarding.qml
+About 1.0 About.qml
 AppDragLayer 1.0 AppDragLayer.qml
 CornerWhisper 1.0 CornerWhisper.qml
 NotifyOsd 1.0 NotifyOsd.qml

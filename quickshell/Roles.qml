@@ -28,6 +28,11 @@ QtObject {
     readonly property color on_tertiary: glass ? back : Colors.on_tertiary
     readonly property color inverse_primary: glass ? ink : Colors.inverse_primary
     readonly property color tertiary_fixed: glass ? ink : Colors.tertiary_fixed
+
+    // the same light / dark tone in both modes (M3's fixed roles): what must stay light, like
+    // the whites of the mascots' eyes
+    readonly property color primary_fixed: glass ? "white" : Colors.primary_fixed
+    readonly property color on_primary_fixed: glass ? "black" : Colors.on_primary_fixed
     readonly property color tertiary_fixed_dim: glass ? inked(g.secondaryText) : Colors.tertiary_fixed_dim
 
     // containers: washes of ink

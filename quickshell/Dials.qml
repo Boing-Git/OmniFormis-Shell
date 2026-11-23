@@ -34,6 +34,9 @@ QtObject {
     // the first-run tour (Onboarding.qml), once it exists: begin()
     property var onboarding: null
 
+    // the About card (About.qml), once it exists: open()
+    property var about: null
+
     function register(name, dial) {
         dials[name] = dial
         revision++

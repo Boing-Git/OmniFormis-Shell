@@ -87,6 +87,9 @@ PanelWindow{
     // qs ipc call hints tour)
     Onboarding {}
 
+    // the shells' mascots, and switching between them (the About pill, qs ipc call about open)
+    About {}
+
     // what the closed corners say (the volume as an arc, a bead per new notification): one
     // tiny window per spot, only where there's something to say
     Variants {

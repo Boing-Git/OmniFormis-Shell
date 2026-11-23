@@ -607,6 +607,11 @@ PanelWindow {
                         // shows once more the next time you meet it
                         label: "Help", icon: "help", shape: "Circle", on: false, status: "none",
                         activate: () => dial.showHelp()
+                    },
+                    {
+                        // the shells' mascots: switch shells there (About.qml)
+                        label: "About", icon: "info", shape: "Circle", on: false, status: "none",
+                        activate: () => { dial.arranging = false; dial.open = false; if (Dials.about) Dials.about.open() }
                     }
                 ])
             },

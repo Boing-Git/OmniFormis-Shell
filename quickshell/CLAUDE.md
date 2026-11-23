@@ -57,8 +57,22 @@ Ask me in one line before starting.
 - New QML files must be added to the `qmldir` of their folder (root, `primitive/`, `controlcenter/` or `screenshot/`), or they aren't found.
 - Test with `qs -p ./` and check the output for errors/warnings.
 
+- Theming: the wallpaper dial (and Puffy) theme through `scripts/theme-apply.sh` (`Prefs.applyTheme(path)`): matugen with the repo's config, an explicit source (never prompts), one run at a time, a log in `~/.local/state/theme-apply/`. Settings → Wallpaper → Scheme / Theme from (`Prefs.themeScheme`, `themeSource`), each chip with dots from the wallpaper (`theme-apply.sh --preview`).
+- Settings → Advanced (`primitive/Advanced.qml`): every plain `property` of ControlCenterSettings, MediaSettings, ArrangeSettings, ReaderSettings, ScreenshotSettings and LockSettings, read from the files themselves (the comment above a property is its help, `// ── x ──` its group, `readonly` ones are worked out and skipped). Each settings file calls `Advanced.adopt(cfgRoot, "<type>")`, so a new plain setting shows up by itself. Saved in `Vars.advancedPath`.
+- Presets (`Presets.qml`, Settings → Presets, `qs ipc call preset ...`): every value of Prefs and Advanced, the dials' spots, the wallpaper and Hyprland's variables, one JSON per preset in `Vars.presetsPath`; applying saves "Before last apply" first (the undo).
+- Clipboard (`controlcenter/ClipboardControl.qml`): cliphist's copies on the inner ring, pins kept by the shell (`Vars.clipboard.pinsDir`), the tile pauses keeping copies (the flag `scripts/clip-store.sh` checks).
+- Shells: Dial-E (this folder), Puffy (`../puffy`), Droplet (`../droplet`). Start, restart and switch only through `scripts/shell` (it refuses while the lock is up). Settings → Shell and the About card (`About.qml`, the About pill in the Dials control) switch from here.
+- Mascots: `primitive/Mascot.qml` (kind "dial-e" / "puffy" / "droplet"): drawn, coloured by roles passed in, springy, calm under Bounce 0. Pupils use `Roles.on_primary_fixed` on `Roles.primary_fixed` whites (the same in light and dark).
+- Liquid glass, Sees: Live: only the dial that is out streams, only the windows under its box (`LiquidBackdrop.awake` / `area`), at `Vars.liquid.liveFps`; a capture that stops is started again; windows get Hyprland's rounding and border; workspace and special-workspace changes slide or fade with Hyprland's own animation (`Backdrop._beginSwitch`). The glass shader has a fourth shape, `"box"`, for cards (the tour, About). Lock → Look → Lock sheet: Blur or Liquid glass.
+- Design → Ring colours (three or one) and Unpicked size (every ring's unpicked items, `Prefs.inactiveScale`).
+- Tests: `test-dial-heading.qml` (Enter acts on where a spinning ring is heading), `scripts/tests/theme-apply.test.sh`, `scripts/tests/glass-bench.sh` (the glass's CPU / GPU cost; opens the control center).
+
 ## Comment standard
 
 - A comment sits directly above the thing it explains, with **no blank line** between them.
 - Leave **one blank line** between a comment and any code above it that it does *not* explain (no gap needed right after an opening `{`).
 - End-of-line comments explain their own line, so they need no gaps.
+
+## Spoilers: the mascots' secrets
+
+On the About card (the About pill in the control center's Dials control): tap Dial-E seven times; hold Puffy until it has puffed all the way up; pull Droplet down as if pouring it. Each tells you about its shell.

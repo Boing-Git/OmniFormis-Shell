@@ -18,3 +18,4 @@ LiquidGlass 1.0 LiquidGlass.qml
 LiquidBackdrop 1.0 LiquidBackdrop.qml
 singleton Backdrop 1.0 Backdrop.qml
 singleton Advanced 1.0 Advanced.qml
+Mascot 1.0 Mascot.qml
