@@ -1,4 +1,5 @@
 import QtQuick
+import "../primitive"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // READER SETTINGS: the dial while Notifications or Settings is selected. Both read the
@@ -11,6 +12,12 @@ import QtQuick
 // follows them. Sizes are px unless it says otherwise; Quickshell reloads on save.
 // ─────────────────────────────────────────────────────────────────────────────
 QtObject {
+    id: cfgRoot
+
+    // Settings → Advanced changes any plain setting below, live, in every copy of this file
+    Component.onCompleted: Advanced.adopt(cfgRoot, "ReaderSettings")
+    Component.onDestruction: Advanced.release(cfgRoot, "ReaderSettings")
+
     // the dial's size right now (set by the control; animates while it grows)
     required property real liveSize
 

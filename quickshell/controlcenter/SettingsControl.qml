@@ -99,6 +99,27 @@ Item {
         }
     }
 
+    // ── Advanced ── every plain setting of the settings files (Advanced.qml), by file and by
+    // each file's own sections; the comment above it in the file is its help
+    function advancedSetting(type, e) {
+        const v = Advanced.valueOf(type, e.key)
+        const r = e.kind === "number" ? Advanced.rangeOf(type, e.key) : [0, 0, 1]
+        return {
+            source: "advanced", object: type, key: e.key, label: pretty(e.key), title: pretty(e.key), help: e.help, type: e.kind,
+            icon: e.kind === "bool" ? "toggle_on" : e.kind === "number" ? "tune" : "edit",
+            value: v, shown: e.kind === "bool" ? (v ? "On" : "Off") : String(e.kind === "number" ? Math.round(v * 1000) / 1000 : v),
+            changed: Advanced.isChanged(type, e.key), min: r[0], max: r[1], step: r[2], options: []
+        }
+    }
+    function advancedGroups() {
+        return Advanced.files.filter(f => (Advanced.schema[f.type] || []).length > 0).map(f => {
+            const list = Advanced.schema[f.type], sections = []
+            for (const e of list) if (sections.indexOf(e.section) < 0) sections.push(e.section)
+            return { label: f.label, icon: f.icon, children: sections.map(sec => ({
+                label: sec, icon: "tune", items: list.filter(e => e.section === sec).map(e => advancedSetting(f.type, e)) })) }
+        })
+    }
+
     // ── the shortcuts ── (hypr.binds) grouped as omniformis groups them
     readonly property var bindCategories: {
         const out = []
@@ -159,6 +180,7 @@ Item {
 
     readonly property var tree: {
         Prefs.revision
+        Advanced.revision
         const top = Prefs.groups.map(g => ({
             label: groupNames[g] || g, icon: Prefs.groupIcons[g] || "settings",
             items: Prefs.inGroup(g).map(prefSetting)
@@ -179,6 +201,7 @@ Item {
                 items: hypr.vars.filter(v => v.category === c).map(hyprSetting)
             }))
         })
+        top.push({ label: "Advanced", icon: "tune", children: advancedGroups() })
         return top
     }
 
@@ -228,6 +251,7 @@ Item {
     function put(s, value) {
         if (!s) return "nothing selected"
         if (s.source === "prefs") return Prefs.set(s.key, value)
+        if (s.source === "advanced") return Advanced.set(s.object, s.key, value)
         if (s.source === "theme") {
             if (s.key === "mode") hypr.setTheme(hypr.scheme, String(value))
             else hypr.setTheme(String(value), hypr.mode)
@@ -268,6 +292,7 @@ Item {
     // dial opened for Hyprland's
     function restore(s) {
         if (s.source === "prefs") Prefs.reset(s.key)
+        else if (s.source === "advanced") Advanced.reset(s.object, s.key)
         else if (s.source === "hypr" && originals.values[s.key] !== undefined) hypr.set(s.key, originals.values[s.key])
         else if (s.source === "bind" && originals.binds[s.key] !== undefined) hypr.setBind(s.key, originals.binds[s.key])
     }

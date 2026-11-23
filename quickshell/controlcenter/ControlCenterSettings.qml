@@ -1,4 +1,5 @@
 import QtQuick
+import "../primitive"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONTROL CENTER SETTINGS: the dial itself, the outer ring (the control tiles),
@@ -13,6 +14,12 @@ import QtQuick
 // the ring. Sizes are px unless it says otherwise; Quickshell reloads on save.
 // ─────────────────────────────────────────────────────────────────────────────
 QtObject {
+    id: cfgRoot
+
+    // Settings → Advanced changes any plain setting below, live, in every copy of this file
+    Component.onCompleted: Advanced.adopt(cfgRoot, "ControlCenterSettings")
+    Component.onDestruction: Advanced.release(cfgRoot, "ControlCenterSettings")
+
     // the dial's size right now (set by ControlCenter.qml; animates while it grows)
     required property real dialSize
 

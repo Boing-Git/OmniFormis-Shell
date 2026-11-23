@@ -10,6 +10,12 @@ import "../primitive"
 // of a safe: every letter is one notch, with a tick, and leaves an M3 shape (a bead) on
 // the ring. The newest bead sits at the mark at the top.
 QtObject {
+    id: cfgRoot
+
+    // Settings → Advanced changes any plain setting below, live, in every copy of this file
+    Component.onCompleted: Advanced.adopt(cfgRoot, "LockSettings")
+    Component.onDestruction: Advanced.release(cfgRoot, "LockSettings")
+
     // ── the ring ── where the beads sit, round the clock
     // the middle of the ring, px from the centre of the screen
     property real ringRadius: 226

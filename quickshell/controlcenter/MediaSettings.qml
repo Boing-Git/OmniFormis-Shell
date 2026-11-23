@@ -1,4 +1,5 @@
 import QtQuick
+import "../primitive"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MEDIA PLAYER SETTINGS: everything about the media control in one place: the
@@ -12,6 +13,12 @@ import QtQuick
 // bottom follows them. Sizes are px unless it says otherwise; Quickshell reloads on save.
 // ─────────────────────────────────────────────────────────────────────────────
 QtObject {
+    id: cfgRoot
+
+    // Settings → Advanced changes any plain setting below, live, in every copy of this file
+    Component.onCompleted: Advanced.adopt(cfgRoot, "MediaSettings")
+    Component.onDestruction: Advanced.release(cfgRoot, "MediaSettings")
+
     // the dial's size right now (set by MediaPlayer.qml; animates while it grows)
     required property real liveSize
 

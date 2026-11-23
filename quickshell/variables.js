@@ -325,6 +325,9 @@ const controlOrderPath = "/home/boing/.local/state/dial-quickshell/control-order
 // `qs ipc call prefs reset <key>` comes back to the value here. See primitive/Prefs.qml.
 const settingsPath = "/home/boing/.local/state/dial-quickshell/settings.json";
 
+// where Settings → Advanced keeps the values changed in the settings files (primitive/Advanced.qml)
+const advancedPath = "/home/boing/.local/state/dial-quickshell/advanced.json";
+
 // How far a dial overshoots as it opens, 0 (none) to 10, and how quickly it opens and
 // closes, 1 to 10. Bounce 2 / speed 6 is M3E's standard default spring (0.9 / 700): opening
 // is the most frequent thing a dial does, so it gets the quick, calm one. Bounce 6 / speed 3

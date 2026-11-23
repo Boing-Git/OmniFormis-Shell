@@ -1,4 +1,5 @@
 import QtQuick
+import "../primitive"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ARRANGE SETTINGS: Edit in the control center's Dials control. The wiggle while you
@@ -8,6 +9,12 @@ import QtQuick
 // Sizes are px unless it says otherwise; Quickshell reloads on save.
 // ─────────────────────────────────────────────────────────────────────────────
 QtObject {
+    id: cfgRoot
+
+    // Settings → Advanced changes any plain setting below, live, in every copy of this file
+    Component.onCompleted: Advanced.adopt(cfgRoot, "ArrangeSettings")
+    Component.onDestruction: Advanced.release(cfgRoot, "ArrangeSettings")
+
     // ── the wiggle (the dial pills and the Screenshot pill, while Edit is on) ──
     // how far a pill tilts each way (degrees), how far it bobs (px), ms for one wiggle
     property real jiggleDeg: 2.5

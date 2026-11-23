@@ -1,4 +1,5 @@
 import QtQuick
+import "../primitive"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SCREENSHOT SETTINGS: the screenshot tool (screenshot/ScreenshotTool.qml): where shots
@@ -11,6 +12,12 @@ import QtQuick
 // those tokens; change them to taste. Sizes are px unless it says otherwise.
 // ─────────────────────────────────────────────────────────────────────────────
 QtObject {
+    id: cfgRoot
+
+    // Settings → Advanced changes any plain setting below, live, in every copy of this file
+    Component.onCompleted: Advanced.adopt(cfgRoot, "ScreenshotSettings")
+    Component.onDestruction: Advanced.release(cfgRoot, "ScreenshotSettings")
+
     // ── where shots go ──
     // saved shots (Save and Annotate), named like GNOME's: "Screenshot From 2026-11-12 18-04-33.png"
     property string saveDir: "/home/boing/Pictures/Screenshots"
