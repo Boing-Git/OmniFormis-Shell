@@ -85,7 +85,34 @@ Item {
         if (keep) askNow(t)
         if (dial.open) dial.forceActiveFocus()
     }
-    onActiveChanged: if (!active && typing) typed(false)
+    onActiveChanged: {
+        if (!active && typing) typed(false)
+        if (active) wake()
+    }
+
+    // ── waking the AI ── opening Ask loads the model into the graphics card (assistant.py
+    // --warm), with a loading pill meanwhile, as other controls show their work; again only
+    // once the last wake is older than Ollama keeps it (15 min)
+    property bool waking: false
+    property real wokeAt: 0
+    function wake() {
+        if (waking || Date.now() - wokeAt < 10 * 60 * 1000) return
+        waking = true
+        _waker.running = true
+    }
+    property Process _waker: Process {
+        command: ["python3", ask.script, "--warm"]
+        stdout: SplitParser {
+            onRead: line => {
+                try {
+                    const e = JSON.parse(line)
+                    if (e.type === "ready") ask.wokeAt = Date.now()
+                    else if (e.type === "error") ask.answer = e.text
+                } catch (err) {}
+            }
+        }
+        onExited: ask.waking = false
+    }
 
     // from Super + A (scripts/shell ipc call assistant toggle): the control center opens on Ask,
     // ready to type
@@ -103,8 +130,8 @@ Item {
             shape: ask.busy ? "SoftBurst" : ask.confirmStep ? "Arch" : "Circle"
             fill: ask.confirmStep ? Roles.error_container : ask.answer !== "" ? Roles.secondary_container : Roles.surface_container_high
             ink: ask.confirmStep ? Roles.on_error_container : ask.answer !== "" ? Roles.on_secondary_container : Roles.on_surface_variant
-            symbol: ask.busy ? "hourglass_top" : ask.confirmStep ? "help" : "auto_awesome"
-            note: ask.busy ? "Thinking…" : ask.question
+            symbol: ask.busy || ask.waking ? "hourglass_top" : ask.confirmStep ? "help" : "auto_awesome"
+            note: ask.busy ? "Thinking…" : ask.waking ? "Waking the local AI…" : ask.question
             // the title is one line: the answer goes in the body, which wraps along the card
             title: ask.confirmStep ? ask.confirmStep.question
                 : ask.answer !== "" ? (ask.steps.length === 0 ? "Answer" : ask.steps.length + (ask.steps.length === 1 ? " step" : " steps"))
@@ -136,10 +163,11 @@ Item {
                 { label: "Yes", icon: "check", shape: "Circle", on: false, status: "none", activate: () => ask.confirm(true) },
                 { label: "No", icon: "close", shape: "Circle", on: false, status: "none", activate: () => ask.confirm(false) }
             ]
+            const wakingPill = ask.waking ? [{ label: "Waking the AI", icon: "hourglass_top", shape: "Circle", on: false, status: "loading", activate: () => {} }] : []
             const asked = ask.history.map(h => ({ label: h.slice(0, 40), icon: "history", shape: "Circle", on: false, status: "none", activate: () => ask.askNow(h) }))
             const tries = ask.suggestions.filter(s => ask.history.indexOf(s) < 0)
                 .map(s => ({ label: s, icon: "lightbulb", shape: "Circle", on: false, status: "none", activate: () => ask.askNow(s) }))
-            return asked.concat(tries)
+            return wakingPill.concat(asked, tries)
         }
     })
 }

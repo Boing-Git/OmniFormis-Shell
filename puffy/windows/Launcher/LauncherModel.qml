@@ -393,6 +393,31 @@ Item {
         }
         onExited: rootModel.askBusy = false
     }
+    // opening /ask wakes the model (assistant.py --warm) with a "Waking the AI…" row meanwhile;
+    // again only once the last wake is older than Ollama keeps it (15 min)
+    property bool askWaking: false
+    property real askWokeAt: 0
+    function askWake() {
+        if (askWaking || Date.now() - askWokeAt < 10 * 60 * 1000)
+            return;
+        askWaking = true;
+        waker.running = true;
+    }
+    Process {
+        id: waker
+        command: ["python3", rootModel.askScript, "--warm"]
+        stdout: SplitParser {
+            onRead: line => {
+                var e;
+                try { e = JSON.parse(line); } catch (err) { return; }
+                if (e.type === "ready") rootModel.askWokeAt = Date.now();
+                else if (e.type === "error") rootModel.askAnswer = e.text;
+            }
+        }
+        onExited: rootModel.askWaking = false
+    }
+    onAskWakingChanged: scheduleSync()
+    onFilterTextChanged: if (filterText.startsWith("/ask")) askWake()
     onAskStepsChanged: scheduleSync()
     onAskAnswerChanged: scheduleSync()
     onAskConfirmChanged: scheduleSync()
@@ -416,6 +441,8 @@ Item {
                 rows.push(askRow(askAnswer, ["INTERNAL:NOOP"], "auto_awesome"));
             if (askBusy)
                 rows.push(askRow("Thinking…", ["INTERNAL:NOOP"], "hourglass_top"));
+            else if (askWaking)
+                rows.push(askRow("Waking the AI…", ["INTERNAL:NOOP"], "hourglass_top"));
             for (var i = 0; i < askSteps.length; i++)
                 rows.push(askRow(askSteps[i].name, ["INTERNAL:NOOP"], askSteps[i].ok ? "check_circle" : "error"));
         }

@@ -3,6 +3,8 @@
 
     assistant.py "make the gaps bigger"
     assistant.py --yes power '{"action": "reboot"}'     run a step the user confirmed
+    assistant.py --warm                                    wake the model (each shell runs this
+                                                           as its AI opens): {"type": "ready"}
 
 It prints one JSON line per event, for the overlay (assistant/shell.qml) or a terminal:
     {"type": "thinking"}
@@ -51,6 +53,35 @@ def chat(messages):
 
 
 # a request, start to end: the model picks tools, they run, results go back, until it answers
+def missing_model():
+    """The reason the model can't answer yet ("" if it can): Ollama down, or the model not there."""
+    try:
+        with urllib.request.urlopen(URL + "/api/tags", timeout=5) as r:
+            names = [m.get("name", "") for m in json.loads(r.read()).get("models", [])]
+    except (urllib.error.URLError, ValueError, TimeoutError) as e:
+        return f"The local AI isn't running at {URL} ({getattr(e, 'reason', e)}). Is Ollama on?"
+    if MODEL not in names and MODEL + ":latest" not in names:
+        return f"The model {MODEL} isn't here yet: it may still be downloading (or run: ollama pull {MODEL})."
+    return ""
+
+
+def warm():
+    # loads the model into the graphics card and keeps it there a while, so the first question
+    # doesn't wait for it
+    why = missing_model()
+    if why:
+        emit(type="error", text=why)
+        return 1
+    body = json.dumps({"model": MODEL, "keep_alive": "15m"}).encode()
+    try:
+        urllib.request.urlopen(urllib.request.Request(URL + "/api/generate", body, {"Content-Type": "application/json"}), timeout=120).read()
+    except (urllib.error.URLError, TimeoutError) as e:
+        emit(type="error", text=f"The local AI didn't wake ({getattr(e, 'reason', e)}).")
+        return 1
+    emit(type="ready")
+    return 0
+
+
 def ask(prompt):
     messages = [{"role": "system", "content": SYSTEM.format(shell=tools.current_shell() or "unknown")},
                 {"role": "user", "content": prompt}]
@@ -59,7 +90,7 @@ def ask(prompt):
         try:
             msg = chat(messages)
         except urllib.error.URLError as e:
-            emit(type="error", text=f"The local AI isn't answering at {URL} ({getattr(e, 'reason', e)}). Is Ollama running?")
+            emit(type="error", text=missing_model() or f"The local AI isn't answering at {URL} ({getattr(e, 'reason', e)}).")
             return 1
         except (ValueError, KeyError, TimeoutError) as e:
             emit(type="error", text=f"The local AI gave no usable answer ({e}).")
@@ -91,6 +122,8 @@ def ask(prompt):
 
 # the command line (see the top of this file)
 def main(argv):
+    if argv[:1] == ["--warm"]:
+        return warm()
     if argv[:1] == ["--yes"] and len(argv) >= 2:
         kind, result = tools.call(argv[1], json.loads(argv[2]) if len(argv) > 2 else {}, confirmed=True)
         emit(type="tool", name=argv[1], args={}, ok=kind == "ok", result=result)

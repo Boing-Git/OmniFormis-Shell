@@ -210,14 +210,14 @@ Scope {
             color: Colors.surface_container_high
             visible: dy.value > -root.dropR * 1.5
             clip: true
-            border.width: root.busy ? 2 : 1
+            border.width: root.busy || root.waking ? 2 : 1
             antialiasing: true
 
             // while it thinks, its rim runs through the theme's accents
             property int hue: 0
-            border.color: root.busy ? [Colors.primary, Colors.tertiary, Colors.secondary][hue] : Colors.outline_variant
+            border.color: root.busy || root.waking ? [Colors.primary, Colors.tertiary, Colors.secondary][hue] : Colors.outline_variant
             Behavior on border.color { ColorAnimation { duration: 700 } }
-            Timer { running: root.busy; repeat: true; interval: 700; onTriggered: bar.hue = (bar.hue + 1) % 3 }
+            Timer { running: root.busy || root.waking; repeat: true; interval: 700; onTriggered: bar.hue = (bar.hue + 1) % 3 }
 
             Text {
                 id: spark
@@ -249,7 +249,7 @@ Scope {
                 Text {
                     visible: input.text === ""
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.busy ? "Working on it…" : "Ask anything: \"bigger gaps\", \"open Downloads\", \"dark mode\""
+                    text: root.busy ? "Working on it…" : root.waking ? "Waking the AI…" : "Ask anything: \"bigger gaps\", \"open Downloads\", \"dark mode\""
                     font: input.font
                     color: Colors.on_surface_variant
                 }
@@ -374,8 +374,33 @@ Scope {
         }
     }
 
-    // a new bar is an empty one, with the keys
+    // a new bar is an empty one, with the keys; opening it wakes the model
     onPhaseChanged: {
-        if (phase === "open") { input.text = ""; steps = []; answer = ""; confirmStep = null; input.forceActiveFocus() }
+        if (phase === "open") { input.text = ""; steps = []; answer = ""; confirmStep = null; input.forceActiveFocus(); wake() }
+    }
+
+    // ── waking the AI ── assistant.py --warm loads the model into the graphics card as the
+    // bar opens (its rim runs through the accents meanwhile, as while it thinks); again only
+    // once the last wake is older than Ollama keeps it (15 min)
+    property bool waking: false
+    property real wokeAt: 0
+    function wake() {
+        if (waking || Date.now() - wokeAt < 10 * 60 * 1000) return
+        waking = true
+        waker.running = true
+    }
+    Process {
+        id: waker
+        command: ["python3", root.assistant, "--warm"]
+        stdout: SplitParser {
+            onRead: line => {
+                try {
+                    const e = JSON.parse(line)
+                    if (e.type === "ready") root.wokeAt = Date.now()
+                    else if (e.type === "error") root.answer = e.text
+                } catch (err) {}
+            }
+        }
+        onExited: root.waking = false
     }
 }
