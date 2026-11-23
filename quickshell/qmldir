@@ -25,3 +25,4 @@ NotifyOsd 1.0 NotifyOsd.qml
 singleton Roles 1.0 Roles.qml
 singleton Underneath 1.0 Underneath.qml
 singleton Presets 1.0 Presets.qml
+singleton MascotSpots 1.0 MascotSpots.qml

@@ -415,47 +415,6 @@ WlSessionLockSurface {
             }
         }
 
-        // ── Dial-E, keeping watch ── (Settings → Extras → Mascots) on the dial's rim at the
-        // bottom: asleep until you come back; it looks at you (its eyes follow the pointer while
-        // that moves), and looks away (up and aside) while the password is typed
-        Mascot {
-            id: keeper
-            width: 44
-            height: 44
-            x: face.px(surface.cfg.dialRadius - 4, 90) - width / 2
-            y: face.py(surface.cfg.dialRadius - 4, 90) - height / 2
-            kind: "dial-e"
-            calm: Prefs.calm
-            body: Roles.primary_container
-            ink: Roles.on_primary_container
-            eyeWhite: Roles.primary_fixed
-            pupil: Roles.on_primary_fixed
-            accent: Roles.primary
-            visible: Prefs.mascots
-            asleep: !surface.lock.awake
-            // (0, -0.35): eye contact (it cancels the googly pupils' resting droop)
-            look: {
-                if (!surface.pointerLive) return Qt.point(0, -0.35)
-                const dx = surface.pointer.x - (face.x + x + width / 2), dy = surface.pointer.y - (face.y + y + height / 2)
-                const d = Math.max(1, Math.hypot(dx, dy))
-                return Qt.point(dx / d, dy / d)
-            }
-            shy: surface.lock.count > 0 && !surface.lock.wrong && !surface.lock.unlocking
-            // a bob per letter, a flinch per deletion; it cries at a wrong password, and is glad at
-            // the right one
-            property int lastCount: 0
-            Connections {
-                target: surface.lock
-                function onCountChanged() {
-                    if (!surface.lock.wrong && !surface.lock.unlocking)
-                        keeper.react(surface.lock.count > keeper.lastCount ? "type" : "delete")
-                    keeper.lastCount = surface.lock.count
-                }
-                function onWrongChanged() { if (surface.lock.wrong) keeper.react("wrong") }
-                function onUnlockingChanged() { if (surface.lock.unlocking) keeper.react("right") }
-            }
-        }
-
         // ── the centre: now ── the clock (the control center's, bigger), and the date
         // along the bottom of the inside of the ring. They stay put while the ring comes
         // and goes round them
@@ -552,5 +511,101 @@ WlSessionLockSurface {
         onPositionChanged: mouse => { surface.pointer = Qt.point(mouse.x, mouse.y); surface.lock.moved(); surface.pointerLive = true; pointerStill.restart() }
         onPressed: { surface.lock.poke(); keys.forceActiveFocus() }
         onWheel: surface.lock.poke()
+    }
+
+    // ── Dial-E, a hamster in the lock's wheel ── (Settings → Extras → Mascots) inside the
+    // password ring, its feet on the ring's inner edge (never on the ring). The ring turns a
+    // notch per letter and it runs with it, a step or two each; a wrong password's rattle
+    // throws it about. It looks at you, and away (up and aside) while the password is typed;
+    // asleep until you come back. Drag it round the inside of the ring (remembered:
+    // MascotSpots), clear of the date at the bottom and the status at the top. Declared last,
+    // so it's above the hand (the MouseArea before it); a press on it wakes the lock too
+    Mascot {
+        id: keeper
+        width: 44
+        height: 44
+        readonly property real trackR: surface.cfg.ringInner - height / 2
+
+        // where it may stand: all round, but not over the date (bottom) or the status (top)
+        readonly property real halfDeg: Math.atan2(width / 2 + 3, Math.max(1, trackR)) * 180 / Math.PI
+        function allowed(d) {
+            d = ((d % 360) + 360) % 360
+            const keepOut = [[40 - halfDeg, 140 + halfDeg], [220 - halfDeg, 320 + halfDeg]]
+            for (const k of keepOut) if (d > k[0] && d < k[1]) return (d - k[0] < k[1] - d) ? k[0] : k[1]
+            return d
+        }
+        readonly property real share: MascotSpots.spotOf("lock")
+        readonly property real homeDeg: !isNaN(share) ? allowed(share * 360) : 160
+        property real dragDeg: NaN
+        readonly property real deg: !isNaN(dragDeg) ? dragDeg : homeDeg + carry.value
+        x: face.x + face.px(trackR, deg) - width / 2
+        y: face.y + face.py(trackR, deg) - height / 2
+        rotation: deg - 90
+
+        kind: "dial-e"
+        calm: Prefs.calm
+        body: Roles.primary_container
+        ink: Roles.on_primary_container
+        eyeWhite: Roles.primary_fixed
+        pupil: Roles.on_primary_fixed
+        accent: Roles.primary
+        happyColor: Roles.tertiary_container
+        sadColor: Roles.secondary_container
+        angryColor: Roles.error_container
+        visible: Prefs.mascots && face.visible && face.opacity > 0
+        opacity: face.opacity
+        asleep: !surface.lock.awake && !held
+
+        // in its own frame (it stands turned to the ring): toward the pointer while it moves,
+        // else at you ((0, -0.35): eye contact, cancelling the googly pupils' resting droop)
+        look: {
+            if (!surface.pointerLive) return Qt.point(0, -0.35)
+            const a = Math.atan2(surface.pointer.y - (y + height / 2), surface.pointer.x - (x + width / 2)) - rotation * Math.PI / 180
+            return Qt.point(Math.cos(a), Math.sin(a))
+        }
+        shy: surface.lock.count > 0 && !surface.lock.wrong && !surface.lock.unlocking
+
+        // ── the wheel ── the ring's turn (a notch per letter, the wrong-password rattle),
+        // measured each frame: it runs with it, and a rattle carries it a little
+        property real ringAngle: surface.lock.turn
+        property real _lastAngle: ringAngle
+        property real ringSpeed: 0
+        FrameAnimation {
+            running: keeper.visible && surface.lock.awake
+            onTriggered: {
+                const d = keeper.ringAngle - keeper._lastAngle
+                keeper._lastAngle = keeper.ringAngle
+                const v = Math.abs(d) > 60 ? 0 : d / Math.max(0.001, frameTime)
+                keeper.ringSpeed = keeper.ringSpeed * 0.8 + v * 0.2
+                if (Math.abs(keeper.ringSpeed) < 2) keeper.ringSpeed = 0
+            }
+        }
+        run: Math.max(-3, Math.min(3, ringSpeed / 60))
+        SpringValue { id: carry; to: Math.max(-12, Math.min(12, keeper.ringSpeed * 0.05)); value: 0; stiffness: 120; dampingRatio: Prefs.calm ? 1 : 0.6; epsilon: 0.05 }
+
+        // a bob per letter, a flinch per deletion; it cries at a wrong password, and is glad at
+        // the right one
+        property int lastCount: 0
+        Connections {
+            target: surface.lock
+            function onCountChanged() {
+                if (!surface.lock.wrong && !surface.lock.unlocking)
+                    keeper.react(surface.lock.count > keeper.lastCount ? "type" : "delete")
+                keeper.lastCount = surface.lock.count
+            }
+            function onWrongChanged() { if (surface.lock.wrong) keeper.react("wrong") }
+            function onUnlockingChanged() { if (surface.lock.unlocking) keeper.react("right") }
+        }
+
+        // its own mouse: poke, pet, and pick it up to move it round the inside of the ring
+        interactive: true
+        draggable: true
+        onPressedChanged: if (pressed) { surface.lock.poke(); keys.forceActiveFocus() }
+        onDragTo: p => { dragDeg = allowed(Math.atan2(p.y - face.y - face.cy, p.x - face.x - face.cx) * 180 / Math.PI) }
+        onDropped: (vx, vy) => {
+            if (!isNaN(dragDeg)) MascotSpots.put("lock", dragDeg / 360)
+            dragDeg = NaN
+            keys.forceActiveFocus()
+        }
     }
 }

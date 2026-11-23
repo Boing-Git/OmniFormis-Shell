@@ -1,28 +1,41 @@
 import QtQuick
 import QtQuick.Shapes
+import "m3shapes.js" as M3
 
 // The shells' mascots, drawn (they scale and take the theme's colours), M3E-chunky and
 // springy:
 //   "dial-e"   an M3E 12-sided cookie with googly eyes: the pupils hang loose and swing after
-//              the point it looks at, like real googly eyes; it turns a notch when it's happy
+//              the point it looks at, like real googly eyes; little feet when it runs
 //   "puffy"    a pufferfish in M3E's Puffy shape: it puffs up (bigger, spikes out) when poked
 //              or held, breathes slowly at rest
 //   "droplet"  a water drop: wobbles when touched, with a glassy shine and ripples under it
 //
 //   Mascot { kind: "dial-e"; width: 120; height: 120; body: Roles.primary_container; ... }
 //
-// Colours are passed in (primitives never default them). It answers what you do, sized to how
-// often you do it (lively-ux):
-//   react("type")    a small bob and a glance (every letter: kept tiny)
+// It feels with everything it has: each feeling has its own M3 shape (the body morphs into it
+// on a spring), its own colour (happyColor, sadColor, angryColor: pass the roles in), its own
+// size, brows, eyes and mouth. Sized to how often it happens (lively-ux):
+//   react("type")    a small bob (every letter: kept tiny)
 //   react("delete")  a flinch
-//   react("wrong")   it cries: a frown, tears, a droop (rare: the big one)
-//   react("right")   joy: a hop, a big smile, squinting eyes (Dial-E's cookie turns a notch)
+//   react("wrong")   sad: it droops (GhostIsh), cries, brows up, cooler colour (rare: big)
+//   react("right")   happy: Sunny, a hop, a big smile, squinting eyes
+//   react("name")    it heard its name: happy, with a hop and a turn
+//   react("dizzy")   flung too hard: SoftBoom, its eyes go round and round
+//   react("land")    put down: a squash
 //   poke()           startled; cheer() a happy hop; puffTo(v) / puffBy(v) Puffy's puff (0..1)
 // By itself it blinks and breathes; `look` (-1..1 on each axis) is where it looks; `asleep`
-// closes its eyes and lets small z's rise; `shy` looks away (a password is being typed), with a
-// blink as it turns; `turn` (degrees) turns Dial-E's cookie from outside, the pupils swinging
-// after it (the control center's rings turn it like a gear). With `calm` (reduced motion) every answer still
-// shows (the mouth, the tears, the eyes) but nothing travels or idles.
+// closes its eyes (Arch: curled up) and lets small z's rise; `shy` looks away (a password is
+// being typed), with a blink; `run` makes it run (a hamster in its wheel: the feet patter, it
+// bobs and leans into it; the sign is the way). With `calm` (reduced motion) every feeling
+// still shows (shape, colour, face) but nothing travels, bounces or idles.
+//
+// With `interactive` it has a mouse of its own: a click pokes it, resting the pointer on it
+// pets it, and with `draggable` it can be picked up (`held`): it says grabbed(), dragTo(p) (p
+// in its parent: the host decides where it may go) and dropped(vx, vy) (px / s).
+//
+// Hidden in it (CLAUDE.md, Spoilers): poke it five times quickly and it gets cross; pet it and
+// it loves you; fling it and it gets dizzy; say its name to it; wake it in the small hours and
+// it yawns.
 Item {
     id: root
 
@@ -36,6 +49,11 @@ Item {
     required property color pupil
     required property color accent
 
+    // the feelings' colours (without one, the body keeps its colour for that feeling)
+    property color happyColor: body
+    property color sadColor: body
+    property color angryColor: body
+
     // where it looks: (-1, -1) top left .. (1, 1) bottom right
     property point look: Qt.point(0, 0)
     property bool asleep: false
@@ -46,25 +64,18 @@ Item {
     property real shySide: -1
     onShyChanged: blink.restart()
 
-    // ── turned from outside ── degrees; Dial-E's cookie turns with it, and its googly pupils
-    // lag behind the turn (inertia), so a fast spin swings them
-    property real turn: 0
-    property real _lastTurn: 0
-    onTurnChanged: {
-        // clamped: a ring that jumps (a new control) mustn't fling them off
-        const d = Math.max(-12, Math.min(12, turn - _lastTurn))
-        _lastTurn = turn
-        if (!calm && kind === "dial-e") for (const e of [pupilL, pupilR]) e.springX.kick(-d * 5)
-    }
+    // ── running ── a hamster in its wheel: 0 still, ±1 a jog, ±3 flat out (the sign: which way)
+    property real run: 0
+    readonly property bool running: Math.abs(run) > 0.05
 
     // reduced motion (Dial-E: Bounce 0, Prefs.calm): no wobble, no swing, nothing idles. A
     // property, so Puffy and Droplet can use this same file (they link it) without Dial-E's Prefs
     property bool calm: false
     readonly property real s: Math.min(width, height)
 
-    // ── how it feels ── "" (at ease), "happy" or "sad", for a moment after react()
+    // ── how it feels ── "", "happy", "sad", "angry", "love" or "dizzy", for a moment
     property string mood: ""
-    Timer { id: moodClock; onTriggered: root.mood = "" }
+    Timer { id: moodClock; onTriggered: { root.mood = ""; if (root.held) return; blink.restart() } }
     function feel(m, ms) { mood = m; moodClock.interval = ms; moodClock.restart() }
 
     function react(kind) {
@@ -78,27 +89,98 @@ Item {
             feel("sad", 2400)
             puffTo(0)
             if (!calm) { wobble.kick(120); sx.kick(1.6); sy.kick(1.2) }
-        } else if (kind === "right") {
-            feel("happy", 1800)
+        } else if (kind === "right" || kind === "name") {
+            feel("happy", kind === "name" ? 2200 : 1800)
             cheer()
             spin.to += 30
+        } else if (kind === "dizzy") {
+            feel("dizzy", 2600)
+            if (!calm) { wobble.kick(200); spin.to += 360 }
+        } else if (kind === "land") {
+            if (!calm) { sy.kick(3.2); sx.kick(-2.4) }
         } else if (kind === "poke") {
             poke()
         }
     }
 
-    // where the eyes go: down when sad, up when happy, else where it's told to look
-    readonly property point gaze: mood === "sad" ? Qt.point(look.x * 0.3, 0.9) : mood === "happy" ? Qt.point(look.x * 0.3, -0.7)
-        : shy ? Qt.point(shySide, -0.9) : look
+    // ── what each feeling looks like ── its M3 shape (rest first; a drop for Droplet), and
+    // its size
+    readonly property var shapes: ({
+        "dial-e":  { "": "12SidedCookie", happy: "Sunny", sad: "GhostIsh", angry: "Burst", love: "Heart", dizzy: "SoftBoom", asleep: "Arch" },
+        "puffy":   { "": "Puffy", happy: "Flower", sad: "GhostIsh", angry: "Boom", love: "Heart", dizzy: "SoftBurst", asleep: "Puffy" },
+        "droplet": { "": "M50 5C50 5 16 47 16 64C16 83 31 95 50 95C69 95 84 83 84 64C84 47 50 5 50 5Z",
+                     happy: "8LeafClover", sad: "GhostIsh", angry: "Burst", love: "Heart", dizzy: "Puffy", asleep: "Semicircle" }
+    })
+    readonly property string feeling: mood !== "" ? mood : asleep ? "asleep" : ""
+    readonly property string shapeNow: (shapes[kind] || shapes["dial-e"])[feeling] || (shapes[kind] || shapes["dial-e"])[""]
+    readonly property real feelingSize: ({ happy: 1.06, love: 1.08, angry: 1.14, sad: 0.9, asleep: 0.97 })[feeling] || 1
 
-    // the mouth: -1 a frown .. 0 flat .. 1 a big smile (resting: a small one)
-    SpringValue { id: smileS; to: root.mood === "happy" ? 1 : root.mood === "sad" ? -1 : 0.35; stiffness: 300; dampingRatio: root.calm ? 1 : 0.5; epsilon: 0.005 }
+    // the body's colour: the feeling's (a quick crossfade, never a bounce)
+    readonly property color bodyNow: mood === "happy" || mood === "love" ? happyColor : mood === "sad" ? sadColor : mood === "angry" ? angryColor : body
+    property color shownBody: bodyNow
+    Behavior on shownBody { ColorAnimation { duration: 260 } }
 
-    // ── the body's squash and stretch ── one spring per axis; sad, it droops
-    SpringValue { id: sx; to: root.mood === "sad" ? 1.06 : root.shy && root.mood === "" ? 0.93 : 1; value: 1; stiffness: 520; dampingRatio: root.calm ? 1 : 0.35; epsilon: 0.001 }
-    SpringValue { id: sy; to: root.mood === "sad" ? 0.9 : 1; value: 1; stiffness: 520; dampingRatio: root.calm ? 1 : 0.35; epsilon: 0.001 }
+    // ── the morph ── every shape measured the same way (its distance from the centre at
+    // `detail` angles, m3shapes.js), so any two blend angle by angle, on a spring that pops a
+    // little past the new shape; a new feeling mid-morph carries on from where the outline is
+    readonly property int detail: 72
+    property var _measured: ({})
+    function _radii(name) { if (!_measured[name]) _measured[name] = M3.radii(name, detail); return _measured[name] }
+    property var _from: []
+    property var _to: []
+    SpringValue { id: morph; to: 1; value: 1; stiffness: 260; dampingRatio: root.calm ? 1 : 0.5; epsilon: 0.002 }
+    onShapeNowChanged: {
+        const t = morph.value
+        _from = _to.length === 0 ? _radii(shapeNow) : _to.map((b, i) => _from[i] + (b - _from[i]) * t)
+        _to = _radii(shapeNow)
+        morph.snap(0)
+        morph.start()
+    }
+    Component.onCompleted: { _to = _radii(shapeNow); _from = _to }
+
+    // the outline now, in a w × w box: closed (the last point is the first)
+    function outline(w) {
+        const n = _to.length
+        if (n === 0 || _from.length !== n) return []
+        const t = morph.value, k = w / 100, out = []
+        for (let j = 0; j <= n; j++) {
+            const i = j % n, a = i / n * 2 * Math.PI
+            const r = Math.max(0, _from[i] + (_to[i] - _from[i]) * t)
+            out.push(Qt.point((50 + Math.sin(a) * r) * k, (50 - Math.cos(a) * r) * k))
+        }
+        return out
+    }
+
+    // where the eyes go: down when sad, up when happy, round and round when dizzy, away when
+    // shy, down at the ground while held, else where it's told to look
+    readonly property point gaze: mood === "dizzy" ? Qt.point(Math.cos(dizzy.t), Math.sin(dizzy.t))
+        : mood === "sad" ? Qt.point(look.x * 0.3, 0.9) : mood === "happy" || mood === "love" ? Qt.point(look.x * 0.3, -0.7)
+        : held ? Qt.point(0, 1) : shy ? Qt.point(shySide, -0.9)
+        : running ? Qt.point(run > 0 ? 1 : -1, 0.2) : look
+    NumberAnimation {
+        id: dizzy
+        target: dizzy
+        property: "t"
+        from: 0
+        to: Math.PI * 2
+        duration: 520
+        loops: Animation.Infinite
+        running: root.mood === "dizzy" && !root.calm && root.visible
+        property real t: 0
+    }
+
+    // the mouth: -1 a frown .. 0 flat .. 1 a big smile (resting: a small one); an "o" while
+    // held, and for a yawn
+    SpringValue { id: smileS; to: root.mood === "happy" || root.mood === "love" ? 1 : root.mood === "sad" ? -1 : root.mood === "angry" ? -0.7 : root.mood === "dizzy" ? 0 : 0.35; stiffness: 300; dampingRatio: root.calm ? 1 : 0.5; epsilon: 0.005 }
+    property bool yawning: false
+    readonly property bool mouthO: held || yawning
+
+    // ── the body's squash and stretch ── one spring per axis; sad, it droops; held, it hangs
+    SpringValue { id: sx; to: root.mood === "sad" ? 1.06 : root.held ? 0.92 : root.shy && root.mood === "" ? 0.93 : 1; value: 1; stiffness: 520; dampingRatio: root.calm ? 1 : 0.35; epsilon: 0.001 }
+    SpringValue { id: sy; to: root.mood === "sad" ? 0.9 : root.held ? 1.1 : 1; value: 1; stiffness: 520; dampingRatio: root.calm ? 1 : 0.35; epsilon: 0.001 }
+    SpringValue { id: grow; to: root.feelingSize * (root.held ? 1.04 : 1); value: 1; stiffness: 300; dampingRatio: root.calm ? 1 : 0.45; epsilon: 0.001 }
     SpringValue { id: hop; to: 0; value: 0; stiffness: 260; dampingRatio: root.calm ? 1 : 0.45; epsilon: 0.1 }
-    // Dial-E's cookie turns in twelfths (30°), so it always lands on itself
+    // the body turns in twelfths (30°): Dial-E's cookie always lands on itself
     SpringValue { id: spin; to: 0; value: 0; stiffness: 160; dampingRatio: root.calm ? 1 : 0.55; epsilon: 0.05 }
     function poke() {
         if (calm) return
@@ -109,6 +191,19 @@ Item {
         ripples.start()
     }
     function cheer() { if (!calm) { hop.kick(-900); sy.kick(-2) } }
+
+    // cross: it shakes (the angry shape and colour come with the mood)
+    SpringValue { id: shake; to: 0; value: 0; stiffness: 900; dampingRatio: root.calm ? 1 : 0.12; epsilon: 0.05 }
+    onMoodChanged: if (mood === "angry" && !calm) shake.kick(400)
+
+    // ── running ── the feet patter and the body bobs, faster the faster it runs; it leans into it
+    property real stride: 0
+    FrameAnimation {
+        running: root.running && !root.calm && root.visible
+        onTriggered: root.stride += frameTime * Math.max(-3, Math.min(3, root.run)) * 14
+    }
+    readonly property real bob: running && !calm ? Math.abs(Math.sin(stride)) : 0
+    SpringValue { id: lean; to: root.calm ? 0 : Math.max(-14, Math.min(14, root.run * 7)); value: 0; stiffness: 200; dampingRatio: 0.7; epsilon: 0.05 }
 
     // ── blinking ── every few seconds, never in step with another mascot
     property real lid: 1
@@ -123,8 +218,12 @@ Item {
         NumberAnimation { target: root; property: "lid"; to: 0.08; duration: 70 }
         NumberAnimation { target: root; property: "lid"; to: 1; duration: 110 }
     }
-    // happy, it squints; asleep, the eyes are shut
-    readonly property real eyeOpen: asleep ? 0.06 : mood === "happy" ? Math.min(lid, 0.4) : lid
+    // happy or in love, it squints; asleep, the eyes are shut; held, they're wide
+    readonly property real eyeOpen: asleep ? 0.06 : mood === "happy" || mood === "love" ? Math.min(lid, 0.4) : lid
+
+    // woken in the small hours (midnight to five), it yawns
+    onAsleepChanged: if (!asleep && new Date().getHours() < 5) { yawning = true; yawnEnd.restart() }
+    Timer { id: yawnEnd; interval: 1300; onTriggered: root.yawning = false }
 
     // ── breathing ── a slow swell at rest (not with reduced motion)
     property real breath: 0
@@ -133,6 +232,17 @@ Item {
         running: !root.calm && root.visible
         NumberAnimation { to: 1; duration: 1900; easing.type: Easing.InOutSine }
         NumberAnimation { to: 0; duration: 1900; easing.type: Easing.InOutSine }
+    }
+
+    // the whole body's motion, shared by the three: squash and stretch from the feet, the
+    // feeling's size, the hop, the shake, the run's bob and lean
+    component Body: Item {
+        anchors.fill: parent
+        transform: [
+            Scale { origin.x: root.s / 2; origin.y: root.s; xScale: sx.value * grow.value * (1 + root.breath * 0.02); yScale: sy.value * grow.value * (1 + root.breath * 0.03) },
+            Rotation { origin.x: root.s / 2; origin.y: root.s; angle: lean.value },
+            Translate { x: shake.value * root.s / 900; y: hop.value * root.s / 400 - root.bob * root.s * 0.06 }
+        ]
     }
 
     // ── a googly eye ── its pupil swings after `gaze` on a loose spring, and hangs a little
@@ -144,8 +254,8 @@ Item {
         // the pupil's two springs (poke kicks them)
         readonly property alias springX: px
         readonly property alias springY: py
-        SpringValue { id: px; to: root.gaze.x * eye.travel; stiffness: 140; dampingRatio: root.calm ? 1 : 0.22; epsilon: 0.05 }
-        SpringValue { id: py; to: root.gaze.y * eye.travel + eye.travel * 0.35; stiffness: 140; dampingRatio: root.calm ? 1 : 0.22; epsilon: 0.05 }
+        SpringValue { id: px; to: root.gaze.x * eye.travel; stiffness: root.mood === "dizzy" ? 400 : 140; dampingRatio: root.calm ? 1 : 0.22; epsilon: 0.05 }
+        SpringValue { id: py; to: root.gaze.y * eye.travel + eye.travel * 0.35; stiffness: root.mood === "dizzy" ? 400 : 140; dampingRatio: root.calm ? 1 : 0.22; epsilon: 0.05 }
         width: size
         height: size
         Rectangle {
@@ -157,7 +267,7 @@ Item {
             transform: Scale { origin.x: eye.size / 2; origin.y: eye.size / 2; yScale: root.eyeOpen }
         }
         Rectangle {
-            width: eye.size * 0.46
+            width: eye.size * (root.held ? 0.34 : 0.46)
             height: width
             radius: width / 2
             color: root.pupil
@@ -167,7 +277,6 @@ Item {
         }
         // a tear, while it's sad: it wells up under the eye and falls (still, with calm)
         Rectangle {
-            id: tear
             width: Math.max(3, eye.size * 0.42)
             height: width * 1.35
             radius: width / 2
@@ -193,22 +302,59 @@ Item {
         }
     }
 
-    // a mouth: a curve from x0 to x1 at height y0, bent by the smile (x0 / x1: Item has left / right)
-    component Mouth: Shape {
+    // a brow over an eye at (x, y) `w` wide: down at the middle when cross, up at the middle
+    // when sad (`side` -1 for the left eye, 1 for the right)
+    component Brow: Shape {
+        id: brow
+        property real x0
+        property real y0
+        property real w
+        property real side: -1
+        readonly property real tilt: root.mood === "angry" ? 1 : root.mood === "sad" ? -0.8 : 0
+        visible: tilt !== 0
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            strokeColor: root.ink
+            strokeWidth: root.s * 0.05
+            capStyle: ShapePath.RoundCap
+            fillColor: "transparent"
+            // the end nearest the middle drops (cross) or rises (sad)
+            startX: brow.x0; startY: brow.y0 + (brow.side < 0 ? -1 : 1) * brow.tilt * root.s * 0.04
+            PathLine { x: brow.x0 + brow.w; y: brow.y0 + (brow.side < 0 ? 1 : -1) * brow.tilt * root.s * 0.04 }
+        }
+    }
+
+    // a mouth: a curve from x0 to x1 at height y0, bent by the smile (x0 / x1: Item has left /
+    // right); an "o" instead while held or yawning
+    component Mouth: Item {
         id: mouth
         property real x0
         property real x1
         property real y0
         property real bend: root.s * 0.09
         anchors.fill: parent
-        preferredRendererType: Shape.CurveRenderer
-        ShapePath {
-            strokeColor: root.ink
-            strokeWidth: root.s * 0.045
-            capStyle: ShapePath.RoundCap
-            fillColor: "transparent"
-            startX: mouth.x0; startY: mouth.y0
-            PathQuad { x: mouth.x1; y: mouth.y0; controlX: (mouth.x0 + mouth.x1) / 2; controlY: mouth.y0 + mouth.bend * smileS.value + root.s * 0.02 * root.breath }
+        Shape {
+            anchors.fill: parent
+            visible: !root.mouthO
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath {
+                strokeColor: root.ink
+                strokeWidth: root.s * 0.045
+                capStyle: ShapePath.RoundCap
+                fillColor: "transparent"
+                startX: mouth.x0; startY: mouth.y0
+                PathQuad { x: mouth.x1; y: mouth.y0; controlX: (mouth.x0 + mouth.x1) / 2; controlY: mouth.y0 + mouth.bend * smileS.value + root.s * 0.02 * root.breath }
+            }
+        }
+        Rectangle {
+            visible: root.mouthO
+            width: (mouth.x1 - mouth.x0) * (root.yawning ? 0.75 : 0.55)
+            height: width * (root.yawning ? 1.3 : 1)
+            radius: width / 2
+            x: (mouth.x0 + mouth.x1) / 2 - width / 2
+            y: mouth.y0 - height / 2
+            color: root.ink
         }
     }
 
@@ -239,67 +385,104 @@ Item {
         property real t: 0
     }
 
-    // ── Dial-E ── the M3E 12-sided cookie, two googly eyes, a mouth that smiles or frowns
-    Item {
+    // hearts rising while it's in love; one still heart with calm
+    Repeater {
+        model: root.mood === "love" ? 3 : 0
+        Text {
+            required property int index
+            readonly property real t: root.calm ? 0.4 : (hearts.t + index / 3) % 1
+            text: "♥"
+            font.pixelSize: Math.max(8, root.s * (0.16 + 0.08 * t))
+            color: root.accent
+            x: root.s * (0.15 + 0.35 * index + 0.06 * Math.sin(t * 6))
+            y: root.s * (0.1 - 0.4 * t)
+            opacity: root.calm ? 0.9 : Math.sin(t * Math.PI)
+        }
+    }
+    NumberAnimation {
+        id: hearts
+        target: hearts
+        property: "t"
+        from: 0
+        to: 1
+        duration: 1800
+        loops: Animation.Infinite
+        running: root.mood === "love" && !root.calm && root.visible
+        property real t: 0
+    }
+
+    // ── Dial-E ── the cookie (or the feeling's shape), two googly eyes, brows, a mouth, and
+    // feet that come out when it runs or dangles
+    Body {
         visible: root.kind === "dial-e"
-        anchors.fill: parent
-        transform: [
-            Scale { origin.x: root.s / 2; origin.y: root.s; xScale: sx.value * (1 + root.breath * 0.02); yScale: sy.value * (1 + root.breath * 0.03) },
-            Translate { y: hop.value * root.s / 400 }
-        ]
+
+        // the feet, under the body
+        Repeater {
+            model: root.kind === "dial-e" ? 2 : 0
+            Rectangle {
+                required property int index
+                readonly property real phase: root.stride + index * Math.PI
+                width: root.s * 0.16
+                height: root.s * 0.1
+                radius: height / 2
+                color: root.ink
+                x: root.s * (index === 0 ? 0.3 : 0.54) + (root.running && !root.calm ? Math.cos(phase) * root.s * 0.05 * (root.run > 0 ? 1 : -1) : 0)
+                y: root.s * 0.86 - (root.running && !root.calm ? Math.max(0, Math.sin(phase)) * root.s * 0.07 : 0) + (root.held && !root.calm ? Math.sin(root.stride * 2 + index) * root.s * 0.02 : 0)
+                opacity: root.running || root.held ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 140 } }
+            }
+        }
         Shape {
             id: cookie
             width: root.s * 0.96
             height: width
             anchors.centerIn: parent
             preferredRendererType: Shape.CurveRenderer
-            rotation: spin.value + root.turn + root.breath * 3
+            rotation: spin.value + root.breath * 3
             ShapePath {
-                fillColor: root.body
+                fillColor: root.shownBody
                 strokeColor: "transparent"
-                scale: Qt.size(cookie.width / 100, cookie.height / 100)
-                PathSvg { path: "M43.87 10.49C44.01 10.35 44.08 10.28 44.14 10.22C47.43 7.12 52.57 7.12 55.86 10.22C55.92 10.28 55.99 10.35 56.13 10.49C56.22 10.57 56.26 10.61 56.30 10.65C58.41 12.66 61.39 13.46 64.22 12.77C64.27 12.76 64.33 12.74 64.45 12.71C64.64 12.66 64.74 12.64 64.82 12.62C69.22 11.58 73.66 14.15 74.96 18.48C74.99 18.56 75.01 18.65 75.07 18.85C75.10 18.96 75.12 19.02 75.13 19.07C75.95 21.87 78.13 24.05 80.93 24.87C80.98 24.88 81.04 24.90 81.15 24.93C81.35 24.99 81.44 25.01 81.52 25.04C85.85 26.34 88.42 30.78 87.38 35.18C87.36 35.26 87.34 35.36 87.29 35.55C87.26 35.67 87.24 35.73 87.23 35.78C86.54 38.61 87.34 41.59 89.35 43.70C89.39 43.74 89.43 43.78 89.51 43.87C89.65 44.01 89.72 44.08 89.78 44.14C92.88 47.43 92.88 52.57 89.78 55.86C89.72 55.92 89.65 55.99 89.51 56.13C89.43 56.22 89.39 56.26 89.35 56.30C87.34 58.41 86.54 61.39 87.23 64.22C87.24 64.27 87.26 64.33 87.29 64.45C87.34 64.64 87.36 64.74 87.38 64.82C88.42 69.22 85.85 73.66 81.52 74.96C81.44 74.99 81.35 75.01 81.15 75.07C81.04 75.10 80.98 75.12 80.93 75.13C78.13 75.95 75.95 78.13 75.13 80.93C75.12 80.98 75.10 81.04 75.07 81.15C75.01 81.35 74.99 81.44 74.96 81.52C73.66 85.85 69.22 88.42 64.82 87.38C64.74 87.36 64.64 87.34 64.45 87.29C64.33 87.26 64.27 87.24 64.22 87.23C61.39 86.54 58.41 87.34 56.30 89.35C56.26 89.39 56.22 89.43 56.13 89.51C55.99 89.65 55.92 89.72 55.86 89.78C52.57 92.88 47.43 92.88 44.14 89.78C44.08 89.72 44.01 89.65 43.87 89.51C43.78 89.43 43.74 89.39 43.70 89.35C41.59 87.34 38.61 86.54 35.78 87.23C35.73 87.24 35.67 87.26 35.55 87.29C35.36 87.34 35.26 87.36 35.18 87.38C30.78 88.42 26.34 85.85 25.04 81.52C25.01 81.44 24.99 81.35 24.93 81.15C24.90 81.04 24.88 80.98 24.87 80.93C24.05 78.13 21.87 75.95 19.07 75.13C19.02 75.12 18.96 75.10 18.85 75.07C18.65 75.01 18.56 74.99 18.48 74.96C14.15 73.66 11.58 69.22 12.62 64.82C12.64 64.74 12.66 64.64 12.71 64.45C12.74 64.33 12.76 64.27 12.77 64.22C13.46 61.39 12.66 58.41 10.65 56.30C10.61 56.26 10.57 56.22 10.49 56.13C10.35 55.99 10.28 55.92 10.22 55.86C7.12 52.57 7.12 47.43 10.22 44.14C10.28 44.08 10.35 44.01 10.49 43.87C10.57 43.78 10.61 43.74 10.65 43.70C12.66 41.59 13.46 38.61 12.77 35.78C12.76 35.73 12.74 35.67 12.71 35.55C12.66 35.36 12.64 35.26 12.62 35.18C11.58 30.78 14.15 26.34 18.48 25.04C18.56 25.01 18.65 24.99 18.85 24.93C18.96 24.90 19.02 24.88 19.07 24.87C21.87 24.05 24.05 21.87 24.87 19.07C24.88 19.02 24.90 18.96 24.93 18.85C24.99 18.65 25.01 18.56 25.04 18.48C26.34 14.15 30.78 11.58 35.18 12.62C35.26 12.64 35.36 12.66 35.55 12.71C35.67 12.74 35.73 12.76 35.78 12.77C38.61 13.46 41.59 12.66 43.70 10.65C43.74 10.61 43.78 10.57 43.87 10.49Z" }
+                PathPolyline { path: root.kind === "dial-e" ? root.outline(cookie.width) : [] }
             }
         }
         GooglyEye { id: pupilL; size: root.s * 0.28; x: root.s * 0.21; y: root.s * 0.25 }
         GooglyEye { id: pupilR; size: root.s * 0.28; x: root.s * 0.51; y: root.s * 0.25 }
+        Brow { x0: root.s * 0.22; y0: root.s * 0.2; w: root.s * 0.24; side: -1 }
+        Brow { x0: root.s * 0.54; y0: root.s * 0.2; w: root.s * 0.24; side: 1 }
         Mouth { x0: root.s * 0.40; x1: root.s * 0.60; y0: root.s * 0.68 }
     }
 
-    // ── Puffy ── a fish in M3E's Puffy shape that grows as it puffs up (puff 0..1: its scale),
-    // spikes out behind it; one big eye, a tail and a little "o" mouth
+    // ── Puffy ── a fish in M3E's Puffy shape (or the feeling's) that grows as it puffs up
+    // (puff 0..1: its scale), spikes out behind it; one big eye, a tail and a little "o" mouth
     SpringValue { id: puffSpring; to: 0; value: 0; stiffness: 170; dampingRatio: root.calm ? 1 : 0.4; epsilon: 0.002 }
-    readonly property real puff: Math.max(0, Math.min(1.2, puffSpring.value + (kind === "puffy" ? breath * 0.12 : 0)))
+    readonly property real puff: Math.max(0, Math.min(1.2, puffSpring.value + (kind === "puffy" ? breath * 0.12 : 0) + (mood === "angry" ? 0.6 : 0)))
     function puffBy(v) { if (kind === "puffy" && !calm) puffSpring.kick(v * 12) }
     function puffTo(v) { puffSpring.to = v }
 
-    Item {
+    Body {
         id: fish
         visible: root.kind === "puffy"
-        anchors.fill: parent
-        transform: [
-            Scale { origin.x: root.s / 2; origin.y: root.s / 2; xScale: sx.value; yScale: sy.value },
-            Translate { y: hop.value * root.s / 400 }
-        ]
         // its scale: the body grows a quarter as it puffs all the way up
-        readonly property real grow: 1 + 0.25 * root.puff
-        readonly property real r: root.s * 0.31 * grow
+        readonly property real bloat: 1 + 0.25 * root.puff
+        readonly property real r: root.s * 0.31 * bloat
         readonly property real cx: root.s * 0.54
         readonly property real cy: root.s * 0.52
 
-        // the tail, behind the body
+        // the tail, behind the body: it wags as Puffy swims (runs)
         Shape {
+            id: tail
             anchors.fill: parent
             preferredRendererType: Shape.CurveRenderer
+            readonly property real wag: root.running && !root.calm ? Math.sin(root.stride * 1.5) * root.s * 0.06 : 0
             ShapePath {
                 fillColor: root.accent
                 strokeColor: root.accent
                 strokeWidth: root.s * 0.04
                 joinStyle: ShapePath.RoundJoin
                 startX: fish.cx - fish.r * 0.8; startY: fish.cy
-                PathLine { x: root.s * 0.06; y: fish.cy - root.s * 0.14 }
-                PathLine { x: root.s * 0.10; y: fish.cy }
-                PathLine { x: root.s * 0.06; y: fish.cy + root.s * 0.14 }
+                PathLine { x: root.s * 0.06; y: fish.cy - root.s * 0.14 + tail.wag }
+                PathLine { x: root.s * 0.10; y: fish.cy + tail.wag }
+                PathLine { x: root.s * 0.06; y: fish.cy + root.s * 0.14 + tail.wag }
                 PathLine { x: fish.cx - fish.r * 0.8; y: fish.cy }
             }
         }
@@ -336,17 +519,18 @@ Item {
             x: fish.cx - width / 2
             y: fish.cy - height / 2
             preferredRendererType: Shape.CurveRenderer
+            rotation: spin.value
             ShapePath {
-                fillColor: root.body
+                fillColor: root.shownBody
                 strokeColor: "transparent"
-                scale: Qt.size(puffyBody.width / 100, puffyBody.height / 100)
-                PathSvg { path: "M97.89 49.36C97.81 43.55 93.04 38.90 87.22 38.98C86.90 38.98 86.58 39.00 86.27 39.04C86.52 38.84 86.75 38.63 86.98 38.41C91.15 34.36 91.24 27.69 87.18 23.53C86.94 23.28 86.70 23.04 86.46 22.81C82.30 18.76 75.63 18.84 71.57 23.01C71.35 23.24 71.14 23.47 70.94 23.72C70.98 23.41 71.00 23.09 71.00 22.77C71.09 16.96 66.43 12.19 60.62 12.11C60.45 12.11 60.28 12.11 60.11 12.11H59.76C55.46 12.11 51.76 14.69 50.13 18.40C48.50 14.69 44.80 12.11 40.50 12.11H40.15C39.98 12.11 39.81 12.11 39.64 12.11C33.83 12.18 29.18 16.96 29.26 22.77C29.26 23.09 29.28 23.41 29.31 23.72C29.11 23.47 28.91 23.24 28.69 23.01C24.63 18.84 17.96 18.76 13.80 22.81C13.55 23.05 13.31 23.28 13.08 23.53C9.02 27.69 9.11 34.35 13.28 38.41C13.50 38.63 13.74 38.84 13.99 39.04C13.68 39.00 13.36 38.98 13.04 38.98C7.23 38.90 2.45 43.55 2.37 49.36C2.37 49.53 2.37 49.70 2.37 49.87C2.37 50.04 2.37 50.21 2.37 50.38C2.45 56.19 7.22 60.84 13.04 60.76C13.36 60.76 13.68 60.74 13.99 60.70C13.74 60.90 13.50 61.11 13.28 61.33C9.11 65.38 9.02 72.05 13.08 76.21C13.32 76.45 13.55 76.70 13.80 76.93C17.96 80.98 24.63 80.89 28.69 76.73C28.91 76.50 29.11 76.26 29.31 76.02C29.28 76.33 29.26 76.65 29.26 76.97C29.18 82.78 33.83 87.55 39.64 87.63C39.81 87.63 39.98 87.63 40.15 87.63H40.50C44.81 87.63 48.50 85.04 50.13 81.34C51.76 85.04 55.46 87.63 59.76 87.63H60.11C60.28 87.63 60.45 87.63 60.62 87.63C66.43 87.55 71.09 82.78 71.01 76.97C71.01 76.65 70.98 76.33 70.95 76.02C71.15 76.26 71.35 76.50 71.58 76.73C75.63 80.89 82.30 80.98 86.47 76.93C86.71 76.69 86.95 76.45 87.19 76.21C91.24 72.05 91.15 65.39 86.99 61.33C86.76 61.11 86.52 60.90 86.28 60.70C86.59 60.74 86.90 60.76 87.23 60.76C93.04 60.84 97.82 56.19 97.89 50.38C97.89 50.21 97.89 50.04 97.89 49.87C97.89 49.70 97.89 49.53 97.89 49.36H97.89Z" }
+                PathPolyline { path: root.kind === "puffy" ? root.outline(puffyBody.width) : [] }
             }
         }
         GooglyEye { id: puffyEye; size: root.s * 0.24; x: fish.cx + fish.r * 0.05; y: fish.cy - fish.r * 0.62 }
-        // the little "o" mouth: rounder when puffed, a frown when sad
+        Brow { x0: fish.cx + fish.r * 0.05; y0: fish.cy - fish.r * 0.78; w: root.s * 0.22; side: 1 }
+        // the little "o" mouth: rounder when puffed, a frown when sad or cross
         Rectangle {
-            visible: root.mood !== "sad"
+            visible: root.mood !== "sad" && root.mood !== "angry"
             width: root.s * (0.07 + 0.03 * root.puff)
             height: width
             radius: width / 2
@@ -354,10 +538,11 @@ Item {
             y: fish.cy + fish.r * 0.18
             color: root.ink
         }
-        Mouth { visible: root.mood === "sad"; x0: fish.cx + fish.r * 0.62; x1: fish.cx + fish.r * 0.94; y0: fish.cy + fish.r * 0.34; bend: root.s * 0.06 }
+        Mouth { visible: root.mood === "sad" || root.mood === "angry"; x0: fish.cx + fish.r * 0.62; x1: fish.cx + fish.r * 0.94; y0: fish.cy + fish.r * 0.34; bend: root.s * 0.06 }
     }
 
-    // ── Droplet ── a drop with a shine; it wobbles when touched, and rings ripple out under it
+    // ── Droplet ── a drop (or the feeling's shape) with a shine; it wobbles when touched, and
+    // rings ripple out under it
     SpringValue { id: wobble; to: 0; value: 0; stiffness: 300; dampingRatio: root.calm ? 1 : 0.18; epsilon: 0.05 }
     Item {
         visible: root.kind === "droplet"
@@ -380,43 +565,38 @@ Item {
                 opacity: t > 0 && t < 1 ? 1 - t : 0
             }
         }
-        Item {
-            anchors.fill: parent
-            transform: [
-                Scale { origin.x: root.s / 2; origin.y: root.s * 0.95; xScale: sx.value * (1 + root.breath * 0.02); yScale: sy.value * (1 - root.breath * 0.015) },
-                Rotation { origin.x: root.s / 2; origin.y: root.s * 0.95; angle: wobble.value },
-                Translate { y: hop.value * root.s / 400 }
-            ]
-            Shape {
+        Body {
+            // a drop that runs sloshes (a little wobble at each step)
+            Item {
                 anchors.fill: parent
-                preferredRendererType: Shape.CurveRenderer
-                ShapePath {
-                    fillColor: root.body
-                    strokeColor: "transparent"
-                    PathSvg {
-                        readonly property real k: root.s
-                        path: "M " + 0.5 * k + " " + 0.05 * k
-                            + " C " + 0.5 * k + " " + 0.05 * k + " " + 0.16 * k + " " + 0.47 * k + " " + 0.16 * k + " " + 0.64 * k
-                            + " C " + 0.16 * k + " " + 0.83 * k + " " + 0.31 * k + " " + 0.95 * k + " " + 0.5 * k + " " + 0.95 * k
-                            + " C " + 0.69 * k + " " + 0.95 * k + " " + 0.84 * k + " " + 0.83 * k + " " + 0.84 * k + " " + 0.64 * k
-                            + " C " + 0.84 * k + " " + 0.47 * k + " " + 0.5 * k + " " + 0.05 * k + " " + 0.5 * k + " " + 0.05 * k + " Z"
+                transform: Rotation { origin.x: root.s / 2; origin.y: root.s * 0.95; angle: wobble.value + (root.running && !root.calm ? Math.sin(root.stride) * 5 : 0) }
+                Shape {
+                    id: drop
+                    anchors.fill: parent
+                    preferredRendererType: Shape.CurveRenderer
+                    ShapePath {
+                        fillColor: root.shownBody
+                        strokeColor: "transparent"
+                        PathPolyline { path: root.kind === "droplet" ? root.outline(drop.width) : [] }
                     }
                 }
+                // the shine: glass, like the shell's liquid glass
+                Rectangle {
+                    width: root.s * 0.11
+                    height: root.s * 0.2
+                    radius: width / 2
+                    rotation: 24
+                    x: root.s * 0.27
+                    y: root.s * 0.42
+                    color: root.eyeWhite
+                    opacity: 0.55
+                }
+                GooglyEye { id: dropL; size: root.s * 0.17; x: root.s * 0.33; y: root.s * 0.56 }
+                GooglyEye { id: dropR; size: root.s * 0.17; x: root.s * 0.52; y: root.s * 0.56 }
+                Brow { x0: root.s * 0.32; y0: root.s * 0.52; w: root.s * 0.15; side: -1 }
+                Brow { x0: root.s * 0.53; y0: root.s * 0.52; w: root.s * 0.15; side: 1 }
+                Mouth { x0: root.s * 0.43; x1: root.s * 0.57; y0: root.s * 0.81; bend: root.s * 0.06 }
             }
-            // the shine: glass, like the shell's liquid glass
-            Rectangle {
-                width: root.s * 0.11
-                height: root.s * 0.2
-                radius: width / 2
-                rotation: 24
-                x: root.s * 0.27
-                y: root.s * 0.42
-                color: root.eyeWhite
-                opacity: 0.55
-            }
-            GooglyEye { id: dropL; size: root.s * 0.17; x: root.s * 0.33; y: root.s * 0.56 }
-            GooglyEye { id: dropR; size: root.s * 0.17; x: root.s * 0.52; y: root.s * 0.56 }
-            Mouth { x0: root.s * 0.43; x1: root.s * 0.57; y0: root.s * 0.81; bend: root.s * 0.06 }
         }
     }
     NumberAnimation {
@@ -427,5 +607,69 @@ Item {
         to: 1.4
         duration: 1300
         property real t: 0
+    }
+
+    // ── its own mouse (interactive) ── a click pokes it (five within three seconds and it's
+    // cross); the pointer resting on it pets it (it loves you); with `draggable` a press and a
+    // move picks it up (the host moves it: dragTo), and letting go puts it down (dropped):
+    // thrown hard, it's dizzy
+    property bool interactive: false
+    property bool draggable: false
+    property bool held: false
+    // the pointer is on it / the button is down on it: a host that closes when the pointer
+    // leaves it should wait meanwhile (a press here takes the hover from what's underneath)
+    readonly property bool hovered: hover.hovered
+    readonly property bool pressed: hand.pressed
+    signal grabbed()
+    signal dragTo(point p)
+    signal dropped(real vx, real vy)
+    property int _pokes: 0
+    Timer { id: pokeWindow; interval: 3000; onTriggered: root._pokes = 0 }
+    Timer { id: petting; interval: 1500; onTriggered: if (!root.held && root.mood === "") root.feel("love", 3000) }
+    // (petting is a HoverHandler: it shares the hover, where a hovering MouseArea would take it
+    // from whatever the mascot sits on, e.g. a dial that closes when the pointer leaves it)
+    HoverHandler {
+        id: hover
+        enabled: root.interactive
+        cursorShape: root.held ? Qt.ClosedHandCursor : root.draggable ? Qt.OpenHandCursor : Qt.PointingHandCursor
+        onHoveredChanged: if (!hovered) petting.stop()
+        onPointChanged: if (hovered && !hand.pressed && root.mood === "") petting.restart()
+    }
+    MouseArea {
+        id: hand
+        anchors.fill: parent
+        enabled: root.interactive
+        preventStealing: true
+        property point from
+        property point last
+        property real lastT: 0
+        property real vx: 0
+        property real vy: 0
+        onPressed: mouse => { from = mapToItem(root.parent, mouse.x, mouse.y); last = from; lastT = Date.now(); vx = 0; vy = 0; petting.stop() }
+        onPositionChanged: mouse => {
+            const p = mapToItem(root.parent, mouse.x, mouse.y)
+            if (!root.held && root.draggable && Math.hypot(p.x - from.x, p.y - from.y) > 6) { root.held = true; root.grabbed() }
+            if (!root.held) return
+            const now = Date.now(), dt = Math.max(1, now - lastT)
+            vx = vx * 0.5 + (p.x - last.x) / dt * 1000 * 0.5
+            vy = vy * 0.5 + (p.y - last.y) / dt * 1000 * 0.5
+            last = p
+            lastT = now
+            root.dragTo(p)
+        }
+        onReleased: {
+            if (root.held) {
+                root.held = false
+                const speed = Date.now() - lastT > 80 ? 0 : Math.hypot(vx, vy)
+                root.react(speed > 1500 ? "dizzy" : "land")
+                root.dropped(vx, vy)
+                return
+            }
+            root.react("poke")
+            root._pokes++
+            pokeWindow.restart()
+            if (root._pokes >= 5) { root._pokes = 0; root.feel("angry", 3500) }
+        }
+        onCanceled: root.held = false
     }
 }

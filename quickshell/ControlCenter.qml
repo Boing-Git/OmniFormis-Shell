@@ -138,8 +138,9 @@ PanelWindow {
         closeOnEnter: settings.closeOnEnter
 
         // while arranging it stays open when the mouse leaves (you go round the screen to
-        // the spots), and Esc leaves Edit instead of closing
-        closeOnExit: !arranging
+        // the spots), and Esc leaves Edit instead of closing; also while the pointer is on
+        // Dial-E or holds it (a press on it takes the hover from the dial)
+        closeOnExit: !arranging && !hiding.pressed && !hiding.hovered
         closeOnEscape: !arranging
         onEscaped: arranging = false
 
@@ -1066,22 +1067,40 @@ PanelWindow {
         // (and with Ask at the mark, typing starts the question)
         onTyped: text => { if (inSettings) settingsControl.startTyping(text); else if (askControl.active && !askControl.typing) askControl.startTyping(text) }
 
-        // ── Dial-E itself, hiding in plain sight ── (Settings → Extras → Mascots) small, in the
-        // empty end of the inner disc where the dial meets the screen's edge. The rings turn it
-        // like a gear meshed inside the inner ring (same way round), every frame of a drag or a
-        // fling, its googly pupils swinging after the turn; it dozes while nothing happens, and
-        // a click startles it. Geared 3:1, not the true ratio (~10:1): the cookie repeats every
-        // 30°, and faster it strobes on a fling (looks still, or turning backwards)
+        // ── Dial-E itself, a hamster in the control center's wheel ── (Settings → Extras →
+        // Mascots) inside the inner ring, its feet on the band's inner edge (never on a ring).
+        // The rings turning under it make it run, as fast as they turn and against them; a
+        // fast turn carries it up the wheel, and a fling hard enough throws it round, dizzy.
+        // Drag it along the edge to where it lives (remembered: MascotSpots); the card's words
+        // keep clear of it (dial.keepClear). While you type in Ask it watches each letter go
+        // in and patters a step per letter; type its name and it's glad. It dozes when nothing
+        // happens; click, pet or fling it (its secrets: the Mascot's own header)
         Mascot {
             id: hiding
-            readonly property real deg: dial.startDeg + dial.sweepDeg - 9
-            readonly property real r: dial.innerRadius - dial.settings.pillHeight / 2 - width / 2 - 9
             width: 46
             height: 46
-            turn: (spin.scroll + spin2.scroll) * 3
-            onTurnChanged: { dozing.dozed = false; dozing.restart() }
-            x: dial.centerX + r * Math.cos(deg * Math.PI / 180) - width / 2
-            y: dial.centerY + r * Math.sin(deg * Math.PI / 180) - height / 2
+
+            // the track: just inside the inner band, and how much of the arc the mascot covers
+            readonly property real trackR: dial.settings.innerRadius - dial.settings.pillHeight / 2 - dial.settings.innerBandMarginUsed - height / 2
+            readonly property real halfDeg: Math.atan2(width / 2 + 3, Math.max(1, trackR)) * 180 / Math.PI
+            readonly property real lowDeg: dial.startDeg + halfDeg + 2
+            readonly property real highDeg: dial.startDeg + dial.sweepDeg - halfDeg - 2
+
+            // where it lives: where you put it, or else the end of the arc lower on the screen
+            readonly property real share: MascotSpots.spotOf("center")
+            readonly property real homeDeg: !isNaN(share) ? lowDeg + share * (highDeg - lowDeg)
+                : Math.sin(highDeg * Math.PI / 180) >= Math.sin(lowDeg * Math.PI / 180) ? highDeg : lowDeg
+            property real dragDeg: NaN
+
+            // where it is now: home, carried up the wheel by a fast turn, or where it's held
+            readonly property real deg: !isNaN(dragDeg) ? dragDeg : Math.max(lowDeg, Math.min(highDeg, homeDeg + carry.value))
+            x: dial.centerX + trackR * Math.cos(deg * Math.PI / 180) - width / 2
+            y: dial.centerY + trackR * Math.sin(deg * Math.PI / 180) - height / 2
+
+            // feet to the ring (the wheel's inside is its floor), and a whole turn when it's flung round
+            rotation: deg - 90 + tumble.value
+            SpringValue { id: tumble; to: 0; value: 0; stiffness: 120; dampingRatio: Prefs.calm ? 1 : 0.7; epsilon: 0.2 }
+
             kind: "dial-e"
             calm: Prefs.calm
             body: Roles.primary_container
@@ -1089,12 +1108,79 @@ PanelWindow {
             eyeWhite: Roles.primary_fixed
             pupil: Roles.on_primary_fixed
             accent: Roles.primary
+            happyColor: Roles.tertiary_container
+            sadColor: Roles.secondary_container
+            angryColor: Roles.error_container
             visible: Prefs.mascots && opacity > 0
             opacity: dial.open && dial.currentSize >= dial.expandedSize * 0.9 && !dial.arranging ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: Vars.expressiveDefaultEffects.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.expressiveDefaultEffects.bezier } }
-            // it looks at the middle of the dial, where things happen, and dozes off after a while
-            look: Qt.point(Math.cos((dial.midDeg + 180) * Math.PI / 180), Math.sin((dial.midDeg + 180) * Math.PI / 180))
-            asleep: dozing.dozed
+
+            // the words keep clear of where it lives
+            Binding { target: dial; property: "keepClear"; value: hiding.visible ? [hiding.homeDeg - hiding.halfDeg - 2, hiding.homeDeg + hiding.halfDeg + 2] : null }
+
+            // ── the wheel ── how fast the rings turn (deg / s, either ring), measured each frame
+            property real ringAngle: spin.scroll + spin2.scroll
+            property real _lastAngle: ringAngle
+            property real ringSpeed: 0
+            FrameAnimation {
+                running: dial.open && hiding.visible
+                onTriggered: {
+                    const d = hiding.ringAngle - hiding._lastAngle
+                    hiding._lastAngle = hiding.ringAngle
+                    // a jump (a new control's ring set at once) isn't a turn
+                    const v = Math.abs(d) > 40 ? 0 : d / Math.max(0.001, frameTime)
+                    hiding.ringSpeed = hiding.ringSpeed * 0.82 + v * 0.18
+                    if (Math.abs(hiding.ringSpeed) < 2) hiding.ringSpeed = 0
+                }
+            }
+            // it runs against the turn (feet to the ring, so its right is the way the angle
+            // falls); a little while after each letter typed in Ask, it patters in place
+            property real patter: 0
+            run: Math.max(-3, Math.min(3, ringSpeed / 120)) + patter
+            Timer { id: patterStop; interval: 220; onTriggered: hiding.patter = 0 }
+
+            // a fast turn carries it up the side of the wheel; it slides back as the turn slows
+            SpringValue { id: carry; to: Math.max(-28, Math.min(28, hiding.ringSpeed * 0.035)); value: 0; stiffness: 90; dampingRatio: Prefs.calm ? 1 : 0.6; epsilon: 0.05 }
+
+            // flung hard enough (a fling peaks at ~600 deg/s; turning by hand stays well under), it
+            // goes round the wheel and comes out dizzy (once in a while)
+            property real _dizzyAt: 0
+            onRingSpeedChanged: {
+                if (Math.abs(ringSpeed) > 6) { dozing.dozed = false; dozing.restart() }
+                if (Math.abs(ringSpeed) > 480 && Date.now() - _dizzyAt > 5000) {
+                    _dizzyAt = Date.now()
+                    if (!Prefs.calm) tumble.kick(ringSpeed > 0 ? 900 : -900)
+                    react("dizzy")
+                }
+            }
+
+            // ── where it looks ── in its own frame (it's turned to the ring): at the letter
+            // being typed while you type in Ask, else at the middle of the dial
+            function lookTo(px, py) {
+                const cx = x + width / 2, cy = y + height / 2
+                const a = Math.atan2(py - cy, px - cx) - rotation * Math.PI / 180
+                return Qt.point(Math.cos(a), Math.sin(a))
+            }
+            readonly property real caretDeg: valueBar.flipped ? valueBar.fromDeg + valueBar.sweep - valueBar.caretAlong : valueBar.fromDeg + valueBar.caretAlong
+            look: askControl.typing
+                ? lookTo(dial.centerX + valueBar.radius * Math.cos(caretDeg * Math.PI / 180), dial.centerY + valueBar.radius * Math.sin(caretDeg * Math.PI / 180))
+                : lookTo(dial.centerX + dial.settings.innerRadius * 0.3 * Math.cos(dial.midDeg * Math.PI / 180), dial.centerY + dial.settings.innerRadius * 0.3 * Math.sin(dial.midDeg * Math.PI / 180))
+
+            // every letter typed in Ask: a bob and a patter; its own name: it's glad
+            Connections {
+                target: valueBar
+                enabled: askControl.typing
+                function onTextChanged() {
+                    dozing.dozed = false
+                    dozing.restart()
+                    hiding.react("type")
+                    hiding.patter = 1.2
+                    patterStop.restart()
+                    if (/dial[- ]?e\W*$/i.test(valueBar.text)) hiding.react("name")
+                }
+            }
+
+            asleep: dozing.dozed && !held
             Timer {
                 id: dozing
                 property bool dozed: false
@@ -1106,10 +1192,20 @@ PanelWindow {
                 target: dial
                 function onOpenChanged() { dozing.dozed = false }
             }
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: { dozing.dozed = false; dozing.restart(); hiding.poke() }
+
+            // its own mouse: poke, pet, and pick it up to move it along the edge
+            interactive: true
+            draggable: true
+            onGrabbed: { dozing.dozed = false; dozing.restart() }
+            onDragTo: p => {
+                const a = Math.atan2(p.y - dial.centerY, p.x - dial.centerX) * 180 / Math.PI
+                // the same turn as the arc (-180..180 against startDeg's numbers)
+                const k = a + 360 * Math.round((dial.startDeg + dial.sweepDeg / 2 - a) / 360)
+                dragDeg = Math.max(lowDeg, Math.min(highDeg, k))
+            }
+            onDropped: (vx, vy) => {
+                if (!isNaN(dragDeg)) MascotSpots.put("center", (dragDeg - lowDeg) / Math.max(1, highDeg - lowDeg))
+                dragDeg = NaN
             }
         }
 

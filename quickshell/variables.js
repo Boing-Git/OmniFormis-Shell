@@ -332,6 +332,10 @@ const hintRemindDays = 30;
 // Edit is on to change it). Delete the file to come back to the built-in order.
 const controlOrderPath = "/home/boing/.local/state/dial-quickshell/control-order.json";
 
+// where you put the mascots (dragged along the inside of their ring): the control center's and
+// the lock's spots, as a share of the way along the dial (MascotSpots.qml). Delete it for the defaults
+const mascotSpotsPath = "/home/boing/.local/state/dial-quickshell/mascot-spots.json";
+
 // ── live settings ── the values below (and scrollMomentum, flickStrength, hintTimes,
 // osdEnabled, the sorting and the tick sound further up and down this file) can also be
 // changed from inside the shell: the control center's Settings control, or

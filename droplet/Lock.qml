@@ -247,9 +247,19 @@ Scope {
                 SpringValue { id: keeperX; to: root.count > 0 ? row.endX + row.gap + 12 : surface.width / 2 - 28; stiffness: 260; dampingRatio: 0.6; epsilon: 0.1 }
                 SpringValue { id: keeperY; to: row.y + row.height / 2 - 28 - (root.count > 0 ? 0 : 54); stiffness: 260; dampingRatio: 0.6; epsilon: 0.1 }
                 Component.onCompleted: { keeperX.snap(keeperX.to); keeperY.snap(keeperY.to) }
-                x: keeperX.value
-                y: keeperY.value
+                // where you put it (pick it up: it keeps riding the drops from there, until the
+                // lock opens); poke, pet or fling it
+                property point moved: Qt.point(0, 0)
+                x: keeperX.value + moved.x
+                y: keeperY.value + moved.y
+                interactive: true
+                draggable: true
+                onDragTo: p => { moved = Qt.point(p.x - width / 2 - keeperX.value, p.y - height / 2 - keeperY.value) }
+                onPressedChanged: if (pressed) { idle = false; idleClock.restart() }
                 kind: "droplet"
+                happyColor: Colors.tertiary_container
+                sadColor: Colors.secondary_container
+                angryColor: Colors.error_container
                 body: Colors.primary_container
                 ink: Colors.on_primary_container
                 eyeWhite: Colors.primary_fixed

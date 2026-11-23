@@ -193,14 +193,24 @@ Item {
                             }
 
                             // ── Puffy itself ── (Settings → Extras → Mascot) by the clock: it puffs
-                            // up a little with each letter and dozes while nothing is typed
+                            // up a little with each letter and dozes while nothing is typed. Pick
+                            // it up and put it anywhere (until the lock opens); poke, pet or fling it
                             Mascots.Mascot {
                                 id: keeper
                                 width: 60
                                 height: 60
-                                x: parent.width - width + 14
-                                y: parent.height - height + 10
+                                // where you put it, from its spot by the clock
+                                property point moved: Qt.point(0, 0)
+                                x: parent.width - width + 14 + moved.x
+                                y: parent.height - height + 10 + moved.y
+                                interactive: true
+                                draggable: true
+                                onDragTo: p => { moved = Qt.point(p.x - width / 2 - (parent.width - width + 14), p.y - height / 2 - (parent.height - height + 10)) }
+                                onPressedChanged: if (pressed) { idle = false; idleClock.restart() } else passwordInput.forceActiveFocus()
                                 kind: "puffy"
+                                happyColor: Theme.tertiary_container
+                                sadColor: Theme.secondary_container
+                                angryColor: Theme.error_container
                                 calm: Vars.reduceMotion
                                 body: Theme.primary_container
                                 ink: Theme.on_primary_container

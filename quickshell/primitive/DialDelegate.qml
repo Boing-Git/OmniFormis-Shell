@@ -31,6 +31,10 @@ Item {
     property real expandedSize: 400
     property bool open: false
 
+    // a stretch of the dial's angle where something of its own lives ([from, to] in degrees, or
+    // null): the mascot in the control center. Cards keep their words out of it (ReaderCard)
+    property var keepClear: null
+
     // close after a click picks something (activated). Off for dials you keep using
     // after a click (the control center, the OSDs, the wallpaper dial)
     property bool autoClose: true

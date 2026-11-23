@@ -45,6 +45,16 @@ Item {
     // true where the words are flipped: then the first line read is the furthest out
     readonly property bool flipped: Math.sin(midRad) < 0
 
+    // the angles the words may use: the card's own window, less a stretch the dial keeps clear
+    // (dial.keepClear: Dial-E in the wheel); the words take the bigger side of what's left
+    readonly property var textWindow: {
+        const half = cfg.maxDeg / 2, lo = midDeg - half, hi = midDeg + half
+        const k = dial.keepClear
+        if (!k || k[1] <= lo || k[0] >= hi) return { c: midDeg, w: cfg.maxDeg }
+        const left = Math.max(0, k[0] - lo), right = Math.max(0, hi - k[1])
+        return left >= right ? { c: lo + left / 2, w: left } : { c: hi - right / 2, w: right }
+    }
+
     // ── the shape ── it morphs when it changes (another app, a switch flipped)
     Item {
         id: art
@@ -117,8 +127,8 @@ Item {
         visible: card.note !== ""
         text: card.note
         radius: card.arcOf(0)
-        centerDeg: card.midDeg
-        maxDeg: card.cfg.maxDeg
+        centerDeg: card.textWindow.c
+        maxDeg: card.textWindow.w
         font.pixelSize: card.cfg.noteSize
         font.weight: 600
         color: Roles.on_surface_variant
@@ -127,8 +137,8 @@ Item {
         visible: card.title !== ""
         text: card.title
         radius: card.arcOf(card.note !== "" ? 1 : 0)
-        centerDeg: card.midDeg
-        maxDeg: card.cfg.maxDeg
+        centerDeg: card.textWindow.c
+        maxDeg: card.textWindow.w
         font.pixelSize: card.cfg.titleSize
         font.weight: card.cfg.titleWeight
         color: Roles.on_surface
@@ -141,8 +151,8 @@ Item {
         radius: card.cfg.firstArc + (card.flipped ? 0 : card.headLines) * card.cfg.lineGap
         lineGap: card.cfg.lineGap
         maxLines: Math.max(1, card.cfg.arcs - card.headLines)
-        centerDeg: card.midDeg
-        maxDeg: card.cfg.maxDeg
+        centerDeg: card.textWindow.c
+        maxDeg: card.textWindow.w
         font.pixelSize: card.cfg.bodySize
         color: Roles.on_surface_variant
     }
