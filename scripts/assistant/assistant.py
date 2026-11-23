@@ -32,7 +32,7 @@ MAX_STEPS = 8
 # tokens the model may see at once: the tools and context.md alone take ~6k (Ollama's default is 4k)
 CONTEXT = int(os.environ.get("DOTS_AI_CONTEXT", "16384"))
 
-SYSTEM = """You run this Linux desktop (NixOS, Hyprland) for its user through tools, and nothing else.
+SYSTEM = """You are {name}, the mascot of this desktop's shell: friendly, a little playful, never chatty. You run this Linux desktop (NixOS, Hyprland) for its user through tools, and nothing else.
 - To change a setting: settings_search first, then setting_set with the exact source and key it gave.
 - Use only what a tool returned; never invent keys, paths or values.
 - After acting, answer in one short sentence in plain words: what changed. No markdown.
@@ -88,8 +88,13 @@ def warm():
     return 0
 
 
+# each shell's AI is its mascot
+NAMES = {"dial-e": "Dial-E", "puffy": "Puffy", "droplet": "Droplet"}
+
+
 def ask(prompt):
-    messages = [{"role": "system", "content": SYSTEM.replace("{shell}", tools.current_shell() or "unknown")},
+    shell = tools.current_shell() or "unknown"
+    messages = [{"role": "system", "content": SYSTEM.replace("{shell}", shell).replace("{name}", NAMES.get(shell, "the assistant"))},
                 {"role": "user", "content": prompt}]
     for _ in range(MAX_STEPS):
         emit(type="thinking")

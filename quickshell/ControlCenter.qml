@@ -1088,7 +1088,7 @@ PanelWindow {
             radius: dial.settings.knobsMid
             sweep: Math.min(110, dial.sweepDeg - 20)
             fromDeg: dial.midDeg - sweep / 2
-            placeholder: askControl.typing ? "Ask anything, then Enter" : "Type a value, then Enter"
+            placeholder: askControl.typing ? "Ask Dial-E anything, then Enter" : "Type a value, then Enter"
             barColor: Roles.surface_container_high
             borderColor: Roles.primary
             letterColor: Roles.on_surface
@@ -1181,7 +1181,8 @@ PanelWindow {
             // it runs against the turn (feet to the ring, so its right is the way the angle
             // falls); a little while after each letter typed in Ask, it patters in place
             property real patter: 0
-            run: Math.max(-3, Math.min(3, ringSpeed / 120)) + patter
+            // while the AI thinks it runs its wheel (the loading answer is the hamster's own)
+            run: Math.max(-3, Math.min(3, ringSpeed / 120)) + patter + (askControl.busy && askControl.active ? 0.8 : 0)
             Timer { id: patterStop; interval: 220; onTriggered: hiding.patter = 0 }
 
             // a fast turn carries it up the side of the wheel; it slides back as the turn slows
@@ -1210,6 +1211,12 @@ PanelWindow {
             look: askControl.typing
                 ? lookTo(dial.centerX + valueBar.radius * Math.cos(caretDeg * Math.PI / 180), dial.centerY + valueBar.radius * Math.sin(caretDeg * Math.PI / 180))
                 : lookTo(dial.centerX + dial.settings.innerRadius * 0.3 * Math.cos(dial.midDeg * Math.PI / 180), dial.centerY + dial.settings.innerRadius * 0.3 * Math.sin(dial.midDeg * Math.PI / 180))
+
+            // the AI is Dial-E: glad at an answer, sad at an error
+            Connections {
+                target: askControl
+                function onAnswered(ok) { hiding.react(ok ? "right" : "wrong") }
+            }
 
             // every letter typed in Ask: a bob and a patter; its own name: it's glad
             Connections {

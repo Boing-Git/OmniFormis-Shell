@@ -350,6 +350,8 @@ Item {
     property string askAnswer: ""
     property var askConfirm: null
     property bool askBusy: false
+    // an answer came (ok), or an error: Puffy shows it (Launcher.qml)
+    signal answered(bool ok)
     readonly property string askScript: Quickshell.shellDir + "/../scripts/assistant/assistant.py"
     function ask(question) {
         var q = question.trim();
@@ -385,15 +387,17 @@ Item {
                     // (with its arguments: the list merges rows that are named the same)
                     rootModel.askSteps = rootModel.askSteps.concat([{ ok: e.ok, name: e.name.replace(/_/g, " ").replace(/^./, c => c.toUpperCase())
                         + (e.args && Object.keys(e.args).length ? " · " + Object.values(e.args).join(" ") : "") + (e.ok ? "" : ": " + e.result) }]);
-                else if (e.type === "answer" || e.type === "error")
+                else if (e.type === "answer" || e.type === "error") {
                     rootModel.askAnswer = e.text;
+                    rootModel.answered(e.type === "answer");
+                }
                 else if (e.type === "confirm")
                     rootModel.askConfirm = e;
             }
         }
         onExited: rootModel.askBusy = false
     }
-    // opening /ask wakes the model (assistant.py --warm) with a "Waking the AI…" row meanwhile;
+    // opening /ask wakes the model (assistant.py --warm) with a "Puffy is waking up…" row meanwhile;
     // again only once the last wake is older than Ollama keeps it (15 min)
     property bool askWaking: false
     property real askWokeAt: 0
@@ -441,7 +445,7 @@ Item {
             if (askBusy)
                 rows.push(askRow("Thinking…", ["INTERNAL:NOOP"], "hourglass_top"));
             else if (askWaking)
-                rows.push(askRow("Waking the AI…", ["INTERNAL:NOOP"], "hourglass_top"));
+                rows.push(askRow("Puffy is waking up…", ["INTERNAL:NOOP"], "hourglass_top"));
             for (var i = 0; i < askSteps.length; i++)
                 rows.push(askRow(askSteps[i].name, ["INTERNAL:NOOP"], askSteps[i].ok ? "check_circle" : "error"));
         }
@@ -562,7 +566,7 @@ Item {
         }
 
         var settingsOptions = [
-            askRow("Ask the AI", ["INTERNAL:ASK_MODE"], "auto_awesome"),
+            askRow("Ask Puffy", ["INTERNAL:ASK_MODE"], "auto_awesome"),
             askRow("Automations", ["INTERNAL:RUN_MODE"], "bolt"),
             {
                 name: "Settings",

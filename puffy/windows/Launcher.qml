@@ -8,6 +8,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import "../theme"
 import "../core/primitives" as Primitives
+import "../mascot" as Mascots
 Item {
     id: root
     
@@ -158,7 +159,7 @@ Item {
                 SearchBar {
                     id: searchBar
                     expanded: root.expanded
-                    placeholderText: "Search apps..."
+                    placeholderText: "Search apps, or /ask Puffy..."
                     showIcon: true
                     containerPadding: Vars.spacingMedium
                     outerTopLeftRadius: panel.topLeftRadius
@@ -170,6 +171,42 @@ Item {
                     Behavior on outerTopRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
                     Behavior on outerBottomLeftRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
                     Behavior on outerBottomRightRadius { enabled: !root.gameMode; NumberAnimation { duration: Vars.animationDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.customExpressiveSpatialSlow } }
+                    // in /ask the AI is Puffy: it watches the letters, bobs while it thinks, is
+                    // glad at an answer and sad at an error
+                    Mascots.Mascot {
+                        id: puffy
+                        readonly property bool asking: searchBar.text.startsWith("/ask")
+                        width: 36
+                        height: 36
+                        anchors.right: parent.right
+                        // left of the bar's clear button
+                        anchors.rightMargin: 52
+                        anchors.verticalCenter: parent.verticalCenter
+                        opacity: asking && Vars.mascots && Vars.assistant !== false ? 1 : 0
+                        visible: opacity > 0
+                        Behavior on opacity { NumberAnimation { duration: 160 } }
+                        kind: "puffy"
+                        happyColor: Theme.tertiary_container
+                        sadColor: Theme.secondary_container
+                        angryColor: Theme.error_container
+                        calm: Vars.reduceMotion
+                        body: Theme.primary_container
+                        ink: Theme.on_primary_container
+                        eyeWhite: Theme.primary_fixed
+                        pupil: Theme.on_primary_fixed
+                        accent: Theme.primary
+                        run: launcherModel.askBusy ? 0.7 : 0
+                        look: launcherModel.askBusy ? Qt.point(-0.2, -1) : searchBar.text.length > 5 ? Qt.point(-1, 0.1) : Qt.point(0, -0.35)
+                        Connections {
+                            target: searchBar
+                            function onTextChanged() { if (puffy.asking) puffy.react("type") }
+                        }
+                        Connections {
+                            target: launcherModel
+                            function onAnswered(ok) { puffy.react(ok ? "right" : "wrong") }
+                        }
+                    }
+
                     onDownPressed: {
                         if (appList.count > 0 && appList.currentIndex === -1) {
                             appList.currentIndex = 0;

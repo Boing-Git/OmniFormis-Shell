@@ -54,11 +54,14 @@ Item {
         run(["--yes", c.name, JSON.stringify(c.args)])
     }
 
+    // an answer came (ok), or an error: the mascot shows it
+    signal answered(bool ok)
+
     // one JSON line per event (assistant.py's docstring)
     function event(e) {
         if (e.type === "tool")
             steps = steps.concat([(e.ok ? "✓ " : "✗ ") + e.name.replace(/_/g, " ").replace(/^./, c => c.toUpperCase())])
-        else if (e.type === "answer" || e.type === "error") answer = e.text
+        else if (e.type === "answer" || e.type === "error") { answer = e.text; answered(e.type === "answer") }
         else if (e.type === "confirm") confirmStep = e
     }
     property Process _asker: Process {
@@ -132,11 +135,11 @@ Item {
             fill: ask.confirmStep ? Roles.error_container : ask.answer !== "" ? Roles.secondary_container : Roles.surface_container_high
             ink: ask.confirmStep ? Roles.on_error_container : ask.answer !== "" ? Roles.on_secondary_container : Roles.on_surface_variant
             symbol: ask.busy || ask.waking ? "hourglass_top" : ask.confirmStep ? "help" : "auto_awesome"
-            note: ask.busy ? "Thinking…" : ask.waking ? "Waking the local AI…" : ask.question
+            note: ask.busy ? "Dial-E is thinking…" : ask.waking ? "Dial-E is waking up…" : ask.question
             // the title is one line: the answer goes in the body, which wraps along the card
             title: ask.confirmStep ? ask.confirmStep.question
-                : ask.answer !== "" ? (ask.steps.length === 0 ? "Answer" : ask.steps.length + (ask.steps.length === 1 ? " step" : " steps"))
-                : ask.busy ? "" : "Ask the local AI"
+                : ask.answer !== "" ? (ask.steps.length === 0 ? "Dial-E" : ask.steps.length + (ask.steps.length === 1 ? " step" : " steps"))
+                : ask.busy ? "" : "Ask Dial-E"
             body: ask.answer !== "" ? ask.answer + (ask.steps.length > 0 ? "\n" + ask.steps.join("   ") : "")
                 : ask.steps.length > 0 ? ask.steps.join("\n")
                 : ask.busy ? "" : "Type, then Enter: \"bigger gaps\", \"open Downloads\", \"dark mode\", \"what's playing\"."

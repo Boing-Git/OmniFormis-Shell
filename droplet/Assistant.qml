@@ -43,6 +43,7 @@ Scope {
     property bool busy: false
     property var steps: []           // what it did: [{ icon, text, ok }]
     property string answer: ""
+    property bool answerOk: true     // the answer is an answer (false: an error)
     property var confirmStep: null   // { name, args, question }: waiting for a yes
     readonly property bool hasCard: busy || steps.length > 0 || answer !== "" || confirmStep !== null
 
@@ -90,8 +91,8 @@ Scope {
         if (e.type === "tool")
             steps = steps.concat([{ icon: e.ok ? "check" : "error", ok: e.ok,
                                     text: pretty(e.name) + (e.ok ? "" : ": " + e.result) }])
-        else if (e.type === "answer") answer = e.text
-        else if (e.type === "error") answer = e.text
+        else if (e.type === "answer") { answerOk = true; answer = e.text }
+        else if (e.type === "error") { answerOk = false; answer = e.text }
         else if (e.type === "confirm") confirmStep = e
     }
 
@@ -228,16 +229,49 @@ Scope {
             Behavior on border.color { ColorAnimation { duration: 700 } }
             Timer { running: root.busy || root.waking; repeat: true; interval: 700; onTriggered: bar.hue = (bar.hue + 1) % 3 }
 
-            Text {
+            // Droplet itself (the AI is Droplet): it watches the letters, looks up and bobs while it
+            // thinks, is glad at an answer and sad at an error. Mascot off: a spinning spark
+            Item {
                 id: spark
+                width: 40
+                height: 40
                 anchors.verticalCenter: parent.verticalCenter
-                x: spread.value > 0.5 ? 20 : (parent.width - width) / 2
-                text: "auto_awesome"
-                font.family: "Material Symbols Rounded"
-                font.pixelSize: 24
-                color: Colors.primary
-                RotationAnimation on rotation { running: root.busy; from: 0; to: 360; duration: 1400; loops: Animation.Infinite }
-                Connections { target: root; function onBusyChanged() { if (!root.busy) spark.rotation = 0 } }
+                x: spread.value > 0.5 ? 14 : (parent.width - width) / 2
+                Text {
+                    anchors.centerIn: parent
+                    visible: !Settings.mascot
+                    text: "auto_awesome"
+                    font.family: "Material Symbols Rounded"
+                    font.pixelSize: 24
+                    color: Colors.primary
+                    RotationAnimation on rotation { running: root.busy && !Settings.mascot; from: 0; to: 360; duration: 1400; loops: Animation.Infinite }
+                }
+                Mascot {
+                    id: buddy
+                    anchors.fill: parent
+                    visible: Settings.mascot
+                    kind: "droplet"
+                    happyColor: Colors.tertiary_container
+                    sadColor: Colors.secondary_container
+                    angryColor: Colors.error_container
+                    body: Colors.primary_container
+                    ink: Colors.on_primary_container
+                    eyeWhite: Colors.primary_fixed
+                    pupil: Colors.on_primary_fixed
+                    accent: Colors.primary
+                    run: root.busy || root.waking ? 0.7 : 0
+                    look: root.busy || root.waking ? Qt.point(0.2, -1)
+                        : input.text !== "" ? Qt.point(Math.min(1, input.cursorRectangle.x / Math.max(1, input.width) * 1.6 + 0.2), 0.1)
+                        : Qt.point(0, -0.35)
+                    Connections {
+                        target: input
+                        function onTextChanged() { if (root.phase === "open") buddy.react("type") }
+                    }
+                    Connections {
+                        target: root
+                        function onAnswerChanged() { if (root.answer !== "") buddy.react(root.answerOk ? "right" : "wrong") }
+                    }
+                }
             }
 
             TextInput {
@@ -258,7 +292,7 @@ Scope {
                 Text {
                     visible: input.text === ""
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.busy ? "Working on it…" : root.waking ? "Waking the AI…" : "Ask anything: \"bigger gaps\", \"open Downloads\", \"dark mode\""
+                    text: root.busy ? "Droplet is on it…" : root.waking ? "Droplet is waking up…" : "Ask Droplet: \"bigger gaps\", \"open Downloads\", \"dark mode\""
                     font: input.font
                     color: Colors.on_surface_variant
                 }
