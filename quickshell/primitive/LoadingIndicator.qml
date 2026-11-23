@@ -100,6 +100,10 @@ Item {
 
     property real cyclePosition: 0.0
 
+    // a new position draws: lets something else step it (render-boot-frames.qml renders the
+    // boot animation from it)
+    onCyclePositionChanged: canvas.requestPaint()
+
     Timer {
         id: masterTimer
         interval: 16

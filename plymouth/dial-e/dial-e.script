@@ -1,0 +1,50 @@
+# Dial-E's boot animation: the shell's own M3E loading indicator (quickshell/primitive/
+# LoadingIndicator.qml). The frames hold one morph cycle; the turn is done here, so the two
+# loops run on their own and neither shows a seam. Made by scripts/build-plymouth.sh, which
+# bakes the theme's colours into the @...@ values below.
+
+Window.SetBackgroundTopColor(0.075, 0.075, 0.094);
+Window.SetBackgroundBottomColor(0.075, 0.075, 0.094);
+
+FRAMES = 139;
+for (i = 0; i < FRAMES; i++) {
+    n = "" + i;
+    if (i < 100) n = "0" + n;
+    if (i < 10) n = "0" + n;
+    frame[i] = Image("frame-" + n + ".png");
+}
+spinner = Sprite();
+spinner.SetZ(10);
+tick = 0;
+
+# Plymouth calls this 50 times a second: a morph cycle every 4.62 s (231 calls), a turn every
+# 2.4 s (120 calls)
+fun refresh_callback() {
+    tick = tick + 1;
+    image = frame[Math.Int(tick * FRAMES / 231) % FRAMES].Rotate(tick * 2 * Math.Pi / 120);
+    spinner.SetImage(image);
+    spinner.SetX(Window.GetX() + Window.GetWidth() / 2 - image.GetWidth() / 2);
+    spinner.SetY(Window.GetY() + Window.GetHeight() / 2 - image.GetHeight() / 2);
+}
+Plymouth.SetRefreshFunction(refresh_callback);
+
+# a password asked for at boot (a disk to unlock, a service): the question and a bead per letter
+words = Sprite();
+words.SetZ(20);
+fun show_words(text) {
+    image = Image.Text(text, 0.894, 0.882, 0.914);
+    words.SetImage(image);
+    words.SetX(Window.GetX() + Window.GetWidth() / 2 - image.GetWidth() / 2);
+    words.SetY(Window.GetY() + Window.GetHeight() / 2 + 170);
+    words.SetOpacity(1);
+}
+fun password_callback(prompt, bullets) {
+    text = prompt + "   ";
+    for (b = 0; b < bullets; b++) text = text + "•";
+    show_words(text);
+}
+fun message_callback(text) { show_words(text); }
+fun normal_callback() { words.SetOpacity(0); }
+Plymouth.SetDisplayPasswordFunction(password_callback);
+Plymouth.SetMessageFunction(message_callback);
+Plymouth.SetDisplayNormalFunction(normal_callback);

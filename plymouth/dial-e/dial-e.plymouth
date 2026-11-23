@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Dial-E
+Description=The dial shell's M3E loading indicator, morphing and turning
+ModuleName=script
+
+[script]
+ImageDir=@out@/share/plymouth/themes/dial-e
+ScriptFile=@out@/share/plymouth/themes/dial-e/dial-e.script
