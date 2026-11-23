@@ -28,6 +28,7 @@ STATE = Path(os.environ.get("XDG_STATE_HOME", HOME / ".local/state"))
 CACHE = Path(os.environ.get("XDG_CACHE_HOME", HOME / ".cache")) / "dots-assistant"
 DIAL_SETTINGS = STATE / "dial-quickshell" / "settings.json"
 DIAL_SCHEMA = CACHE / "dial-e-settings.json"
+DIAL_DIR = DOTS / "quickshell"
 
 
 class ToolError(Exception):
@@ -92,8 +93,122 @@ def dial_settings():
     return rows, False
 
 
+# ── Dial-E's Advanced settings ── (primitive/Advanced.qml) every plain property of its settings
+# files: read here from the files themselves, the same way Advanced.qml does, so they are known
+# whether Dial-E runs or not. Saved changes live in Vars.advancedPath as { type: { key: value } }
+def advanced_path():
+    m = re.search(r'const advancedPath\s*=\s*"([^"]+)"', (DIAL_DIR / "variables.js").read_text())
+    return Path(m.group(1)) if m else STATE / "dial-quickshell" / "advanced.json"
+
+
+def advanced_files():
+    text = (DIAL_DIR / "primitive" / "Advanced.qml").read_text()
+    return re.findall(r'\{ type: "(\w+)", label: "([^"]+)", path: "([^"]+)"', text)
+
+
+def literal(raw):
+    raw = raw.strip().rstrip(";").split("//")[0].strip()
+    if raw in ("true", "false"):
+        return raw == "true"
+    m = re.fullmatch(r'"([^"\\]*)"', raw)
+    if m:
+        return m.group(1)
+    try:
+        if not re.fullmatch(r"-?\d+(\.\d+)?|-?\.\d+", raw):
+            return None
+        return float(raw) if "." in raw else int(raw)
+    except ValueError:
+        return None
+
+
+def advanced_settings():
+    """[{type, label, key, kind, int, section, help, default, value}] from the files and the saved changes."""
+    try:
+        saved = json.loads(advanced_path().read_text())
+    except (OSError, ValueError):
+        saved = {}
+    out = []
+    for type_, label, path in advanced_files():
+        try:
+            lines = (DIAL_DIR / path).read_text().splitlines()
+        except OSError:
+            continue
+        section, comment = "General", []
+        for line in lines:
+            sec = re.match(r"^\s*//\s*──\s*(.+?)\s*(──|$)", line)
+            if sec:
+                t = re.sub(r"\(.*$", "", sec.group(1)).strip()
+                t = re.sub(r"^the ", "", t)
+                section = t[:1].upper() + t[1:]
+                comment = []
+                continue
+            c = re.match(r"^\s*//\s?(.*)$", line)
+            if c:
+                comment.append(c.group(1))
+                continue
+            p_ = re.match(r"^\s*property\s+(real|int|bool|string)\s+(\w+)\s*:(.*)$", line)
+            if p_ and section.lower() != "worked out":
+                kind = {"bool": "bool", "string": "text"}.get(p_.group(1), "number")
+                default = literal(p_.group(3))
+                value = saved.get(type_, {}).get(p_.group(2), default)
+                out.append({"type": type_, "label": label, "key": p_.group(2), "kind": kind, "int": p_.group(1) == "int",
+                            "section": section, "help": " ".join(comment).strip(), "default": default, "value": value})
+            comment = []
+    return out
+
+
+def advanced_range(row):
+    # as Advanced.qml's rangeOf: from its own value (0 .. 3x, a negative one mirrored)
+    d = row["default"] if isinstance(row["default"], (int, float)) and not isinstance(row["default"], bool) else 0
+    return [d * 3 if d < 0 else 0, max(0 if d < 0 else d * 3, 10 if row["int"] else 1)]
+
+
+def advanced_set(full_key, value):
+    type_, _, key = full_key.partition(".")
+    row = next((r for r in advanced_settings() if r["type"] == type_ and r["key"] == key), None)
+    if not row:
+        raise ToolError(f"unknown Advanced setting '{full_key}' (it is Type.key, from settings_search)")
+    if row["kind"] == "number":
+        try:
+            v = float(str(value).strip())
+        except ValueError:
+            raise ToolError(f"{key} is a number")
+        lo, hi = advanced_range(row)
+        if row["default"] is not None and not lo <= v <= hi:
+            raise ToolError(f"{key} goes from {lo:g} to {hi:g}")
+        v = int(round(v)) if row["int"] else (int(v) if v.is_integer() else v)
+    elif row["kind"] == "bool":
+        v = str(value).strip().lower() in ("true", "1", "on", "yes")
+    else:
+        v = str(value).strip()
+        if v in ("", "undefined", "null", "NaN") or re.search(r'[\n\r"\\]', v):
+            raise ToolError(f"{key} can't be '{v}'")
+    if current_shell() == "dial-e":
+        r = run([SHELL, "ipc", "call", "advanced", "set", type_, key, str(v).lower() if isinstance(v, bool) else str(v)]).strip()
+        if r.startswith("Error"):
+            raise ToolError(r)
+        return f"{row['label']} > {key} = {v}"
+    path = advanced_path()
+    try:
+        saved = json.loads(path.read_text())
+    except (OSError, ValueError):
+        saved = {}
+    saved.setdefault(type_, {})[key] = v
+    if not DRY:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(saved, indent=2) + "\n")
+        tmp.replace(path)
+    return f"Dial-E isn't running: saved {row['label']} > {key} = {v}, it applies when Dial-E starts"
+
+
 def all_settings():
     out = []
+    for r in advanced_settings():
+        rng = advanced_range(r) if r["kind"] == "number" and r["default"] is not None else [None, None]
+        out.append({"source": "dial-e-advanced", "key": r["type"] + "." + r["key"], "value": r["value"],
+                    "type": "number" if r["kind"] == "number" else r["kind"], "min": rng[0], "max": rng[1],
+                    "help": f'Advanced > {r["label"]} > {r["section"]}: {r["help"]}'})
     rows, _ = dial_settings()
     for r in rows:
         out.append({"source": "dial-e", "key": r["key"], "value": r.get("value"), "type": r.get("type"),
@@ -133,12 +248,14 @@ def settings_search(query, source=""):
 
 
 def setting_set(source, key, value):
+    if source == "dial-e-advanced":
+        return advanced_set(key, value)
     if source == "hyprland":
         return run(["omniformis", "hypr", "set", key, str(value)]).strip() or f"{key} = {value}"
     if source == "puffy":
         return run(["omniformis", "qs", "set", key, str(value)]).strip() or f"{key} = {value}"
     if source != "dial-e":
-        raise ToolError("source is one of dial-e, hyprland, puffy")
+        raise ToolError("source is one of dial-e, dial-e-advanced, hyprland, puffy")
     rows, live = dial_settings()
     if live:
         r = run([SHELL, "ipc", "call", "prefs", "set", key, str(value)]).strip()
@@ -346,10 +463,10 @@ def p(type_, desc, enum=None):
 
 
 TOOLS = {
-    "settings_search": (settings_search, "Find settings of the desktop: the Dial-E shell, Hyprland (gaps, animations, layout, modifiers, default apps, game mode) and the Puffy shell. Always search before setting, to get the exact source and key.",
-                        {"query": p("string", "words to look for, e.g. 'lock blur' or 'gaps'"), "source": p("string", "only this source", ["dial-e", "hyprland", "puffy"])}, ["query"], False),
+    "settings_search": (settings_search, "Find settings of the desktop: the Dial-E shell (dial-e: its main settings; dial-e-advanced: every size, timing and shape of its control center, media player, screenshot tool and lock screen), Hyprland (gaps, animations, layout, modifiers, default apps, game mode) and the Puffy shell. Always search before setting, to get the exact source and key.",
+                        {"query": p("string", "words to look for, e.g. 'lock blur' or 'gaps'"), "source": p("string", "only this source", ["dial-e", "dial-e-advanced", "hyprland", "puffy"])}, ["query"], False),
     "setting_set": (setting_set, "Change one setting found with settings_search.",
-                    {"source": p("string", "where the setting lives", ["dial-e", "hyprland", "puffy"]), "key": p("string", "the exact key"), "value": p("string", "the new value")}, ["source", "key", "value"], False),
+                    {"source": p("string", "where the setting lives", ["dial-e", "dial-e-advanced", "hyprland", "puffy"]), "key": p("string", "the exact key"), "value": p("string", "the new value")}, ["source", "key", "value"], False),
     "keybinds_search": (keybinds_search, "Find keyboard shortcuts by what they do or by key.", {"query": p("string", "e.g. 'screenshot' or 'SUPER + T'")}, ["query"], False),
     "shell_switch": (shell_switch, "Switch the desktop shell.", {"name": p("string", "the shell", ["dial-e", "puffy", "droplet"])}, ["name"], False),
     "shell_actions": (shell_actions, "List what the running shell can do (its IPC targets and functions).", {}, [], False),

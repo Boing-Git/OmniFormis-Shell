@@ -71,4 +71,18 @@ server.shutdown()
 ev = run("hello", "http://127.0.0.1:9")
 assert ev[-1]["type"] == "error" and "Ollama" in ev[-1]["text"], ev
 
+# Dial-E's Advanced settings: read from its files (as Advanced.qml does), saved for when it starts
+import tempfile
+sys.path.insert(0, str(HERE))
+import tools
+adv = tools.advanced_settings()
+assert len(adv) > 250 and any(r["type"] == "LockSettings" and r["key"] == "ringRadius" for r in adv)
+with tempfile.TemporaryDirectory() as d:
+    tools.advanced_path = lambda: Path(d) / "advanced.json"
+    tools.current_shell = lambda: "droplet"
+    assert tools.call("setting_set", {"source": "dial-e-advanced", "key": "LockSettings.ringRadius", "value": "240"})[0] == "ok"
+    assert json.loads((Path(d) / "advanced.json").read_text()) == {"LockSettings": {"ringRadius": 240}}
+    kind, why = tools.call("setting_set", {"source": "dial-e-advanced", "key": "LockSettings.ringRadius", "value": "9999"})
+    assert kind == "error" and "goes from" in why
+
 print("assistant: all passed")

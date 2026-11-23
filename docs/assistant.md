@@ -13,7 +13,9 @@ It works the same under Dial-E, Puffy and Droplet: it is its own small Quickshel
 `scripts/assistant/tools.py` is the whole list (19 commands). The model can call nothing else,
 and every command runs as a plain argument list, never through a shell.
 
-- **Settings**: every Dial-E setting (live, or saved for when Dial-E next starts), every
+- **Settings**: every Dial-E setting, and all ~300 of its Advanced ones (every size, timing
+  and shape of the control center, media player, screenshot tool and lock: read from the
+  settings files themselves), live or saved for when Dial-E next starts; every
   Hyprland variable of the dotfiles (gaps, animations, layout, modifiers, default apps, game
   mode), every Puffy setting. It searches before it sets, and values are checked (ranges,
   choices) before anything is written.
@@ -30,21 +32,23 @@ and every command runs as a plain argument list, never through a shell.
 From a terminal: `scripts/assistant/tools.py list`, `tools.py call volume '{"action":"get"}'`,
 `scripts/assistant/assistant.py "make the gaps bigger"`.
 
-## Turn on the AI (NixOS, as root)
+## Turn on the AI
 
-Ollama with your graphics card (CUDA), and one model that can call tools, about 5 GB:
+It is in `~/Nixos` already (`modules/system/services/services.nix`: Ollama with CUDA and the
+`qwen3:8b` model; `modules/system/core/environment.nix`: NixOS's CUDA cache, so it comes
+ready-built). The first rebuild has to be told about that cache, since it is only trusted
+after this rebuild:
 
-```nix
-services.ollama = {
-  enable = true;
-  package = pkgs.ollama-cuda;
-  loadModels = [ "qwen3:8b" ];
-};
+```sh
+sudo nixos-rebuild switch --flake ~/Nixos \
+  --option extra-substituters https://cache.nixos-cuda.org \
+  --option extra-trusted-public-keys cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=
 ```
 
-then `sudo nixos-rebuild switch --flake ~/Nixos`. It listens on 127.0.0.1 only: nothing leaves
-the machine. Another model: set `DOTS_AI_MODEL` (and `DOTS_AI_URL` for another server) in the
-session's environment. Without Ollama the bar opens and says it can't reach the AI.
+After that a plain `sudo nixos-rebuild switch --flake ~/Nixos` is enough. The model (about
+5 GB) downloads once, in the background, after the rebuild. Ollama listens on 127.0.0.1 only:
+nothing leaves the machine. Another model: set `DOTS_AI_MODEL` (and `DOTS_AI_URL` for another
+server). Without Ollama the bar opens and says it can't reach the AI.
 
 ## Test
 
@@ -52,5 +56,4 @@ session's environment. Without Ollama the bar opens and says it can't reach the 
 
 ## Not yet
 
-Notes (skipped for now); Dial-E's ~300 Advanced settings (only its main settings are tools);
-voice.
+Notes (skipped for now); voice.
