@@ -14,3 +14,4 @@ BluetoothPairDelegate 1.0 bluetooth/BluetoothPairDelegate.qml
 SettingsIcon 1.0 SettingsIcon.qml
 KeybindsPage 1.0 KeybindsPage.qml
 KeybindRow 1.0 KeybindRow.qml
+ExtrasPage 1.0 ExtrasPage.qml

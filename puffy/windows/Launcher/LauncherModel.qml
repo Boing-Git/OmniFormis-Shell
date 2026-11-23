@@ -341,6 +341,89 @@ Item {
         }
     }
 
+    // ── /ask ── the local AI (../scripts/assistant/assistant.py) in the launcher's own rows:
+    // "/ask bigger gaps", Enter on "Ask: …" asks; the steps it did and its answer come in as
+    // rows; a step that asks first (log out, restart, shut down) adds Yes and No rows.
+    // Settings → Extras → assistant (variables.js) turns it off.
+    property string askQuestion: ""
+    property var askSteps: []
+    property string askAnswer: ""
+    property var askConfirm: null
+    property bool askBusy: false
+    readonly property string askScript: Quickshell.shellDir + "/../scripts/assistant/assistant.py"
+    function ask(question) {
+        var q = question.trim();
+        if (q === "" || askBusy)
+            return;
+        askQuestion = q;
+        askSteps = [];
+        askAnswer = "";
+        askConfirm = null;
+        askBusy = true;
+        asker.command = ["python3", askScript, q];
+        asker.running = true;
+    }
+    function askConfirmed(yes) {
+        var c = askConfirm;
+        askConfirm = null;
+        if (!yes || !c) {
+            askAnswer = "Okay, I didn't.";
+            return;
+        }
+        askBusy = true;
+        asker.command = ["python3", askScript, "--yes", c.name, JSON.stringify(c.args)];
+        asker.running = true;
+    }
+    Process {
+        id: asker
+        // one JSON line per event (assistant.py's docstring)
+        stdout: SplitParser {
+            onRead: line => {
+                var e;
+                try { e = JSON.parse(line); } catch (err) { return; }
+                if (e.type === "tool")
+                    // (with its arguments: the list merges rows that are named the same)
+                    rootModel.askSteps = rootModel.askSteps.concat([{ ok: e.ok, name: e.name.replace(/_/g, " ").replace(/^./, c => c.toUpperCase())
+                        + (e.args && Object.keys(e.args).length ? " · " + Object.values(e.args).join(" ") : "") + (e.ok ? "" : ": " + e.result) }]);
+                else if (e.type === "answer" || e.type === "error")
+                    rootModel.askAnswer = e.text;
+                else if (e.type === "confirm")
+                    rootModel.askConfirm = e;
+            }
+        }
+        onExited: rootModel.askBusy = false
+    }
+    onAskStepsChanged: scheduleSync()
+    onAskAnswerChanged: scheduleSync()
+    onAskConfirmChanged: scheduleSync()
+    onAskBusyChanged: scheduleSync()
+    function askRow(name, command, iconName) {
+        return { name: name, command: command, commandStr: JSON.stringify(command), workingDirectory: Quickshell.env("HOME"),
+                 icon: "", isFile: false, isSetting: true, iconName: iconName };
+    }
+    function askRows(question) {
+        if (Vars.assistant === false)
+            return [askRow("Ask the AI is off (Settings → Extras)", ["INTERNAL:NOOP"], "block")];
+        var rows = [];
+        if (question !== "" && (question !== askQuestion || (!askBusy && askAnswer === "" && askSteps.length === 0)))
+            rows.push(askRow("Ask: " + question, ["INTERNAL:ASK", question], "auto_awesome"));
+        if (question === askQuestion || question === "") {
+            if (askConfirm) {
+                rows.push(askRow("Yes: " + askConfirm.question, ["INTERNAL:ASK_YES"], "check"));
+                rows.push(askRow("No", ["INTERNAL:ASK_NO"], "close"));
+            }
+            if (askAnswer !== "")
+                rows.push(askRow(askAnswer, ["INTERNAL:NOOP"], "auto_awesome"));
+            if (askBusy)
+                rows.push(askRow("Thinking…", ["INTERNAL:NOOP"], "hourglass_top"));
+            for (var i = 0; i < askSteps.length; i++)
+                rows.push(askRow(askSteps[i].name, ["INTERNAL:NOOP"], askSteps[i].ok ? "check_circle" : "error"));
+        }
+        if (rows.length === 0)
+            rows.push(askRow("Type what you want, then Enter: \"bigger gaps\", \"open Downloads\"", ["INTERNAL:NOOP"], "auto_awesome"));
+        return rows;
+    }
+
     onFilterTextChanged: scheduleSync()
     onEmojiModelChanged: scheduleSync()
     onFileModelChanged: scheduleSync()
@@ -381,6 +464,7 @@ Item {
         }
 
         var settingsOptions = [
+            askRow("Ask the AI", ["INTERNAL:ASK_MODE"], "auto_awesome"),
             {
                 name: "Settings",
                 command: ["INTERNAL:SETTINGS"],
@@ -451,6 +535,10 @@ Item {
                         iconName: "travel_explore"
                     }
                 ];
+            }
+            if (query.startsWith("ask")) {
+                // the question as typed (the query above is lowercased)
+                return askRows(rootModel.filterText.trim().substring(4).trim());
             }
             if (query.startsWith("emoji")) {
                 if (query === "emoji")

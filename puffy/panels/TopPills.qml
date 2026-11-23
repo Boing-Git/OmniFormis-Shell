@@ -574,6 +574,22 @@ PanelWindow {
         }
     }
 
+    // the AI: the launcher in its /ask mode (Super + A, through scripts/shell)
+    function toggleAssistant() {
+        if (!polkitItem.expanded) {
+            if (launcherItem.expanded && launcherItem.searchText.startsWith("/ask")) {
+                launcherItem.expanded = false;
+            } else {
+                topWindow.popupOpened();
+                _forceDropGrab = true;
+                closeAllExcept(launcherItem);
+                launcherItem.expanded = true;
+                launcherItem.searchText = "/ask ";
+                _forceDropGrab = false;
+            }
+        }
+    }
+
     function toggleSettings() {
         if (!polkitItem.expanded) {
             let wasExpanded = settingsAppItem.expanded;

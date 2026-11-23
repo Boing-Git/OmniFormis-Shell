@@ -35,7 +35,9 @@ Item {
     readonly property real total: Object.values(today).reduce((a, b) => a + b, 0)
 
     // a window class as the app it belongs to (its name and icon)
-    function entryOf(cls) { return DesktopEntries.heuristicLookup(cls) }
+    // (bindings that use it follow the app list, which loads in the background)
+    readonly property int appCount: DesktopEntries.applications.values.length
+    function entryOf(cls) { return appCount >= 0 ? DesktopEntries.heuristicLookup(cls) : null }
     function nameOf(cls) { const e = entryOf(cls); return e ? e.name : cls }
     function pretty(s) {
         const m = Math.floor(s / 60)

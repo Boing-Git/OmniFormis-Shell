@@ -405,6 +405,22 @@ ListView {
                 root.focusSearchBar();
                 return;
             }
+            // /ask: the launcher stays open while the AI works (LauncherModel.qml)
+            if (cmdArray[0] === "INTERNAL:ASK_MODE") {
+                root.requestSearchText("/ask ");
+                root.focusSearchBar();
+                return;
+            }
+            if (cmdArray[0] === "INTERNAL:ASK") {
+                if (root.launcherModel) root.launcherModel.ask(cmdArray[1]);
+                return;
+            }
+            if (cmdArray[0] === "INTERNAL:ASK_YES" || cmdArray[0] === "INTERNAL:ASK_NO") {
+                if (root.launcherModel) root.launcherModel.askConfirmed(cmdArray[0] === "INTERNAL:ASK_YES");
+                return;
+            }
+            if (cmdArray[0] === "INTERNAL:NOOP")
+                return;
             if (cmdArray[0] === "INTERNAL:CLEAR_CLIPBOARD") {
                 if (root.launcherModel) {
                     root.launcherModel.clearClipboard();

@@ -161,6 +161,17 @@ Item {
             shape: "Puffy"
         },
 
+        // the extras: the AI, the mascot, screen time
+        {
+            id: "extras",
+            name: "Extras",
+            subtitle: "Ask the AI, screen time, mascot",
+            icon: "\ue65f",
+            section: "Presets & Customization",
+            hue: 0.50,
+            shape: "Puffy"
+        },
+
         // System Monitor & Info
         {
             id: "taskmanager",
@@ -647,6 +658,8 @@ Item {
                             return 6;
                         if (root.currentSection === "Keybinds")
                             return 7;
+                        if (root.currentSection === "extras")
+                            return 8;
                         return 1;
                     }
 
@@ -733,6 +746,18 @@ Item {
 
                     TaskManagerPage {
                         id: taskManagerPage
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        pageTitle: root.currentNavItem ? root.currentNavItem.name : ""
+                        pageIcon: root.currentNavItem ? root.currentNavItem.icon : ""
+                        pageShape: root.currentNavItem ? root.currentNavItem.shape : "Circle"
+                        pageColor: root.currentNavColor
+                        pageOnColor: root.currentNavOnColor
+                        searchText: root.globalSearchText
+                    }
+
+                    ExtrasPage {
+                        id: extrasPage
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         pageTitle: root.currentNavItem ? root.currentNavItem.name : ""

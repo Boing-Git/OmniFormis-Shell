@@ -90,6 +90,12 @@ ShellRoot {
     }
 
     // Global shortcuts route to TopPills
+    // Super + A (scripts/shell ipc call assistant toggle): the launcher's /ask mode
+    IpcHandler {
+        target: "assistant"
+        function toggle(): void { root.callOnAllPills("toggleAssistant") }
+    }
+
     GlobalShortcut {
         name: "launcher"
         description: "Toggle Launcher"
