@@ -159,7 +159,7 @@ Item {
             readonly property real px: (homeX + (ringX - homeX) * t) * (1 - l) + dialSpot.x * l
             readonly property real py: (homeY + (ringY - homeY) * t) * (1 - l) + dialSpot.y * l
 
-            // a dot in the digits, an M3 bead on the ring (by its place, as LockSurface's)
+            // small in the digits, a full bead on the ring (by its place, as LockSurface's)
             readonly property real size: eclipse.cfg.eclipseDotSize
                 + (eclipse.cfg.beadSize * (1 + (eclipse.cfg.beadSelectedScale - 1) * near) - eclipse.cfg.eclipseDotSize) * Math.max(0, t)
             readonly property color ringFill: eclipse.host.mix(eclipse.host.mix(eclipse.host.mix(Roles.secondary, Roles.primary, near),
@@ -176,28 +176,21 @@ Item {
             opacity: (inDigits ? 1 : Math.min(1, Math.max(0, t))) * (1 + (fade - 1) * Math.min(1, Math.max(0, t))) * (1 - l * l)
             visible: opacity > 0.01
 
-            Rectangle {
+            // its M3E shape, the same in the digits and on the ring (the one that flies is the one
+            // you saw in the clock): it only grows, turns to face out and takes the ring's colour
+            readonly property string shapeName: eclipse.cfg.eclipseDotShape !== "" ? eclipse.cfg.eclipseDotShape
+                : eclipse.cfg.beadShapes[index % eclipse.cfg.beadShapes.length]
+            readonly property real tt: Math.min(1, Math.max(0, t))
+            Shape {
+                id: beadShape
                 anchors.fill: parent
-                radius: width / 2
-                antialiasing: true
-                opacity: 1 - Math.min(1, Math.max(0, bead.t))
-                color: eclipse.host.mix(Roles.on_surface, Roles.primary, eclipse.host.done)
-            }
-
-            Loader {
-                anchors.fill: parent
-                active: bead.t > 0.01
-                opacity: Math.min(1, Math.max(0, bead.t))
-                rotation: (bead.deg + 90) * Math.min(1, Math.max(0, bead.t))
-                sourceComponent: Shape {
-                    id: beadShape
-                    preferredRendererType: Shape.CurveRenderer
-                    ShapePath {
-                        strokeColor: "transparent"
-                        fillColor: bead.ringFill
-                        scale: shapes.fitScale(beadShape)
-                        PathSvg { path: shapes.getPath(eclipse.cfg.beadShapes[bead.index % eclipse.cfg.beadShapes.length]) }
-                    }
+                preferredRendererType: Shape.CurveRenderer
+                rotation: (bead.deg + 90) * bead.tt
+                ShapePath {
+                    strokeColor: "transparent"
+                    fillColor: eclipse.host.mix(eclipse.host.mix(Roles.on_surface, Roles.primary, eclipse.host.done), bead.ringFill, bead.tt)
+                    scale: shapes.fitScale(beadShape)
+                    PathSvg { path: shapes.getPath(bead.shapeName) }
                 }
             }
         }

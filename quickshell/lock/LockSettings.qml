@@ -86,7 +86,11 @@ QtObject {
     // ── Eclipse ── (Lock face: Eclipse) the time in beads, a 5 × 7 dot matrix
     // px from one bead to the next, and a bead's size, in the digits
     property real eclipsePitch: 14
-    property real eclipseDotSize: 10
+    property real eclipseDotSize: 12
+
+    // the M3E shape of every bead in the digits (M3Shapes' names, e.g. 4SidedCookie, Gem,
+    // Sunny); empty: each bead has its own, the one it keeps on the ring (beadShapes)
+    property string eclipseDotShape: ""
 
     // the beads lean towards the pointer: px at most, and how near it has to be to pull
     property real eclipseDrift: 6
