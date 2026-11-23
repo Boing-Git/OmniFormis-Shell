@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: mascot-ring-rotation
+expected_outcome: |
+  Couples the mascot to the ring's continuous rotation value (it moves with the hand, every frame, including momentum), instead of one canned bob per selection change; keeps it small because the ring is turned many times a day; and keeps the answer under reduced motion.

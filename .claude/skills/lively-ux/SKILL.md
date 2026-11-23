@@ -1,6 +1,6 @@
 ---
 name: lively-ux
-description: Makes boring, dead-feeling interfaces lively with motion, feedback, reactions and a bit of personality, and audits a UI for where it feels static or unresponsive. Use it whenever the user says a UI feels boring, dead, flat, static, stiff, lifeless, robotic or "not alive", asks for animation, bounce, springs, overshoot, squash and stretch, micro-interactions, hover or press feedback, juice, delight, playful or fun, transitions, or wants empty, loading, error and success states that feel alive. Also use it when building or changing any interactive UI (Quickshell/QML, web, GTK, a game menu), even if the user doesn't say "lively". It covers motion and feedback; for uniqueness, brand and premium feel it hands over to gux-expert, and for game feel to game-expert.
+description: Makes boring, dead-feeling interfaces lively with motion, feedback, reactions and a bit of personality, and audits a UI for where it feels static or unresponsive. Use it whenever the user says a UI feels boring, dead, flat, static, stiff, lifeless, robotic or "not alive", asks for animation, bounce, springs, overshoot, squash and stretch, micro-interactions, hover or press feedback, juice, delight, playful or fun, transitions, or wants empty, loading, error and success states that feel alive. Use it too for any mascot, character, avatar or face in a UI (where it looks, how it reacts to typing, a password, a wrong or right answer, a ring or slider being turned), or when one "feels like a sticker" or decoration. Also use it when building or changing any interactive UI (Quickshell/QML, web, GTK, a game menu), even if the user doesn't say "lively". It covers motion and feedback; for uniqueness, brand and premium feel it hands over to gux-expert, and for game feel to game-expert.
 ---
 
 # Lively UX
@@ -55,6 +55,9 @@ Everything below serves those two, with a third that keeps them from turning int
   Hitting a wall silently is the most common dead spot.
 - **States are alive**: loading moves (and moves *towards* something), success celebrates
   briefly, error shakes once, empty states say something warm and point to the next action.
+- **Characters are actors, not stickers**: a mascot or face tracks continuous input every frame
+  (the pointer, a turning ring), meets the user's eyes when they're idle, looks away while a
+  secret is typed, and answers every key. Read `references/characters.md` before touching one.
 - **Idle life only where it means something**: a breathing "live" dot, a slow drift on a playing
   track. An idle animation that means nothing is decoration and tires the eye.
 - **Sound and haptics** (if the platform has them) sized to the event: a tick per detent, nothing
@@ -105,8 +108,9 @@ Lively that drops frames is worse than still. On a 240 Hz screen a frame is 4 ms
 
 ## Before and after
 
-Real cases from this repo; `references/tested-screens.md` has three whole screens audited, and
-`references/motion-recipes.md` the reusable recipes.
+Real cases from this repo; `references/tested-screens.md` has three whole screens audited,
+`references/motion-recipes.md` the reusable recipes, and `references/characters.md` how to make a
+mascot or face feel like someone (layers, gaze, coupling to a turning ring).
 
 **A size that stops dead** (no weight):
 ```qml

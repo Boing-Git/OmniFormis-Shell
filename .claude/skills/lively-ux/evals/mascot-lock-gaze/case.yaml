@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: mascot-lock-gaze
+expected_outcome: |
+  Treats the mascot as a character with a social contract: it averts its gaze (or covers its eyes) while the password is typed and makes eye contact with the user when they are not typing; answers each key, wrong and right; uses the repo's springs; and stays quiet enough for a screen seen many times a day.
