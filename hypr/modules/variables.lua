@@ -23,10 +23,8 @@ local vars = {
     Layout = "Scrolling",
 
     -- Input
-    -- Set keyboard layout
-    kb_layout = "us",
-    -- Set keyboard variant
-    kb_variant = "colemak_dh",
+    -- The keyboard layout everywhere: Hyprland (and so every app and the lock), and through Nix the login screen and the text consoles. An XKB layout with its variant in brackets, such as us, us(colemak_dh), us(dvorak), de or fr(azerty); several separated by commas, switched with the keyboard options. Shortcuts stay on the same keys: change them in Shortcuts
+    KeyboardLayout = "us(colemak_dh)",
     -- Set keyboard options
     kb_options = "grp:alt_shift_toggle",
     -- Set follow mouse mode

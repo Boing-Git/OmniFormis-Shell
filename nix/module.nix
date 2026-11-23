@@ -179,8 +179,7 @@ in
         GameMode = false;
         LowSpec = "auto";
         Layout = "Scrolling";
-        kb_layout = "us,us";
-        kb_variant = "colemak_dh,";
+        KeyboardLayout = "us(colemak_dh),us";
         kb_options = "grp:alt_shift_toggle,caps:escape";
         follow_mouse = 1;
         sensitivity = 0;
