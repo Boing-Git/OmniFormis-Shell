@@ -17,8 +17,8 @@ Scope {
 
     // ── settings ── sizes are px, times ms
     // the strip at the top edge that can be pulled, and the drop that comes out of it
-    readonly property real stripWidth: 220
-    readonly property real stripHeight: 4
+    readonly property real stripWidth: 360
+    readonly property real stripHeight: 10
     readonly property real dropR: 22
 
     // the body of liquid behind the edge (it never swells), and how far down the drop must

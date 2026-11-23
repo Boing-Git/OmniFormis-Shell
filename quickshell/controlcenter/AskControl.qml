@@ -19,7 +19,7 @@ Item {
     required property var bar
 
     // ★ the card's and the dial's sizes while this is selected: controlcenter/ReaderSettings.qml ★
-    readonly property var cfg: ReaderSettings { liveSize: ask.dial.expandedSize; sweepDeg: ask.dial.sweepDeg }
+    readonly property var cfg: ReaderSettings { liveSize: ask.dial.expandedSize; sweepDeg: ask.dial.sweepDeg; overInnerRing: true }
 
     readonly property bool active: dial.open && !!dial.currentControl && dial.currentControl.key === "ask"
 
@@ -30,7 +30,6 @@ Item {
     property string answer: ""
     property var confirmStep: null
     property bool busy: false
-    property var history: []
 
     readonly property string script: Quickshell.shellDir + "/../scripts/assistant/assistant.py"
 
@@ -46,7 +45,6 @@ Item {
         steps = []
         answer = ""
         confirmStep = null
-        history = [t].concat(history.filter(h => h !== t)).slice(0, 8)
         run([t])
     }
     function confirm(yes) {
@@ -71,23 +69,26 @@ Item {
     // ── typing ── on the shared curved bar (ControlCenter.qml routes it here while Ask is at
     // the mark)
     property bool typing: false
+    // the bar stays out the whole time Ask is selected (typing ahead while it thinks is fine:
+    // askNow waits for the last answer)
     function startTyping(first) {
-        if (busy) return
         typing = true
         bar.clear()
         if (first !== undefined) bar.insert(first)
         bar.focusInput()
     }
+    // Enter asks and the bar stays for the next one; Esc closes the dial
     function typed(keep) {
         const t = bar.text
+        if (keep && t.trim() !== "" && !busy) { askNow(t); bar.clear(); return }
+        if (keep) return
         typing = false
         bar.clear()
-        if (keep) askNow(t)
-        if (dial.open) dial.forceActiveFocus()
+        if (active) dial.open = false
     }
     onActiveChanged: {
-        if (!active && typing) typed(false)
-        if (active) wake()
+        if (!active && typing) { typing = false; bar.clear() }
+        if (active) { wake(); startTyping() }
     }
 
     // ── waking the AI ── opening Ask loads the model into the graphics card (assistant.py
@@ -142,8 +143,6 @@ Item {
         }
     }
 
-    readonly property var suggestions: ["Bigger gaps", "Dark mode", "What's playing?", "Screen time today", "Open Downloads"]
-
     readonly property var control: ({
         key: "ask",
         label: "Ask",
@@ -157,17 +156,10 @@ Item {
         corner: ask.corner,
         settings: ask.cfg.controlCenter,
 
-        // Yes / No while a step waits; else the questions asked before, and ones to try
-        devices: () => {
-            if (ask.confirmStep) return [
-                { label: "Yes", icon: "check", shape: "Circle", on: false, status: "none", activate: () => ask.confirm(true) },
-                { label: "No", icon: "close", shape: "Circle", on: false, status: "none", activate: () => ask.confirm(false) }
-            ]
-            const wakingPill = ask.waking ? [{ label: "Waking the AI", icon: "hourglass_top", shape: "Circle", on: false, status: "loading", activate: () => {} }] : []
-            const asked = ask.history.map(h => ({ label: h.slice(0, 40), icon: "history", shape: "Circle", on: false, status: "none", activate: () => ask.askNow(h) }))
-            const tries = ask.suggestions.filter(s => ask.history.indexOf(s) < 0)
-                .map(s => ({ label: s, icon: "lightbulb", shape: "Circle", on: false, status: "none", activate: () => ask.askNow(s) }))
-            return wakingPill.concat(asked, tries)
-        }
+        // no inner ring (the card's words take its place), but Yes / No while a step waits
+        devices: () => ask.confirmStep ? [
+            { label: "Yes", icon: "check", shape: "Circle", on: false, status: "none", activate: () => ask.confirm(true) },
+            { label: "No", icon: "close", shape: "Circle", on: false, status: "none", activate: () => ask.confirm(false) }
+        ] : []
     })
 }

@@ -59,6 +59,9 @@ QtObject {
     // room kept clear between the last arc and the inner ring's band
     property real textClearance: 12
 
+    // the card's words may also take the inner ring's place (a control with no inner ring: Ask)
+    property bool overInnerRing: false
+
     // ── the dial round the card ──
     // Their own copy of ControlCenterSettings, used only while one of them is selected
     // (what each one does: see ControlCenterSettings.qml). The inner ring sits further out
@@ -74,8 +77,9 @@ QtObject {
     // ─────────────────────────────────────────────────────────────────────────
     // worked out from the settings above (don't edit, they follow)
     // ─────────────────────────────────────────────────────────────────────────
-    // the room inside the inner ring's band for the card
-    readonly property real room: controlCenter.innerRadius - controlCenter.pillHeight / 2 - controlCenter.innerBandMarginUsed - textClearance
+    // the room inside the inner ring's band for the card (out to the band's outer edge when
+    // the control has no inner ring: overInnerRing)
+    readonly property real room: controlCenter.innerRadius + (overInnerRing ? 1 : -1) * (controlCenter.pillHeight / 2 + controlCenter.innerBandMarginUsed) - textClearance
 
     // the shape sits on the dial's middle line, half the dial's angle away from each screen
     // edge, so its centre must be r / sin(that) out to clear them: r·√2 in a corner, just

@@ -982,6 +982,10 @@ PanelWindow {
 
             // the track: one surface step above the dial, like the outer ring's
             bandColor: Roles.surface_container_high
+
+            // Ask has no inner ring (its words take the place), unless Yes / No are on it
+            opacity: dial.currentControl && dial.currentControl.key === "ask" && dial.subItems.length === 0 ? 0 : 1
+            Behavior on opacity { NumberAnimation { duration: Vars.expressiveFastEffects.duration } }
             holeColor: Roles.outline_variant
         }
 
