@@ -56,8 +56,8 @@ Singleton {
         return Object.assign({ label: label, icon: icon, leaf: false, children: children }, more || {})
     }
 
-    // a task of the dial shell, when it is running too (its `qs ipc call`)
-    function dial(args) { Quickshell.execDetached(["qs", "ipc", "call"].concat(args)) }
+    // the dotfiles' shared scripts (Droplet is a shell of its own: it never calls another shell)
+    function script(name) { return Quickshell.shellDir + "/../scripts/" + name }
 
     // the first circles: what the seed opens into
     function roots() {
@@ -68,9 +68,62 @@ Singleton {
             group("Windows", "select_window", windows),
             group("Workspaces", "space_dashboard", workspaces),
             group("Tools", "construction", tools),
+            Settings.screenTime ? group("Screen time", "hourglass_top", screenTime, { note: pretty(total(0)) + " today" }) : null,
+            group("Settings", "settings", settings),
             group("Shells", "swap_horiz", shells),
             group("Power", "power_settings_new", power)
-        ]
+        ].filter(c => c)
+    }
+
+    // ── settings ── Droplet's own (Settings.qml): each one flips as you drop onto it
+    function settings() {
+        return Settings.all.map(s => task(s.label, s.icon, s.label + (Settings[s.key] ? " off" : " on"),
+            () => Settings.toggle(s.key), { on: Settings[s.key], note: Settings[s.key] ? "On" : "Off", stay: true }))
+    }
+
+    // ══════════════════════════════ screen time ═══════════════════════════════
+    // How long each app had you, from the tracker every shell shares (scripts/screentime.py):
+    // today's apps, longest first (dropping onto one opens it), and the last seven days
+    property var usage: ({ on: true, days: [] })
+    Process {
+        id: usageReader
+        command: [root.script("screentime.py"), "json", "7"]
+        stdout: StdioCollector { onStreamFinished: { try { root.usage = JSON.parse(text) } catch (e) {} } }
+    }
+    // opening the shell reads what can change meanwhile: today's screen time, and the
+    // wallpapers the first time
+    onOpenChanged: {
+        if (!open) return
+        if (Settings.screenTime) usageReader.running = true
+        if (wallpaperFiles.length === 0) wallLister.running = true
+    }
+    function total(i) {
+        const d = usage.days[i]
+        return d ? Object.values(d.apps).reduce((a, b) => a + b, 0) : 0
+    }
+    function pretty(s) {
+        const m = Math.floor(s / 60)
+        return m >= 60 ? Math.floor(m / 60) + " h " + (m % 60) + " min" : m >= 1 ? m + " min" : "< 1 min"
+    }
+    // a window class ("firefox", "org.wezfurlong.wezterm") as the app it belongs to
+    function entryOf(cls) { return DesktopEntries.heuristicLookup(cls) }
+    function usageCircle(cls, seconds) {
+        const e = entryOf(cls)
+        return task(e ? e.name : cls, "apps", "Opening " + (e ? e.name : cls), () => { if (e) e.execute() },
+            { image: e ? Quickshell.iconPath(e.icon, true) : "", note: pretty(seconds) })
+    }
+    function screenTime() {
+        const today = usage.days[0] ? usage.days[0].apps : {}
+        const apps = Object.keys(today).sort((a, b) => today[b] - today[a]).slice(0, 9).map(c => usageCircle(c, today[c]))
+        if (apps.length === 0) apps.push(task("Nothing yet today", "hourglass_empty", "Nothing to open", () => {}, { stay: true }))
+        return apps.concat([group("Last 7 days", "date_range", week, { note: pretty([0, 1, 2, 3, 4, 5, 6].reduce((a, i) => a + total(i), 0)) })])
+    }
+    function week() {
+        return usage.days.map((d, i) => group(i === 0 ? "Today" : i === 1 ? "Yesterday" : Qt.formatDate(new Date(d.date + "T12:00"), "dddd"),
+            "calendar_today", () => {
+                const apps = Object.keys(d.apps).sort((a, b) => d.apps[b] - d.apps[a]).slice(0, 9)
+                return apps.length ? apps.map(c => usageCircle(c, d.apps[c])) : [task("Nothing that day", "hourglass_empty", "Nothing to open", () => {}, { stay: true })]
+            }, { note: pretty(total(i)) }))
     }
 
     // ── shells ── the dotfiles' other shells (scripts/shell): the new one starts before this goes
@@ -251,20 +304,15 @@ Singleton {
     // With nothing typed: the first nine of your own order (the dial shell's launcher
     // keeps it; the alphabet otherwise), then All apps, the alphabet in groups. Typing
     // narrows it to the names that start with what you typed, then the ones that contain it
-    FileView {
-        id: orderFile
-        path: Quickshell.env("HOME") + "/.local/state/dial-quickshell/app-order.json"
-        printErrors: false
-        blockLoading: true
-    }
-    readonly property var order: {
-        try { const o = JSON.parse(orderFile.text()); return Array.isArray(o) ? o : [] } catch (e) { return [] }
-    }
+    // the apps you use most this week first (screen time), then by name
     function allApps() {
-        const rank = {}
-        order.forEach((id, i) => { rank[id] = i })
+        const used = {}
+        for (const d of usage.days) for (const c in d.apps) {
+            const e = entryOf(c)
+            if (e) used[e.id] = (used[e.id] || 0) + d.apps[c]
+        }
         return DesktopEntries.applications.values.filter(e => !e.noDisplay)
-            .sort((a, b) => ((rank[a.id] ?? 1e6) - (rank[b.id] ?? 1e6)) || a.name.localeCompare(b.name))
+            .sort((a, b) => ((used[b.id] || 0) - (used[a.id] || 0)) || a.name.localeCompare(b.name))
     }
     function appCircle(e) {
         return task(e.name, "apps", "Opening " + e.name, () => e.execute(), { image: Quickshell.iconPath(e.icon, true) })
@@ -358,16 +406,35 @@ Singleton {
         return out
     }
 
-    // ── tools ── things the dial shell does, when it is running too
+    // ── tools ── Droplet's own: a screenshot (once the circles have run back in, so they
+    // aren't in it), and the wallpapers (the colours follow, through theme-apply.sh)
+    readonly property string shotDir: Quickshell.env("HOME") + "/Pictures/Screenshots"
     function tools() {
         return [
-            task("Screenshot", "screenshot_region", "Taking a screenshot", () => dial(["screenshot", "open"])),
-            task("Wallpapers", "wallpaper", "Opening the wallpapers", () => dial(["wallpaper", "open"])),
-            task("Notifications", "notifications", "Opening the notifications", () => dial(["center", "go", "notify"])),
-            task("Clear notifications", "clear_all", "Notifications cleared", () => dial(["notifs", "clear"])),
-            task("Do not disturb", "notifications_off", "Do not disturb switched", () => dial(["notifs", "dnd"])),
-            task("Settings", "settings", "Opening the settings", () => dial(["center", "go", "settings"]))
+            task("Screenshot", "screenshot_monitor", "Screenshot copied and saved", () => Quickshell.execDetached(["sh", "-c",
+                'sleep 0.9; mkdir -p "$1"; f="$1/$(date +%Y-%m-%d_%H-%M-%S).png"; grim "$f" && wl-copy < "$f"', "sh", shotDir])),
+            task("Screenshot to edit", "draw", "Opening it in Satty", () => Quickshell.execDetached(["sh", "-c",
+                'sleep 0.9; grim - | satty --filename - --output-filename "$1/$(date +%Y-%m-%d_%H-%M-%S).png"', "sh", shotDir])),
+            group("Wallpapers", "wallpaper", () => wallpapersFor(""), { search: wallpapersFor, ask: "type part of its name" })
         ]
+    }
+
+    // the pictures in ~/Pictures/Wallpapers (and the folders in it), read when the shell opens
+    property var wallpaperFiles: []
+    Process {
+        id: wallLister
+        command: ["sh", "-c", 'find -L "$HOME/Pictures/Wallpapers" -maxdepth 3 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \\) 2>/dev/null | sort | head -n 500']
+        stdout: StdioCollector { onStreamFinished: root.wallpaperFiles = text.split("\n").filter(l => l !== "") }
+    }
+    function wallpapersFor(text) {
+        const q = text.trim().toLowerCase()
+        const hits = wallpaperFiles.filter(f => f.split("/").pop().toLowerCase().includes(q)).slice(0, 9)
+        if (hits.length === 0) return [task("No wallpaper called that", "search_off", "Nothing to set", () => {}, { stay: true })]
+        return hits.map(f => {
+            const name = f.split("/").pop().replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ")
+            return task(name, "wallpaper", "Wallpaper set: " + name, () => Quickshell.execDetached([root.script("theme-apply.sh"), f]),
+                { art: "file://" + f.split("/").map(encodeURIComponent).join("/") })
+        })
     }
 
     // ── power ── each one asks once more, so a slip of the hand can't shut the machine down

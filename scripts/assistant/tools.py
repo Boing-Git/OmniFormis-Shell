@@ -478,6 +478,18 @@ def status():
             "workspace": (json.loads(run(["hyprctl", "activeworkspace", "-j"]) or "{}").get("id") if not DRY else 1)}
 
 
+# how long each app was used (scripts/screentime.py): today, or the last few days
+def screen_time(days=1):
+    data = json.loads(run([DOTS / "scripts" / "screentime.py", "json", str(max(1, min(30, int(days))))]) or '{"on": true, "days": []}')
+    totals = {}
+    for d in data["days"]:
+        for app, sec in d["apps"].items():
+            totals[app] = totals.get(app, 0) + sec
+    top = sorted(totals.items(), key=lambda a: -a[1])[:10]
+    return {"tracking": data["on"], "days": len(data["days"]), "minutes_by_app": {a: round(s / 60) for a, s in top},
+            "minutes_in_all": round(sum(totals.values()) / 60)}
+
+
 # ── the list ── name: (function, description, parameters, required, asks first)
 def p(type_, desc, enum=None):
     d = {"type": type_, "description": desc}
@@ -509,6 +521,8 @@ TOOLS = {
     "workspace": (workspace, "Go to a workspace.", {"number": p("integer", "the workspace number")}, ["number"], False),
     "power": (power, "Lock, suspend, log out, restart or shut down. Log out, restart and shut down ask the user first.",
               {"action": p("string", "what to do", ["lock", "suspend", "logout", "reboot", "shutdown"])}, ["action"], False),
+    "screen_time": (screen_time, "How long each app (by window class) was used: today, or the last few days.",
+                    {"days": p("integer", "1 is today, 7 the last week")}, [], False),
     "status": (status, "What the desktop is doing now: shell, volume, media, workspace.", {}, [], False),
 }
 ASKS_FIRST = {("power", "logout"), ("power", "reboot"), ("power", "shutdown")}
