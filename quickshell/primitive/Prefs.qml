@@ -97,6 +97,7 @@ QtObject {
     property bool frostPopups: Vars.frostPopups
     property string frostOver: Vars.frostOver
     property int lockBlur: Vars.lockBlur
+    property string lockBackground: Vars.lockBackground
 
     // ── liquid glass ── (LiquidGlass.qml) "off", "on" or "button" (on, and a dial's glass
     // brightens under the mouse and flattens while pressed); the rest are the liquid glass
@@ -372,6 +373,9 @@ QtObject {
           help: "Everything: the windows behind show through, blurred. Wallpaper: only the wallpaper does, calmer." },
         { key: "lockBlur", group: "Look", label: "Lock blur", icon: "lens_blur", type: "number", min: 0, max: 10, step: 1,
           help: "How blurred the wallpaper behind the lock screen is. 0: sharp." },
+        { key: "lockBackground", group: "Look", label: "Lock sheet", icon: "wallpaper", type: "choice",
+          options: [{ value: "blur", label: "Blur" }, { value: "glass", label: "Liquid glass" }],
+          help: "Blur: the lock covers the desktop with the wallpaper, softened. Liquid glass: a pane of glass sweeps over it, bending it at its rim (Lock blur frosts it)." },
         { key: "liquidGlass", group: "Liquid", label: "Liquid glass", icon: "water_drop", type: "choice",
           options: [{ value: "off", label: "Off" }, { value: "on", label: "On" }, { value: "button", label: "Button" }],
           help: "Every dial, ring and pop-up turns to glass that bends the wallpaper. Button: brighter under the mouse, flatter while pressed." },

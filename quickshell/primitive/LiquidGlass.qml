@@ -82,7 +82,11 @@ ShaderEffect {
     // false: this one stays flat even while liquid glass is on (e.g. rings, Prefs.liquidRings)
     property bool allowed: true
 
-    readonly property bool active: allowed && Prefs.liquidOn && !!backdrop && backdrop.ready && status !== ShaderEffect.Error
+    // true: glass even while liquid glass is off for the dials (a setting of its own asks for
+    // it: the lock's sheet)
+    property bool force: false
+
+    readonly property bool active: allowed && (force || Prefs.liquidOn) && !!backdrop && backdrop.ready && status !== ShaderEffect.Error
     visible: active
 
     // how far past the shape the drop shadow reaches, px (it fades out by twice its spread)

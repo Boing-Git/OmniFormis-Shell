@@ -136,6 +136,11 @@ const frostOver = "everything";
 // this itself (made once per wallpaper and level), so it doesn't touch Hyprland's blur
 const lockBlur = 6;
 
+// what the lock's sheet is (Prefs.lockBackground): "blur" (the wallpaper behind it, softened
+// by lockBlur) or "glass" (a pane of liquid glass over it, bending it at the rim as it sweeps
+// out of the power dial's spot; lockBlur frosts it)
+const lockBackground = "blur";
+
 // Liquid glass: the liquid glass library (Dotfiles/liquidglass-main) on every glass
 // container of the shell: the dials and pop-ups, the bands and search bars on them, the
 // lock's dial. Each bends, fringes and frosts the wallpaper behind it (a layer window can't

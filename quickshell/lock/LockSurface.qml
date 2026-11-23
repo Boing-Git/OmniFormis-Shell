@@ -83,7 +83,8 @@ WlSessionLockSurface {
         ShapePath {
             strokeColor: "transparent"
             fillColor: "transparent"
-            fillItem: wall.status === Image.Ready ? wall : null
+            // (Lock sheet: Liquid glass draws the picture itself, through the glass below)
+            fillItem: wall.status === Image.Ready && !sheetGlass.active ? wall : null
             readonly property real tw: Math.max(1, wall.implicitWidth)
             readonly property real th: Math.max(1, wall.implicitHeight)
             readonly property real fit: Math.max(sheet.width / tw, sheet.height / th)
@@ -96,9 +97,9 @@ WlSessionLockSurface {
         }
 
         ShapePath {
-            strokeColor: Roles.outline_variant
+            strokeColor: sheetGlass.active ? "transparent" : Roles.outline_variant
             strokeWidth: surface.cfg.borderWidth
-            fillColor: Qt.rgba(Roles.surface.r, Roles.surface.g, Roles.surface.b, surface.scrim)
+            fillColor: sheetGlass.active ? "transparent" : Qt.rgba(Roles.surface.r, Roles.surface.g, Roles.surface.b, surface.scrim)
             PathAngleArc {
                 centerX: surface.originPoint.x; centerY: surface.originPoint.y
                 radiusX: surface.sheetRadius; radiusY: surface.sheetRadius
@@ -118,12 +119,28 @@ WlSessionLockSurface {
         visible: false
     }
 
+    // Lock sheet: Liquid glass. The sheet is a pane of liquid glass over the picture, with the
+    // scrim under it: it bends the picture at its rim as it sweeps out of the spot and back,
+    // and its rim catches the light where the flat sheet has its outline
+    LiquidGlass {
+        id: sheetGlass
+        anchors.fill: parent
+        shape: "disc"
+        cx: surface.originPoint.x
+        cy: surface.originPoint.y
+        radius: surface.sheetRadius
+        backdrop: lockPictures
+        force: true
+        allowed: Prefs.lockBackground === "glass"
+        under: surface.scrimColor
+    }
+
     // what the lock's liquid glass sees (Settings → Liquid glass): the same picture (Qt
     // shares one loaded at the same url and size), softened already, so blurred and sharp
     // are the one picture; the scrim over it goes in as each glass's `under`
     LiquidBackdrop {
         id: lockPictures
-        source: Prefs.liquidOn ? surface.lock.pictureUrl : ""
+        source: Prefs.liquidOn || Prefs.lockBackground === "glass" ? surface.lock.pictureUrl : ""
         blurSource: ""
         live: false
         sourceSize: Qt.size(1280, -1)
