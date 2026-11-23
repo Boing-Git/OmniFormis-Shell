@@ -19,7 +19,9 @@ import QtQuick.Shapes
 //   react("right")   joy: a hop, a big smile, squinting eyes (Dial-E's cookie turns a notch)
 //   poke()           startled; cheer() a happy hop; puffTo(v) / puffBy(v) Puffy's puff (0..1)
 // By itself it blinks and breathes; `look` (-1..1 on each axis) is where it looks; `asleep`
-// closes its eyes and lets small z's rise. With `calm` (reduced motion) every answer still
+// closes its eyes and lets small z's rise; `shy` looks away (a password is being typed), with a
+// blink as it turns; `turn` (degrees) turns Dial-E's cookie from outside, the pupils swinging
+// after it (the control center's rings turn it like a gear). With `calm` (reduced motion) every answer still
 // shows (the mouth, the tears, the eyes) but nothing travels or idles.
 Item {
     id: root
@@ -37,6 +39,23 @@ Item {
     // where it looks: (-1, -1) top left .. (1, 1) bottom right
     property point look: Qt.point(0, 0)
     property bool asleep: false
+
+    // ── shy ── it looks away, up and to `shySide` (-1 left, 1 right), and turns a little
+    // (narrower): a password is being typed. A blink as it turns away and back
+    property bool shy: false
+    property real shySide: -1
+    onShyChanged: blink.restart()
+
+    // ── turned from outside ── degrees; Dial-E's cookie turns with it, and its googly pupils
+    // lag behind the turn (inertia), so a fast spin swings them
+    property real turn: 0
+    property real _lastTurn: 0
+    onTurnChanged: {
+        // clamped: a ring that jumps (a new control) mustn't fling them off
+        const d = Math.max(-12, Math.min(12, turn - _lastTurn))
+        _lastTurn = turn
+        if (!calm && kind === "dial-e") for (const e of [pupilL, pupilR]) e.springX.kick(-d * 5)
+    }
 
     // reduced motion (Dial-E: Bounce 0, Prefs.calm): no wobble, no swing, nothing idles. A
     // property, so Puffy and Droplet can use this same file (they link it) without Dial-E's Prefs
@@ -69,13 +88,14 @@ Item {
     }
 
     // where the eyes go: down when sad, up when happy, else where it's told to look
-    readonly property point gaze: mood === "sad" ? Qt.point(look.x * 0.3, 0.9) : mood === "happy" ? Qt.point(look.x * 0.3, -0.7) : look
+    readonly property point gaze: mood === "sad" ? Qt.point(look.x * 0.3, 0.9) : mood === "happy" ? Qt.point(look.x * 0.3, -0.7)
+        : shy ? Qt.point(shySide, -0.9) : look
 
     // the mouth: -1 a frown .. 0 flat .. 1 a big smile (resting: a small one)
     SpringValue { id: smileS; to: root.mood === "happy" ? 1 : root.mood === "sad" ? -1 : 0.35; stiffness: 300; dampingRatio: root.calm ? 1 : 0.5; epsilon: 0.005 }
 
     // ── the body's squash and stretch ── one spring per axis; sad, it droops
-    SpringValue { id: sx; to: root.mood === "sad" ? 1.06 : 1; value: 1; stiffness: 520; dampingRatio: root.calm ? 1 : 0.35; epsilon: 0.001 }
+    SpringValue { id: sx; to: root.mood === "sad" ? 1.06 : root.shy && root.mood === "" ? 0.93 : 1; value: 1; stiffness: 520; dampingRatio: root.calm ? 1 : 0.35; epsilon: 0.001 }
     SpringValue { id: sy; to: root.mood === "sad" ? 0.9 : 1; value: 1; stiffness: 520; dampingRatio: root.calm ? 1 : 0.35; epsilon: 0.001 }
     SpringValue { id: hop; to: 0; value: 0; stiffness: 260; dampingRatio: root.calm ? 1 : 0.45; epsilon: 0.1 }
     // Dial-E's cookie turns in twelfths (30°), so it always lands on itself
@@ -233,7 +253,7 @@ Item {
             height: width
             anchors.centerIn: parent
             preferredRendererType: Shape.CurveRenderer
-            rotation: spin.value + root.breath * 3
+            rotation: spin.value + root.turn + root.breath * 3
             ShapePath {
                 fillColor: root.body
                 strokeColor: "transparent"

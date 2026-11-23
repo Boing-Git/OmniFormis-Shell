@@ -196,10 +196,10 @@ Item {
                             // up a little with each letter and dozes while nothing is typed
                             Mascots.Mascot {
                                 id: keeper
-                                width: 46
-                                height: 46
-                                x: parent.width - width + 10
-                                y: parent.height - height + 6
+                                width: 60
+                                height: 60
+                                x: parent.width - width + 14
+                                y: parent.height - height + 10
                                 kind: "puffy"
                                 calm: Vars.reduceMotion
                                 body: Theme.primary_container
@@ -208,8 +208,14 @@ Item {
                                 pupil: Theme.on_primary_fixed
                                 accent: Theme.primary
                                 visible: Vars.mascots
-                                asleep: passwordInput.text.length === 0 && !root.authError && mood === ""
-                                look: Qt.point(-0.4, 0.8)
+                                // it looks at you; while the password is typed it looks away;
+                                // 15 s with nothing typed, it dozes off
+                                asleep: idle && passwordInput.text.length === 0 && !root.authError && mood === ""
+                                look: Qt.point(0, -0.35)
+                                shy: passwordInput.text.length > 0 && !root.authError
+                                shySide: 1
+                                property bool idle: false
+                                Timer { id: idleClock; interval: 15000; running: keeper.visible; onTriggered: keeper.idle = true }
                                 // a bob per letter (and a little more puff), a flinch per
                                 // deletion; it cries at a wrong password (and goes flat)
                                 property int lastLength: 0
@@ -217,6 +223,8 @@ Item {
                                     target: passwordInput
                                     function onTextChanged() {
                                         const n = passwordInput.text.length
+                                        keeper.idle = false
+                                        idleClock.restart()
                                         if (!root.authError) keeper.react(n > keeper.lastLength ? "type" : "delete")
                                         keeper.lastLength = n
                                         keeper.puffTo(Math.min(1, n / 12))

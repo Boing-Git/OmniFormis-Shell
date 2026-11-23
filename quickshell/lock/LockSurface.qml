@@ -412,12 +412,13 @@ WlSessionLockSurface {
             }
         }
 
-        // ── Dial-E, keeping watch ── (Settings → Extras → Mascots) small, on the dial's rim at
-        // the bottom: asleep until you come back, its eyes on the pointer
+        // ── Dial-E, keeping watch ── (Settings → Extras → Mascots) on the dial's rim at the
+        // bottom: asleep until you come back; it looks at you, and looks away (up and aside)
+        // while the password is typed
         Mascot {
             id: keeper
-            width: 30
-            height: 30
+            width: 44
+            height: 44
             x: face.px(surface.cfg.dialRadius - 4, 90) - width / 2
             y: face.py(surface.cfg.dialRadius - 4, 90) - height / 2
             kind: "dial-e"
@@ -429,11 +430,8 @@ WlSessionLockSurface {
             accent: Roles.primary
             visible: Prefs.mascots
             asleep: !surface.lock.awake
-            look: {
-                const dx = surface.pointer.x - (face.x + x + width / 2), dy = surface.pointer.y - (face.y + y + height / 2)
-                const d = Math.max(1, Math.hypot(dx, dy))
-                return Qt.point(dx / d, dy / d)
-            }
+            look: Qt.point(0, -0.35)
+            shy: surface.lock.count > 0 && !surface.lock.wrong && !surface.lock.unlocking
             // a bob per letter, a flinch per deletion; it cries at a wrong password, and is glad at
             // the right one
             property int lastCount: 0

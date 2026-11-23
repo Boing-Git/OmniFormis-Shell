@@ -236,15 +236,16 @@ Scope {
                 }
             }
 
-            // ── Droplet itself ── (Settings: Mascot) riding behind the newest drop: asleep
-            // until you type, a bob per letter, a flinch per deletion; a wrong password makes
-            // it cry, the right one makes it hop with joy
+            // ── Droplet itself ── (Settings: Mascot) riding behind the newest drop: it looks at
+            // you, and looks away while the password is typed; a bob per letter, a flinch per
+            // deletion; a wrong password makes it cry, the right one makes it hop with joy. 15 s
+            // with nothing typed, it dozes off
             Mascot {
                 id: keeper
-                width: 40
-                height: 40
-                SpringValue { id: keeperX; to: root.count > 0 ? row.endX + row.gap + 8 : surface.width / 2 - 20; stiffness: 260; dampingRatio: 0.6; epsilon: 0.1 }
-                SpringValue { id: keeperY; to: row.y + row.height / 2 - 20 - (root.count > 0 ? 0 : 46); stiffness: 260; dampingRatio: 0.6; epsilon: 0.1 }
+                width: 56
+                height: 56
+                SpringValue { id: keeperX; to: root.count > 0 ? row.endX + row.gap + 12 : surface.width / 2 - 28; stiffness: 260; dampingRatio: 0.6; epsilon: 0.1 }
+                SpringValue { id: keeperY; to: row.y + row.height / 2 - 28 - (root.count > 0 ? 0 : 54); stiffness: 260; dampingRatio: 0.6; epsilon: 0.1 }
                 Component.onCompleted: { keeperX.snap(keeperX.to); keeperY.snap(keeperY.to) }
                 x: keeperX.value
                 y: keeperY.value
@@ -255,12 +256,18 @@ Scope {
                 pupil: Colors.on_primary_fixed
                 accent: Colors.primary
                 visible: Settings.mascot
-                asleep: root.count === 0 && root.note === "" && mood === ""
-                look: Qt.point(root.count > 0 ? -1 : 0, 0.3)
+                asleep: idle && root.count === 0 && root.note === "" && mood === ""
+                look: Qt.point(0, -0.35)
+                shy: root.count > 0 && !root.wrong && !root.opening
+                shySide: 1
+                property bool idle: false
+                Timer { id: idleClock; interval: 15000; running: root.locked; onTriggered: keeper.idle = true }
                 property int lastCount: 0
                 Connections {
                     target: root
                     function onCountChanged() {
+                        keeper.idle = false
+                        idleClock.restart()
                         if (!root.wrong && !root.opening) keeper.react(root.count > keeper.lastCount ? "type" : "delete")
                         keeper.lastCount = root.count
                     }

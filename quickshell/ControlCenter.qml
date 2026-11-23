@@ -1065,14 +1065,18 @@ PanelWindow {
         onTyped: text => { if (inSettings) settingsControl.startTyping(text); else if (askControl.active && !askControl.typing) askControl.startTyping(text) }
 
         // ── Dial-E itself, hiding in plain sight ── (Settings → Extras → Mascots) small, in the
-        // empty end of the inner disc where the dial meets the screen's edge; its eyes follow
-        // the ring as it turns, it dozes while nothing happens, and a click startles it
+        // empty end of the inner disc where the dial meets the screen's edge. The rings turn it
+        // like a gear meshed inside the inner ring (same way round, ring radius / its own
+        // radius as fast), every frame of a drag or a fling, its googly pupils swinging after
+        // the turn; it dozes while nothing happens, and a click startles it
         Mascot {
             id: hiding
             readonly property real deg: dial.startDeg + dial.sweepDeg - 9
-            readonly property real r: dial.innerRadius - dial.settings.pillHeight / 2 - 26
-            width: 34
-            height: 34
+            readonly property real r: dial.innerRadius - dial.settings.pillHeight / 2 - width / 2 - 9
+            width: 46
+            height: 46
+            turn: (spin.scroll + spin2.scroll) * dial.innerRadius / (width * 0.48)
+            onTurnChanged: { dozing.dozed = false; dozing.restart() }
             x: dial.centerX + r * Math.cos(deg * Math.PI / 180) - width / 2
             y: dial.centerY + r * Math.sin(deg * Math.PI / 180) - height / 2
             kind: "dial-e"
@@ -1097,8 +1101,6 @@ PanelWindow {
             }
             Connections {
                 target: dial
-                // the ring turns: it wakes, and bobs as if it followed
-                function onInnerIndexChanged() { dozing.dozed = false; dozing.restart(); hiding.react("type") }
                 function onOpenChanged() { dozing.dozed = false }
             }
             MouseArea {
