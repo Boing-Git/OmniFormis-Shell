@@ -330,7 +330,7 @@ PanelWindow {
 
                         SpringValue {
                             id: iconSize
-                            to: selected ? 60 : 35                     // where it's heading
+                            to: selected ? 60 : 35 * Prefs.inactiveScale  // where it's heading (Unpicked size)
                             stiffness: Vars.springs.expressive.fast.spatial.stiffness
                             dampingRatio: Vars.springs.expressive.fast.spatial.dampingRatio
                             epsilon: 0.2                               // pixels: stop when this close

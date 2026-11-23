@@ -137,7 +137,7 @@ PanelWindow {
                         scale: grow.value
                         SpringValue {
                             id: grow
-                            to: selected ? 100 / 70 : 1
+                            to: selected ? 100 / 70 : Prefs.inactiveScale
                             stiffness: Vars.springs.expressive.fast.spatial.stiffness
                             dampingRatio: Vars.springs.expressive.fast.spatial.dampingRatio
                             epsilon: 0.001

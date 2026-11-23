@@ -219,6 +219,10 @@ const design = {
     // secondary / tertiary containers) or all one: "primary", "secondary", "tertiary"
     ringColors: "three",
 
+    // how big the items you haven't picked are on every ring, against the size they were
+    // drawn at (the picked one keeps its size): 1 is the old look
+    inactiveScale: 0.8,
+
     // a ring that isn't liquid glass while liquid glass is on: its white wash and the white
     // of its hairline edges (1 px)
     flatBandWash: 0.08,

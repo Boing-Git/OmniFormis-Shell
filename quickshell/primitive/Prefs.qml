@@ -48,6 +48,10 @@ QtObject {
     // the control center's outer ring: "three" colours taking turns, or all "primary" /
     // "secondary" / "tertiary"
     property string ringColors: Vars.design.ringColors
+
+    // the items not picked on every ring, as a share of their own size (the picked one keeps
+    // its size, so the pick stands out more the smaller the others are)
+    property real inactiveScale: Vars.design.inactiveScale
     readonly property string fontFamily: textFont === "system" ? Qt.application.font.family : textFont
 
     property int openBounce: Vars.openBounce
@@ -314,6 +318,8 @@ QtObject {
           options: [{ value: "three", label: "Three" }, { value: "primary", label: "Primary" },
                     { value: "secondary", label: "Secondary" }, { value: "tertiary", label: "Tertiary" }],
           help: "The control center's outer ring: its tiles take turns through three colours, or all wear one." },
+        { key: "inactiveScale", group: "Design", label: "Unpicked size", icon: "photo_size_select_small", type: "number", min: 0.5, max: 1, step: 0.05, percent: true,
+          help: "How big the items you haven't picked are on every ring. The picked one keeps its size. 100%: as they used to be." },
         { key: "textFont", group: "Design", label: "Text font", icon: "match_case", type: "choice",
           options: [{ value: "system", label: "System" }, { value: "Inter", label: "Inter" }],
           help: "The font of the shell's words. Inter: close to Apple's San Francisco." },

@@ -237,7 +237,7 @@ PanelWindow {
                          : tile.urgent ? Roles.error
                          : tile.occupied ? Roles.secondary_container
                          : Roles.outline_variant
-                    scale: tile.selected ? 1 : tile.occupied || tile.urgent ? 0.8 : 0.22
+                    scale: tile.selected ? 1 : (tile.occupied || tile.urgent ? 0.8 : 0.22) * Prefs.inactiveScale
 
                     Behavior on scale {
                         NumberAnimation {

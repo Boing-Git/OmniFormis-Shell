@@ -136,7 +136,7 @@ Item {
             ? ((listIndex % ring.count) + ring.count) % ring.count + 1
             : 0
 
-        scale: selected ? 1.2 : 1
+        scale: selected ? 1.2 : Prefs.inactiveScale
         Behavior on scale { NumberAnimation { duration: Prefs.fastSpatial.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Prefs.fastSpatial.bezier } }
 
         // upright on the top spots (see upsideDown)

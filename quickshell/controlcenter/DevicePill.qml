@@ -67,7 +67,7 @@ Item {
         scale: grow.value
         SpringValue {
             id: grow
-            to: root.selected ? root.cfg.selectedPillScale : 1
+            to: root.selected ? root.cfg.selectedPillScale : Prefs.inactiveScale
             stiffness: Vars.springs.expressive.fast.spatial.stiffness
             dampingRatio: Vars.springs.expressive.fast.spatial.dampingRatio
             epsilon: 0.001

@@ -158,7 +158,7 @@ Item {
                 // others a surface step
                 color: slot.selected ? Roles.secondary : Roles.surface_container_high
                 Behavior on color { ColorAnimation { duration: Vars.expressiveFastEffects.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.expressiveFastEffects.bezier } }
-                scale: slot.selected ? root.selectedScale : 1
+                scale: slot.selected ? root.selectedScale : Prefs.inactiveScale
                 Behavior on scale { NumberAnimation { duration: Prefs.fastSpatial.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Prefs.fastSpatial.bezier } }
 
                 Row {
