@@ -1,7 +1,0 @@
-/home/boing/Dotfiles/scripts/lyrics_tool/target/release/deps/colorchoice-8c9566eb22c7f265.d: /home/boing/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colorchoice-1.0.5/src/lib.rs
-
-/home/boing/Dotfiles/scripts/lyrics_tool/target/release/deps/libcolorchoice-8c9566eb22c7f265.rlib: /home/boing/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colorchoice-1.0.5/src/lib.rs
-
-/home/boing/Dotfiles/scripts/lyrics_tool/target/release/deps/libcolorchoice-8c9566eb22c7f265.rmeta: /home/boing/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colorchoice-1.0.5/src/lib.rs
-
-/home/boing/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colorchoice-1.0.5/src/lib.rs:
