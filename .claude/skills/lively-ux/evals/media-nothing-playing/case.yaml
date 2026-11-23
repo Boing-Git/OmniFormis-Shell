@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: media-nothing-playing
+expected_outcome: |
+  Finds the silent failure of play with no player, proposes an answer to it, keeps frequent-use motion small, and keeps idle motion conditional on visibility and reduced motion.

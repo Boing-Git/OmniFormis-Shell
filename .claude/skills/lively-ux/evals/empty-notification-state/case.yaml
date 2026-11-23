@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: empty-notification-state
+expected_outcome: |
+  A list of the empty state's dead spots with file:line evidence, each fixed with a concrete snippet that uses the repo's motion tokens, with a reduced-motion fallback, taught rather than applied.

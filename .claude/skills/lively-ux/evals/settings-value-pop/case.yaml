@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: settings-value-pop
+expected_outcome: |
+  A calibrated review: says the value pop is already lively, and finds the small real issues (restart stutter on fast turns, swell under reduced motion, hard-coded numbers) without inventing big problems.
