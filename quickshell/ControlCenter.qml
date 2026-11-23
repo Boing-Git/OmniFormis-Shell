@@ -612,6 +612,7 @@ PanelWindow {
             },
             media.control,
             notify.control,
+            clipboardControl.control,
             settingsControl.control
         ]
 
@@ -681,6 +682,7 @@ PanelWindow {
         AudioControl { id: audioOut; dial: center.dialItem }
         MediaPlayer { id: media; dial: center.dialItem; shapes: shapeLib; seekPos: spin3.pos }
         NotifyControl { id: notify; dial: center.dialItem }
+        ClipboardControl { id: clipboardControl; dial: center.dialItem }
         SettingsControl { id: settingsControl; dial: center.dialItem; bar: valueBar }
 
         // closes this dial and opens another one (an OSD pops up, see popUp in AudioOsd /

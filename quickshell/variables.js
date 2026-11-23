@@ -328,6 +328,15 @@ const settingsPath = "/home/boing/.local/state/dial-quickshell/settings.json";
 // where Settings → Advanced keeps the values changed in the settings files (primitive/Advanced.qml)
 const advancedPath = "/home/boing/.local/state/dial-quickshell/advanced.json";
 
+// the Clipboard control (controlcenter/ClipboardControl.qml): how many of the newest copies
+// its ring lists, where the pins are kept (cliphist forgets its oldest past 750), and where a
+// copied picture is decoded to be shown
+const clipboard = {
+    shown: 40,
+    pinsDir: "/home/boing/.local/state/dial-quickshell/clipboard-pins",
+    cacheDir: "/home/boing/.cache/dial-quickshell/clipboard"
+};
+
 // the presets (Presets.qml): one JSON file each, so they can be copied in and out, or kept in git
 const presetsPath = "/home/boing/.config/dial-quickshell/presets";
 

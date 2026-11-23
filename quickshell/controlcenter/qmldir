@@ -22,3 +22,4 @@ SettingsControl 1.0 SettingsControl.qml
 HyprSettings 1.0 HyprSettings.qml
 OptionRing 1.0 OptionRing.qml
 KeyChips 1.0 KeyChips.qml
+ClipboardControl 1.0 ClipboardControl.qml

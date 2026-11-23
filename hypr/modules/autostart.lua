@@ -11,8 +11,9 @@ local vars = require("modules.variables")
 --
  hl.on("hyprland.start", function () 
     hl.exec_cmd("hyprctl setcursor " .. vars.cursor_theme .. " " .. tostring(vars.env_hyprcursor_size))
-    hl.exec_cmd("wl-paste --type text --watch cliphist store")
-    hl.exec_cmd("wl-paste --type image --watch cliphist store")
+    -- the clipboard history (cliphist), pausable from the shells' Clipboard tile
+    hl.exec_cmd("wl-paste --type text --watch ~/Dotfiles/scripts/clip-store.sh")
+    hl.exec_cmd("wl-paste --type image --watch ~/Dotfiles/scripts/clip-store.sh")
     hl.exec_cmd("awww-daemon --format xrgb")
     hl.exec_cmd("sleep 1 && awww restore")
     hl.exec_cmd("qs")
