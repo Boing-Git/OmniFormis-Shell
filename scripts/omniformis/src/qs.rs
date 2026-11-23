@@ -18,7 +18,7 @@ const CURVE_VARS: [&str; 14] = [
 ];
 
 fn primary_path() -> PathBuf {
-    dotfiles_dir().join("quickshell/theme/variables.js")
+    dotfiles_dir().join("puffy/theme/variables.js")
 }
 
 fn config_path() -> PathBuf {
@@ -33,7 +33,7 @@ pub fn load_variables() -> String {
             }
         }
     }
-    die("could not find a valid variables.js in the dotfiles or ~/.config/quickshell");
+    die("could not find a valid variables.js in puffy/theme or ~/.config/quickshell/theme");
 }
 
 /// Write to the dotfiles copy and, when it is a different file, the ~/.config copy as well.
