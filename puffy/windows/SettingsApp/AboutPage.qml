@@ -14,7 +14,7 @@ Item {
     property string gpuName: "Unknown GPU"
     property string memName: "Unknown RAM"
 
-    property string pageTitle: "About OmniFormis"
+    property string pageTitle: "About Puffy"
     property string pageIcon: "\ue88e"
     property string pageShape: "Puffy"
     property color pageColor: Theme.secondary
@@ -268,7 +268,61 @@ Item {
                     }
                 }
             }
-            
+
+            // Shell card: switch to the dotfiles' other shells (scripts/shell); the new one starts
+            // before Puffy goes, and if it doesn't come up Puffy stays
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.leftMargin: Vars.spacingLarge
+                Layout.rightMargin: Vars.spacingLarge
+                Layout.preferredHeight: 72
+                radius: 16
+                antialiasing: true
+                color: Vars.tColor(Theme.surface_container_high, Vars.componentOpacity)
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 20
+                    anchors.rightMargin: 16
+                    spacing: 16
+
+                    QsText { text: "swap_horiz"; font.family: "Material Symbols Outlined"; font.pixelSize: 24; color: Theme.on_surface_variant }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+                        QsText { Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft; text: "Shell"; font.family: Vars.fontFamily; font.pixelSize: 16; setWeight: Font.Medium; color: Theme.on_surface }
+                        QsText { Layout.fillWidth: true; horizontalAlignment: Text.AlignLeft; text: "Puffy now. Switch to:"; font.family: Vars.fontFamily; font.pixelSize: 12; color: Theme.on_surface_variant; opacity: 0.9 }
+                    }
+                    Repeater {
+                        model: [{ label: "Dial-E", name: "dial-e" }, { label: "Droplet", name: "droplet" }]
+                        Rectangle {
+                            required property var modelData
+                            Layout.preferredHeight: 40
+                            Layout.preferredWidth: shellLabel.implicitWidth + 32
+                            radius: height / 2
+                            color: shellMouse.containsMouse ? Theme.primary : Theme.secondary_container
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            QsText {
+                                id: shellLabel
+                                anchors.centerIn: parent
+                                text: parent.modelData.label
+                                font.family: Vars.fontFamily
+                                font.pixelSize: 14
+                                setWeight: Font.Medium
+                                color: shellMouse.containsMouse ? Theme.on_primary : Theme.on_secondary_container
+                            }
+                            MouseArea {
+                                id: shellMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Quickshell.execDetached([Quickshell.shellDir + "/../scripts/shell", "switch", parent.modelData.name])
+                            }
+                        }
+                    }
+                }
+            }
+
             Item { Layout.fillHeight: true }
         }
     }

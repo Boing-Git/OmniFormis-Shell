@@ -68,8 +68,15 @@ Singleton {
             group("Windows", "select_window", windows),
             group("Workspaces", "space_dashboard", workspaces),
             group("Tools", "construction", tools),
+            group("Shells", "swap_horiz", shells),
             group("Power", "power_settings_new", power)
         ]
+    }
+
+    // ── shells ── the dotfiles' other shells (scripts/shell): the new one starts before this goes
+    function shells() {
+        return [["Dial-E", "dial-e", "donut_large"], ["Puffy", "puffy", "bubble_chart"]].map(s =>
+            task(s[0], s[2], "Switching to " + s[0], () => Quickshell.execDetached([Quickshell.shellDir + "/../scripts/shell", "switch", s[1]])))
     }
 
     // ═════════════════════════════ control center ═════════════════════════════
