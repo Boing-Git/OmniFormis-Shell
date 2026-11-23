@@ -233,9 +233,20 @@ Scope {
                 // circle that is on the screen (nearest the way we're heading), and if the
                 // circles don't fit on it, go further out, where the arc is longer
                 const need = (widestR || win.bubbleR) * 2 + win.gap, widest = win.fanMax * Math.PI / 180, easy = win.fanEasy * Math.PI / 180
+                // on the screen, and clear of the chain so far: its circles and the threads
+                // between them (a new fan never lands on the way it came)
+                const clear = win.bubbleR * 2 + win.reach
+                const off = (x, y, a, b) => {
+                    const vx = b.homeX - a.homeX, vy = b.homeY - a.homeY, l = vx * vx + vy * vy || 1
+                    const t = Math.max(0, Math.min(1, ((x - a.homeX) * vx + (y - a.homeY) * vy) / l))
+                    return Math.hypot(x - a.homeX - t * vx, y - a.homeY - t * vy)
+                }
                 const ok = (a, d) => {
                     const x = hx + d * Math.cos(a), y = hy + d * Math.sin(a)
-                    return x >= win.edge && x <= width - win.edge && y >= win.edge + 40 && y <= height - win.edge - 56
+                    if (x < win.edge || x > width - win.edge || y < win.edge + 40 || y > height - win.edge - 56) return false
+                    for (let i = 1; i < chain.length; i++)
+                        if (off(x, y, chain[i - 1], chain[i]) < clear) return false
+                    return true
                 }
                 const one = Math.PI / 90
                 let dist = win.step, from = base, to = base, spacing = need / dist
