@@ -27,7 +27,7 @@ if not hw.low_spec then
     hl.window_rule({
         name = "global-opacity",
         match = { fullscreen = false },
-        opacity = windowOpacity .. " override"
+        opacity = windowOpacity .. " override " .. vars.inactive_opacity .. " override"
     })
 end
 
