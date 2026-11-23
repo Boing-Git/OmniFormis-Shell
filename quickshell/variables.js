@@ -141,6 +141,11 @@ const lockBlur = 6;
 // out of the power dial's spot; lockBlur frosts it)
 const lockBackground = "blur";
 
+// what the lock's dial shows (Prefs.lockFace): "dial" (the clock, and a bead per letter on the
+// ring) or "eclipse" (the time in beads; each letter pulls one out of the digits into the ring,
+// a wrong password sends them back, the right one sends them off to the dials)
+const lockFace = "dial";
+
 // Liquid glass: the liquid glass library (Dotfiles/liquidglass-main) on every glass
 // container of the shell: the dials and pop-ups, the bands and search bars on them, the
 // lock's dial. Each bends, fringes and frosts the wallpaper behind it (a layer window can't

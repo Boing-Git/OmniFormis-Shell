@@ -40,6 +40,12 @@ WlSessionLockSurface {
     // before it shrinks back (as every dial's content does: closing is opening backwards)
     readonly property bool faceShown: lock.phase === "covered" || (lock.phase === "in" && lock.cover >= 0.9)
 
+    // Lock face: Eclipse (EclipseBeads.qml) in place of the clock and the ring's beads
+    readonly property bool eclipse: Prefs.lockFace === "eclipse"
+
+    // where the pointer is (Eclipse's beads lean towards it)
+    property point pointer: Qt.point(width / 2, height / 2)
+
     // ── effects that follow the state ── (the effects curve: they never bounce)
     // 1 while the password is wrong (beads and mark in the error colour)
     property real alarm: lock.wrong ? 1 : 0
@@ -277,7 +283,7 @@ WlSessionLockSurface {
             // ── the beads ── one per typed letter: the newest at the mark (bigger,
             // primary), the older ones secondary, further round to the left
             Repeater {
-                model: surface.lock.peak
+                model: surface.eclipse ? 0 : surface.lock.peak
 
                 Item {
                     id: bead
@@ -412,6 +418,7 @@ WlSessionLockSurface {
         Row {
             anchors.centerIn: parent
             spacing: surface.cfg.clockGap
+            visible: !surface.eclipse
 
             ClockFace { cfg: surface.cfg; part: "hours"; anchors.verticalCenter: parent.verticalCenter }
             ClockFace { cfg: surface.cfg; part: "minutes"; anchors.verticalCenter: parent.verticalCenter }
@@ -434,6 +441,22 @@ WlSessionLockSurface {
             font.pixelSize: surface.cfg.dateFontSize
             font.weight: 600
             color: Roles.on_surface
+        }
+    }
+
+    // ── Eclipse ── over the dial, and not faded with it as the lock opens: its beads fly
+    // off to the dials while the sheet goes back
+    Loader {
+        anchors.fill: parent
+        active: surface.eclipse
+        opacity: surface.faceShown || surface.lock.unlocking ? 1 : 0
+        visible: opacity > 0
+        Behavior on opacity { NumberAnimation { duration: Vars.expressiveFastEffects.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.expressiveFastEffects.bezier } }
+        sourceComponent: EclipseBeads {
+            host: surface
+            cx: surface.width / 2
+            cy: surface.height / 2
+            pointer: surface.pointer
         }
     }
 
@@ -482,7 +505,7 @@ WlSessionLockSurface {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
-        onPositionChanged: surface.lock.moved()
+        onPositionChanged: mouse => { surface.pointer = Qt.point(mouse.x, mouse.y); surface.lock.moved() }
         onPressed: { surface.lock.poke(); keys.forceActiveFocus() }
         onWheel: surface.lock.poke()
     }

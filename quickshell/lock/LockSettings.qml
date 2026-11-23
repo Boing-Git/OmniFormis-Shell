@@ -83,6 +83,18 @@ QtObject {
     property real awakeScrim: 0.48
     property real sharpScrimExtra: 0.2
 
+    // ── Eclipse ── (Lock face: Eclipse) the time in beads, a 5 × 7 dot matrix
+    // px from one bead to the next, and a bead's size, in the digits
+    property real eclipsePitch: 14
+    property real eclipseDotSize: 10
+
+    // the beads lean towards the pointer: px at most, and how near it has to be to pull
+    property real eclipseDrift: 6
+    property real eclipseDriftReach: 260
+
+    // ms between two beads setting off for the dials as the lock opens
+    property int eclipseLaunchStagger: 2
+
     // ── timing ──
     // ms with no key and no move before the ring folds away and only the time is left
     // (only while nothing is typed)

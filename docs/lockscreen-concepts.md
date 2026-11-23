@@ -20,6 +20,8 @@ re-lock and the same "no unlock call by design".
 
 ## 1. Eclipse: the clock gives its beads to the password
 
+**Built** (Dial-E): Settings → Lock → Look → Lock face → Eclipse (`quickshell/lock/EclipseBeads.qml`, sizes in LockSettings → Advanced). Default stays Dial. Not yet: Puffy and Droplet variants, the fixed-bead-count privacy option.
+
 **Idea.** The time fills the dial as large dot-matrix digits made of M3 beads (this is the
 "interactive dot matrix" from the todo). The beads drift a little towards the pointer.
 

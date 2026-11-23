@@ -102,6 +102,7 @@ QtObject {
     property string frostOver: Vars.frostOver
     property int lockBlur: Vars.lockBlur
     property string lockBackground: Vars.lockBackground
+    property string lockFace: Vars.lockFace
 
     // ── liquid glass ── (LiquidGlass.qml) "off", "on" or "button" (on, and a dial's glass
     // brightens under the mouse and flattens while pressed); the rest are the liquid glass
@@ -382,6 +383,9 @@ QtObject {
         { key: "lockBackground", group: "Look", label: "Lock sheet", icon: "wallpaper", type: "choice",
           options: [{ value: "blur", label: "Blur" }, { value: "glass", label: "Liquid glass" }],
           help: "Blur: the lock covers the desktop with the wallpaper, softened. Liquid glass: a pane of glass sweeps over it, bending it at its rim (Lock blur frosts it)." },
+        { key: "lockFace", group: "Look", label: "Lock face", icon: "lock_clock", type: "choice",
+          options: [{ value: "dial", label: "Dial" }, { value: "eclipse", label: "Eclipse" }],
+          help: "Dial: the clock, and a bead on the ring per letter. Eclipse: the time in beads; each letter pulls one into the ring, so the clock thins as you type. Wrong sends them back, right sends them to your dials." },
         { key: "liquidGlass", group: "Liquid", label: "Liquid glass", icon: "water_drop", type: "choice",
           options: [{ value: "off", label: "Off" }, { value: "on", label: "On" }, { value: "button", label: "Button" }],
           help: "Every dial, ring and pop-up turns to glass that bends the wallpaper. Button: brighter under the mouse, flatter while pressed." },
