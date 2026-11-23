@@ -1066,16 +1066,17 @@ PanelWindow {
 
         // ── Dial-E itself, hiding in plain sight ── (Settings → Extras → Mascots) small, in the
         // empty end of the inner disc where the dial meets the screen's edge. The rings turn it
-        // like a gear meshed inside the inner ring (same way round, ring radius / its own
-        // radius as fast), every frame of a drag or a fling, its googly pupils swinging after
-        // the turn; it dozes while nothing happens, and a click startles it
+        // like a gear meshed inside the inner ring (same way round), every frame of a drag or a
+        // fling, its googly pupils swinging after the turn; it dozes while nothing happens, and
+        // a click startles it. Geared 3:1, not the true ratio (~10:1): the cookie repeats every
+        // 30°, and faster it strobes on a fling (looks still, or turning backwards)
         Mascot {
             id: hiding
             readonly property real deg: dial.startDeg + dial.sweepDeg - 9
             readonly property real r: dial.innerRadius - dial.settings.pillHeight / 2 - width / 2 - 9
             width: 46
             height: 46
-            turn: (spin.scroll + spin2.scroll) * dial.innerRadius / (width * 0.48)
+            turn: (spin.scroll + spin2.scroll) * 3
             onTurnChanged: { dozing.dozed = false; dozing.restart() }
             x: dial.centerX + r * Math.cos(deg * Math.PI / 180) - width / 2
             y: dial.centerY + r * Math.sin(deg * Math.PI / 180) - height / 2

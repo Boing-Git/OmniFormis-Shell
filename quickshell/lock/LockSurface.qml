@@ -45,6 +45,9 @@ WlSessionLockSurface {
 
     // where the pointer is (Eclipse's beads lean towards it)
     property point pointer: Qt.point(width / 2, height / 2)
+    // the pointer moved in the last 3 s (the mascot follows it; else it looks at you)
+    property bool pointerLive: false
+    Timer { id: pointerStill; interval: 3000; onTriggered: surface.pointerLive = false }
 
     // ── effects that follow the state ── (the effects curve: they never bounce)
     // 1 while the password is wrong (beads and mark in the error colour)
@@ -413,8 +416,8 @@ WlSessionLockSurface {
         }
 
         // ── Dial-E, keeping watch ── (Settings → Extras → Mascots) on the dial's rim at the
-        // bottom: asleep until you come back; it looks at you, and looks away (up and aside)
-        // while the password is typed
+        // bottom: asleep until you come back; it looks at you (its eyes follow the pointer while
+        // that moves), and looks away (up and aside) while the password is typed
         Mascot {
             id: keeper
             width: 44
@@ -430,7 +433,13 @@ WlSessionLockSurface {
             accent: Roles.primary
             visible: Prefs.mascots
             asleep: !surface.lock.awake
-            look: Qt.point(0, -0.35)
+            // (0, -0.35): eye contact (it cancels the googly pupils' resting droop)
+            look: {
+                if (!surface.pointerLive) return Qt.point(0, -0.35)
+                const dx = surface.pointer.x - (face.x + x + width / 2), dy = surface.pointer.y - (face.y + y + height / 2)
+                const d = Math.max(1, Math.hypot(dx, dy))
+                return Qt.point(dx / d, dy / d)
+            }
             shy: surface.lock.count > 0 && !surface.lock.wrong && !surface.lock.unlocking
             // a bob per letter, a flinch per deletion; it cries at a wrong password, and is glad at
             // the right one
@@ -540,7 +549,7 @@ WlSessionLockSurface {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
-        onPositionChanged: mouse => { surface.pointer = Qt.point(mouse.x, mouse.y); surface.lock.moved() }
+        onPositionChanged: mouse => { surface.pointer = Qt.point(mouse.x, mouse.y); surface.lock.moved(); surface.pointerLive = true; pointerStill.restart() }
         onPressed: { surface.lock.poke(); keys.forceActiveFocus() }
         onWheel: surface.lock.poke()
     }
