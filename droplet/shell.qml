@@ -542,6 +542,7 @@ PanelWindow {
             id: seed
             node: ({ label: "", icon: "hub", leaf: false, children: () => Tree.roots() })
             r: win.seedR
+            fixedSize: true
             role: web.phase === "open" || web.phase === "closing" ? "chain" : "seed"
             grabbed: web.phase === "pull" || web.grabbed === seed
 

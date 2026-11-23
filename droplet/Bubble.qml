@@ -103,7 +103,8 @@ Item {
     // the pop: M3E expressive fast (800 / 0.6), so it overshoots a little and settles
     SpringValue {
         id: grow
-        to: !root.started || root.role === "gone" ? 0
+        to: root.fixedSize ? 1
+            : !root.started || root.role === "gone" ? 0
             : root.role === "chain" || root.role === "done" ? 1.12
             : root.hot ? 1.1 : 1
         stiffness: 800
@@ -111,11 +112,15 @@ Item {
         epsilon: 0.002
     }
 
+    // one size always (the drop out of the edge): no pop, no grow on joining or hover; it
+    // still squashes and wobbles, which changes its shape, not its size
+    property bool fixedSize: false
+
     // it starts inside the circle it comes out of, at nothing
     Component.onCompleted: {
         sx.snap(from ? from.cx : toX)
         sy.snap(from ? from.cy : toY)
-        grow.snap(0)
+        grow.snap(fixedSize ? 1 : 0)
         if (delay > 0) starter.start()
         else begin()
     }
