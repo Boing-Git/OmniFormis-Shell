@@ -16,7 +16,8 @@ local vars = require("modules.variables")
     hl.exec_cmd("wl-paste --type image --watch ~/Dotfiles/scripts/clip-store.sh")
     hl.exec_cmd("awww-daemon --format xrgb")
     hl.exec_cmd("sleep 1 && awww restore")
-    hl.exec_cmd("qs")
+    -- the chosen shell (Dial-E, Puffy or Droplet): scripts/shell remembers which
+    hl.exec_cmd("~/Dotfiles/scripts/shell start")
     hl.exec_cmd("hypridle")
  end)
 

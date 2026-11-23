@@ -30,9 +30,9 @@ ShellRoot {
             onStreamFinished: {
                 let text = this.text.trim();
                 if (text.includes("nixos")) {
-                    root.globalOsIconPath = "file:///home/boing/Dotfiles/quickshell/theme/assets/nixos-logo.png";
+                    root.globalOsIconPath = Qt.resolvedUrl("theme/assets/nixos-logo.png");
                 } else if (text.includes("arch")) {
-                    root.globalOsIconPath = "file:///home/boing/Dotfiles/quickshell/theme/assets/arch-logo.png";
+                    root.globalOsIconPath = Qt.resolvedUrl("theme/assets/arch-logo.png");
                 }
             }
         }

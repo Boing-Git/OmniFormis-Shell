@@ -26,7 +26,7 @@ Item {
 
     Process {
         id: emojiFetcher
-        command: ["cat", Quickshell.env("HOME") + "/.config/quickshell/scripts/emojis.txt"]
+        command: ["cat", Qt.resolvedUrl("../scripts/emojis.txt").toString().replace(/^file:\/\//, "")]
         running: false
         
         stdout: StdioCollector {

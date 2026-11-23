@@ -22,7 +22,7 @@ Item {
 
     Process {
         id: emojiLoader
-        command: ["cat", Quickshell.env("HOME") + "/.config/quickshell/scripts/emojis.txt"]
+        command: ["cat", Qt.resolvedUrl("../../scripts/emojis.txt").toString().replace(/^file:\/\//, "")]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {

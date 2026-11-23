@@ -183,23 +183,6 @@ if [ -n "$DIAL_SHELL_RELOADS" ]; then
     exit 0
 fi
 
-# Restart quickshell the same careful way scripts/reload.sh does: stop the watchdog and actually
-# wait for it to exit before relaunching, and relaunch through qs-watchdog.sh with the explicit
-# -p path rather than a bare `quickshell &`. A bare launch has no -p flag, so quickshell falls
-# back to its default config search path — which on this machine resolves to a stale, read-only
-# Nix-store copy of the whole shell under ~/.config/quickshell instead of the live
-# ~/Dotfiles/quickshell tree, making every widget look like an old, pre-redesign version until a
-# real reload fixed it. A bare launch also bypasses the watchdog, silently losing crash recovery
-# after every theme switch.
-pkill -TERM -f qs-watchdog.sh
-for i in $(seq 1 50); do
-    pgrep -f qs-watchdog.sh >/dev/null || break
-    sleep 0.1
-done
-pkill -9 -f qs-watchdog.sh 2>/dev/null
-
-pkill -9 quickshell 2>/dev/null || true
-pkill -9 .quickshell-wra 2>/dev/null || true
-
-nohup bash /home/boing/Dotfiles/quickshell/scripts/qs-watchdog.sh >/dev/null 2>&1 &
-disown
+# the shell that runs (Dial-E, Puffy or Droplet) restarts with the new colours, through the
+# switcher, so it's the same shell that comes back
+"$HOME/Dotfiles/scripts/shell" restart

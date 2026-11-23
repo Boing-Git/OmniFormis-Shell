@@ -291,28 +291,19 @@ pub fn kill() {
     if no_side_effects() {
         return;
     }
-    emit("Killing Quickshell...");
-    let _ = Command::new("sh")
-        .arg("-c")
-        .arg("pkill -9 quickshell; pkill -9 .quickshell-wra; pkill -f qs-watchdog")
-        .status();
+    emit("Stopping the shell...");
+    // through the switcher (scripts/shell), which knows which shell runs
+    let _ = Command::new(dotfiles_dir().join("scripts/shell")).arg("stop").status();
 }
 
 pub fn launch(detached: bool) {
     if no_side_effects() {
         return;
     }
-    emit("Launching Quickshell...");
-    let script = dotfiles_dir().join("quickshell/scripts/qs-watchdog.sh");
-    if detached {
-        let _ = Command::new("sh")
-            .arg("-c")
-            .arg("nohup bash \"$0\" > /dev/null 2>&1 &")
-            .arg(&script)
-            .spawn();
-    } else {
-        let _ = Command::new("bash").arg(&script).status();
-    }
+    emit("Starting the shell...");
+    // the chosen shell, through the switcher (scripts/shell); it daemonizes the shell itself
+    let switcher = dotfiles_dir().join("scripts/shell");
+    let _ = if detached { Command::new(&switcher).arg("start").spawn().map(|_| ()) } else { Command::new(&switcher).arg("start").status().map(|_| ()) };
 }
 
 pub fn reload() {

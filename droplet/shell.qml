@@ -38,7 +38,7 @@ PanelWindow {
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "circle-shell"
+    WlrLayershell.namespace: "droplet"
     WlrLayershell.layer: WlrLayer.Overlay
 
     // the keys only while it's open (Esc, Backspace, Enter, and typing to search)

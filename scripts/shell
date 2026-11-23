@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# The desktop shells of these dotfiles, and which one runs. The one chosen is remembered, and
+# everything that starts or restarts a shell goes through here (autostart, a theme switch,
+# reload.sh, omniformis qs), so it is always that one.
+#
+#   shell list               the shells, the running one marked
+#   shell current            the chosen one
+#   shell start              starts the chosen one, unless a shell already runs (autostart)
+#   shell switch <name>      starts <name>, waits until it answers, then stops the other
+#                            (if it doesn't answer in 15 s it's stopped and the old one stays)
+#   shell restart | stop
+set -u
+here=$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)
+state="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles-shell"
+names=(dial-e puffy droplet)
+declare -A dir=([dial-e]="$here/quickshell" [puffy]="$here/puffy" [droplet]="$here/droplet")
+declare -A title=([dial-e]="Dial-E" [puffy]="Puffy" [droplet]="Droplet")
+# (the names the shells had before: a saved choice or a keybind with one still works)
+declare -A alias=([dial]=dial-e [quickshell]=dial-e [omniformis]=puffy [circle]=droplet [circle-shell]=droplet)
+
+notify() {
+    busctl --user call org.freedesktop.Notifications /org/freedesktop/Notifications \
+        org.freedesktop.Notifications Notify susssasa{sv}i "Shell" 0 "swap_horiz" "$1" "$2" 0 0 6000 >/dev/null 2>&1 || true
+}
+name_of() { local n=${1,,}; [ -n "$n" ] || return 1; n=${alias[$n]:-$n}; [ -n "${dir[$n]:-}" ] && echo "$n"; }
+chosen() { name_of "$(cat "$state" 2>/dev/null)" || echo dial-e; }
+
+# the running instances of a shell: "<id>" per line (its config resolves into its folder; the
+# autostart one is started through ~/.config/quickshell, a link to Dial-E's)
+ids_of() {
+    local want
+    want=$(readlink -f "${dir[$1]}")
+    qs list --all 2>/dev/null | awk '/^Instance /{sub(":", "", $2); id=$2} /Config path:/{print id, $3}' |
+        while read -r id path; do [ "$(dirname "$(readlink -f "$path")")" = "$want" ] && echo "$id"; done
+}
+running() { for n in "${names[@]}"; do [ -n "$(ids_of "$n")" ] && echo "$n"; done; }
+answers() { local id; id=$(ids_of "$1" | head -n1); [ -n "$id" ] && qs ipc -i "$id" show >/dev/null 2>&1; }
+
+# QML_IMPORT_PATH from the session can point at another Qt's modules (it did: 6.11 under a
+# 6.12 Quickshell, and Puffy's QtQuick.Controls failed to load); the shells bring their own
+launch() { env -u QML_IMPORT_PATH qs -d -p "${dir[$1]}" >/dev/null 2>&1; }
+stop() { for id in $(ids_of "$1"); do qs kill -i "$id" >/dev/null 2>&1; done; }
+
+switch_to() {
+    local to old
+    to=$(name_of "$1") || { echo "no shell called '$1' (${names[*]})" >&2; return 1; }
+    old=$(running | grep -vx "$to")
+    [ -z "$(ids_of "$to")" ] && launch "$to"
+    for _ in $(seq 1 60); do answers "$to" && break; sleep 0.25; done
+    if ! answers "$to"; then
+        stop "$to"
+        notify "${title[$to]} didn't start" "Staying on ${title[${old:-dial-e}]:-the current shell}. Its log: qs log -p ${dir[$to]}"
+        echo "${title[$to]} didn't start; nothing changed" >&2
+        return 1
+    fi
+    for n in $old; do stop "$n"; done
+    mkdir -p "$(dirname "$state")" && echo "$to" >"$state"
+}
+
+# Stopping the shell that holds the lock would leave the session locked with nothing to unlock
+# it: never while Dial-E's lock is up (its marker names this Hyprland session)
+locked() {
+    local f="${XDG_STATE_HOME:-$HOME/.local/state}/dial-quickshell/locked"
+    [ -f "$f" ] && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && [ "$(cat "$f")" = "$HYPRLAND_INSTANCE_SIGNATURE" ]
+}
+case "${1:-}" in switch | restart | stop) if locked; then echo "the screen is locked: unlock first" >&2; exit 1; fi ;; esac
+
+case "${1:-}" in
+    list) cur=$(running); for n in "${names[@]}"; do printf '%s%s\t%s\n' "$n" "$(grep -qx "$n" <<<"$cur" && echo ' *')" "${dir[$n]}"; done ;;
+    current) chosen ;;
+    start) [ -n "$(running)" ] || switch_to "$(chosen)" ;;
+    switch) switch_to "${2:?usage: shell switch <${names[*]// /|}>}" ;;
+    restart) n=$(running | head -n1); n=${n:-$(chosen)}; stop "$n"; sleep 0.3; switch_to "$n" ;;
+    stop) for n in $(running); do stop "$n"; done ;;
+    *) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

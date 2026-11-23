@@ -1,4 +1,6 @@
-# Circle shell
+# Droplet
+
+The Droplet shell (it was called the circle shell): its mascot is a water droplet.
 
 A shell where everything is a circle, and you get things done by dragging one circle onto
 the next.
@@ -56,9 +58,9 @@ second line under their name (the network, the level, the artist).
 
 ## Run it
 
-    qs -p ~/Dotfiles/circle-shell                          # for real
-    CIRCLES_DEMO=1 qs -p ~/Dotfiles/circle-shell           # tasks only say what they'd do
-    qs -p ~/Dotfiles/circle-shell ipc call circles toggle  # open / close from a keybind
+    qs -p ~/Dotfiles/droplet                              # for real (or: scripts/shell switch droplet)
+    CIRCLES_DEMO=1 qs -p ~/Dotfiles/droplet           # tasks only say what they'd do
+    qs -p ~/Dotfiles/droplet ipc call circles toggle  # open / close from a keybind
 
 It runs next to the dial shell (it sits on the overlay layer).
 
