@@ -46,6 +46,7 @@ layout(std140, binding = 0) uniform buf {
     float shadowSpread;
     float shadowOffsetY;
     float bevelMode;
+    vec2 boxHalf;
 };
 
 out gl_PerVertex { vec4 gl_Position; };

@@ -67,6 +67,9 @@ layout(std140, binding = 0) uniform buf {
     float shadowSpread;
     float shadowOffsetY;
     float bevelMode;
+
+    // shape 3, a box: its half width and height (px); shapeRadius rounds its corners
+    vec2 boxHalf;
 };
 
 // the wallpaper, and the same blurred (the Blur setting)
@@ -78,6 +81,14 @@ float sdShape(vec2 p) {
     float R = shapeRadius * dpr;
     if (shapeKind < 0.5)
         return length(p) - R;
+
+    // a box with rounded corners (Inigo Quilez's sdRoundBox), for cards
+    if (shapeKind > 2.5) {
+        vec2 b = boxHalf * dpr;
+        float r = min(R, min(b.x, b.y));
+        vec2 q = abs(p) - b + r;
+        return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+    }
     float hw = shapeHalfWidth * dpr;
 
     // turned so the band's middle points down the y axis, then folded: it's symmetric
@@ -101,7 +112,7 @@ float sdShape(vec2 p) {
 // From the middle of the glass's body to p: a disc's middle is its centre, a band's is the
 // circle it follows (the library's v_localPx, from the panel's centre)
 vec2 bodyOffset(vec2 p) {
-    if (shapeKind < 0.5) return p;
+    if (shapeKind < 0.5 || shapeKind > 2.5) return p;
     float l = max(length(p), 1e-4);
     return p / l * (l - shapeRadius * dpr);
 }
@@ -155,7 +166,7 @@ void main() {
     // ── anti-aliased mask ──
     float mask = 1.0 - smoothstep(-1.5, 0.5, sdf);
 
-    float maxD = shapeKind < 0.5 ? shapeRadius * dpr : shapeHalfWidth * dpr;
+    float maxD = (shapeKind < 0.5 ? shapeRadius : shapeKind > 2.5 ? min(boxHalf.x, boxHalf.y) : shapeHalfWidth) * dpr;
     float inside = -sdf;
     // the rim band: the library's 35% of the shape, but never wider than the bevel (×1.5),
     // so a big dial's rim stays a thin line of light instead of a wide haze

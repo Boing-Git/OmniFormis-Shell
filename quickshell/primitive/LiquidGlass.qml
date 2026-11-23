@@ -30,7 +30,10 @@ ShaderEffect {
     //   "disc"  a circle of `radius` round (cx, cy)
     //   "arc"   a band `thickness` wide along the circle of `radius` round (cx, cy), from
     //           startDeg over sweepDeg (0° = right, 90° = down), with `roundEnds` or cut flat
+    //   "box"   a card boxWidth × boxHeight round (cx, cy), its corners rounded by `radius`
     property string shape: "disc"
+    property real boxWidth: width
+    property real boxHeight: height
     property real cx: width / 2
     property real cy: height / 2
     property real radius: Math.min(width, height) / 2
@@ -134,8 +137,9 @@ ShaderEffect {
     // which way is up in the window's clip space: down on Vulkan, up everywhere else
     readonly property real ndcYUp: GraphicsInfo.api === GraphicsInfo.Vulkan ? -1 : 1
 
-    // the shape: 0 disc, 1 band with round ends, 2 band with flat ends
-    readonly property real shapeKind: shape === "disc" ? 0 : roundEnds ? 1 : 2
+    // the shape: 0 disc, 1 band with round ends, 2 band with flat ends, 3 box
+    readonly property real shapeKind: shape === "disc" ? 0 : shape === "box" ? 3 : roundEnds ? 1 : 2
+    readonly property size boxHalf: Qt.size(boxWidth / 2, boxHeight / 2)
     readonly property real shapeRadius: radius
     readonly property real shapeHalfWidth: thickness / 2
     readonly property real midRad: (startDeg + sweepDeg / 2) * Math.PI / 180

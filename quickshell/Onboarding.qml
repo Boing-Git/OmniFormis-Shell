@@ -122,6 +122,14 @@ PanelWindow {
     readonly property real cardRadius: 28
     readonly property real markerRadius: 84
 
+    // what the card's glass sees: streamed (Sees: Live) only while the tour is up, and only
+    // what's under the card
+    LiquidBackdrop {
+        id: tourPictures
+        awake: win.shown
+        area: Qt.rect(card.x, card.y, card.width, card.height)
+    }
+
     Item {
         id: content
         anchors.fill: parent
@@ -217,8 +225,23 @@ PanelWindow {
             width: win.cardWidth
             height: column.height + win.cardPad * 2
             radius: win.cardRadius
-            color: Roles.surface_container_high
+            color: cardGlass.active ? "transparent" : Roles.surface_container_high
             antialiasing: true
+
+            // liquid glass when it's on (Settings → Liquid glass), like every dial: a card of
+            // it, over the scrim
+            LiquidGlass {
+                id: cardGlass
+                anchors.fill: parent
+                anchors.margins: -shadowReach
+                shape: "box"
+                boxWidth: card.width
+                boxHeight: card.height
+                radius: card.radius
+                backdrop: tourPictures
+                tint: Prefs.liquidBody(Roles.surface_container_high, "popup")
+                under: Qt.rgba(0, 0, 0, 0.45 * scrim.opacity)
+            }
 
             // in the middle of the screen, nudged away from the spot so the arrow has room
             readonly property real nudge: 110
