@@ -4,7 +4,7 @@
 # reload.sh, omniformis qs), so it is always that one.
 #
 #   shell list               the shells, the running one marked
-#   shell current            the chosen one
+#   shell current            the one running (else the chosen one)
 #   shell start              starts the chosen one, unless a shell already runs (autostart)
 #   shell switch <name>      starts <name>, waits until it answers, then stops the other
 #                            (if it doesn't answer in 15 s it's stopped and the old one stays)
@@ -67,8 +67,23 @@ switch_to() {
         echo "${title[$to]} didn't start; nothing changed" >&2
         return 1
     fi
+    # remembered before the old one goes: a switch asked for from inside the old shell (its
+    # settings, its AI) can be stopped along with it
+    remember "$to"
     for n in $old; do stop "$n"; done
-    mkdir -p "$(dirname "$state")" && echo "$to" >"$state"
+}
+
+# saves the chosen shell (what `shell start` starts at login)
+remember() { mkdir -p "$(dirname "$state")" && echo "$1" >"$state"; }
+
+# the shell running now, else the chosen one. A shell that runs without being chosen (started
+# by hand, or the chosen one crashed and another was started) becomes the chosen one
+current() {
+    local n
+    n=$(running | head -n1)
+    [ -n "$n" ] || { chosen; return; }
+    [ "$n" = "$(chosen)" ] || remember "$n"
+    echo "$n"
 }
 
 # Stopping the shell that holds the lock would leave the session locked with nothing to unlock
@@ -85,9 +100,18 @@ locked() {
 }
 case "${1:-}" in switch | restart | stop) if locked; then echo "the screen is locked: unlock first" >&2; exit 1; fi ;; esac
 
+# a switch or restart runs in a session of its own: the shell it stops may be the one that
+# asked for it (with the AI, this script is that shell's grandchild), and must not take the
+# switch down with it halfway
+case "${1:-}" in switch | restart)
+    if [ -z "${DOTFILES_SHELL_DETACHED:-}" ] && command -v setsid >/dev/null; then
+        DOTFILES_SHELL_DETACHED=1 exec setsid -w "$0" "$@"
+    fi ;;
+esac
+
 case "${1:-}" in
     list) cur=$(running); for n in "${names[@]}"; do printf '%s%s\t%s\n' "$n" "$(grep -qx "$n" <<<"$cur" && echo ' *')" "${dir[$n]}"; done ;;
-    current) chosen ;;
+    current) current ;;
     start) [ -n "$(running)" ] || switch_to "$(chosen)" ;;
     switch) switch_to "${2:?usage: shell switch <${names[*]// /|}>}" ;;
     restart) n=$(running | head -n1); n=${n:-$(chosen)}; stop "$n"; sleep 0.3; switch_to "$n" ;;
