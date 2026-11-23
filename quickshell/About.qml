@@ -162,6 +162,7 @@ PanelWindow {
 
                     Mascot {
                         id: mascot
+                        calm: Prefs.calm
                         kind: slot.modelData.name
                         width: 170
                         height: 170

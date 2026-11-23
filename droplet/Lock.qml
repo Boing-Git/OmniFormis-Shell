@@ -183,6 +183,32 @@ Scope {
                 }
             }
 
+            // ── Droplet itself ── (Settings: Mascot) at the end of the string of drops, asleep
+            // until you type; a wrong password startles it, the right one makes it hop
+            Mascot {
+                id: keeper
+                width: 40
+                height: 40
+                x: parent.width / 2 + (root.count > 0 && !root.opening ? (root.count - 1) / 2 * row.gap + row.gap + 8 : -width / 2)
+                y: row.y + row.height / 2 - height / 2 - (root.count > 0 ? 0 : 46)
+                Behavior on x { NumberAnimation { duration: 320; easing.type: Easing.OutBack } }
+                Behavior on y { NumberAnimation { duration: 320; easing.type: Easing.OutBack } }
+                kind: "droplet"
+                body: Colors.primary_container
+                ink: Colors.on_primary_container
+                eyeWhite: Colors.primary_fixed
+                pupil: Colors.on_primary_fixed
+                accent: Colors.primary
+                visible: Settings.mascot
+                asleep: root.count === 0 && root.note === ""
+                look: Qt.point(root.count > 0 ? -1 : 0, 0.3)
+                Connections {
+                    target: root
+                    function onWrongChanged() { if (root.wrong) keeper.poke() }
+                    function onOpeningChanged() { if (root.opening) keeper.cheer() }
+                }
+            }
+
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: row.y + row.height + 12

@@ -11,6 +11,7 @@ import "theme/variables.js" as Vars
 import "."
 import "desktop/Widgets" as Widgets
 import "core/primitives" as Primitives
+import "mascot" as Mascots
 
 Item {
     id: root
@@ -189,6 +190,35 @@ Item {
                                 anchors.centerIn: parent
                                 width: 300
                                 height: 300
+                            }
+
+                            // ── Puffy itself ── (Settings → Extras → Mascot) by the clock: it puffs
+                            // up a little with each letter, dozes while nothing is typed, and a
+                            // wrong password gives it a fright
+                            Mascots.Mascot {
+                                id: keeper
+                                width: 46
+                                height: 46
+                                x: parent.width - width + 10
+                                y: parent.height - height + 6
+                                kind: "puffy"
+                                calm: Vars.reduceMotion
+                                body: Theme.primary_container
+                                ink: Theme.on_primary_container
+                                eyeWhite: Theme.primary_fixed
+                                pupil: Theme.on_primary_fixed
+                                accent: Theme.primary
+                                visible: Vars.mascots
+                                asleep: passwordInput.text.length === 0 && !root.authError
+                                look: Qt.point(-0.4, 0.8)
+                                Connections {
+                                    target: passwordInput
+                                    function onTextChanged() { keeper.puffTo(Math.min(1, passwordInput.text.length / 12)) }
+                                }
+                                Connections {
+                                    target: root
+                                    function onAuthErrorChanged() { if (root.authError) { keeper.puffTo(0); keeper.poke() } }
+                                }
                             }
                         }
 

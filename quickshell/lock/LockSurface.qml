@@ -412,6 +412,36 @@ WlSessionLockSurface {
             }
         }
 
+        // ── Dial-E, keeping watch ── (Settings → Extras → Mascots) small, on the dial's rim at
+        // the bottom: asleep until you come back, its eyes on the pointer; a wrong password
+        // startles it, the right one makes it hop
+        Mascot {
+            id: keeper
+            width: 30
+            height: 30
+            x: face.px(surface.cfg.dialRadius - 4, 90) - width / 2
+            y: face.py(surface.cfg.dialRadius - 4, 90) - height / 2
+            kind: "dial-e"
+            calm: Prefs.calm
+            body: Roles.primary_container
+            ink: Roles.on_primary_container
+            eyeWhite: Roles.primary_fixed
+            pupil: Roles.on_primary_fixed
+            accent: Roles.primary
+            visible: Prefs.mascots
+            asleep: !surface.lock.awake
+            look: {
+                const dx = surface.pointer.x - (face.x + x + width / 2), dy = surface.pointer.y - (face.y + y + height / 2)
+                const d = Math.max(1, Math.hypot(dx, dy))
+                return Qt.point(dx / d, dy / d)
+            }
+            Connections {
+                target: surface.lock
+                function onWrongChanged() { if (surface.lock.wrong) keeper.poke() }
+                function onUnlockingChanged() { if (surface.lock.unlocking) keeper.cheer() }
+            }
+        }
+
         // ── the centre: now ── the clock (the control center's, bigger), and the date
         // along the bottom of the inside of the ring. They stay put while the ring comes
         // and goes round them

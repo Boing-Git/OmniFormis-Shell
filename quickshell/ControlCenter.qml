@@ -1064,6 +1064,49 @@ PanelWindow {
         // (and with Ask at the mark, typing starts the question)
         onTyped: text => { if (inSettings) settingsControl.startTyping(text); else if (askControl.active && !askControl.typing) askControl.startTyping(text) }
 
+        // ── Dial-E itself, hiding in plain sight ── (Settings → Extras → Mascots) small, in the
+        // empty end of the inner disc where the dial meets the screen's edge; its eyes follow
+        // the ring as it turns, it dozes while nothing happens, and a click startles it
+        Mascot {
+            id: hiding
+            readonly property real deg: dial.startDeg + dial.sweepDeg - 9
+            readonly property real r: dial.innerRadius - dial.settings.pillHeight / 2 - 26
+            width: 34
+            height: 34
+            x: dial.centerX + r * Math.cos(deg * Math.PI / 180) - width / 2
+            y: dial.centerY + r * Math.sin(deg * Math.PI / 180) - height / 2
+            kind: "dial-e"
+            calm: Prefs.calm
+            body: Roles.primary_container
+            ink: Roles.on_primary_container
+            eyeWhite: Roles.primary_fixed
+            pupil: Roles.on_primary_fixed
+            accent: Roles.primary
+            visible: Prefs.mascots && opacity > 0
+            opacity: dial.open && dial.currentSize >= dial.expandedSize * 0.9 && !dial.arranging ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: Vars.expressiveDefaultEffects.duration; easing.type: Easing.BezierSpline; easing.bezierCurve: Vars.expressiveDefaultEffects.bezier } }
+            // it looks at the middle of the dial, where things happen, and dozes off after a while
+            look: Qt.point(Math.cos((dial.midDeg + 180) * Math.PI / 180), Math.sin((dial.midDeg + 180) * Math.PI / 180))
+            asleep: dozing.dozed
+            Timer {
+                id: dozing
+                property bool dozed: false
+                interval: 12000
+                running: dial.open
+                onTriggered: dozed = true
+            }
+            Connections {
+                target: dial
+                function onInnerIndexChanged() { dozing.dozed = false; dozing.restart() }
+                function onOpenChanged() { dozing.dozed = false }
+            }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: { dozing.dozed = false; dozing.restart(); hiding.poke() }
+            }
+        }
+
         // ── the corner card of the selected control (`corner`), faded in and out ──
         Loader {
             id: cornerLoader
