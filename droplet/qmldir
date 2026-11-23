@@ -2,6 +2,7 @@ singleton Colors 1.0 Colors.qml
 singleton Tree 1.0 Tree.qml
 SpringValue 1.0 SpringValue.qml
 Bubble 1.0 Bubble.qml
+Slider 1.0 Slider.qml
 Goo 1.0 Goo.qml
 singleton Settings 1.0 Settings.qml
 Lock 1.0 Lock.qml

@@ -389,10 +389,11 @@ const presets = {
     ],
     Liquid: [
         { value: "apple", label: "Apple", values: liquidApple },
-        // no shader at all: solid dials, rings a touch see-through, and Hyprland's blur behind
-        // the shell (frost) showing at their soft edges as a liquid rim
+        // solid dials, rings a touch see-through, and Hyprland's blur behind the shell (frost)
+        // showing at their soft edges as a rim. Liquid glass on or off is left as it is: the
+        // switch doesn't take you out of the preset
         { value: "frost", label: "Frost", values: {
-            liquidGlass: "off", glassDials: 1, glassRings: 0.95, glassPopups: 1, glassLock: 1,
+            glassDials: 1, glassRings: 0.95, glassPopups: 1, glassLock: 1,
             frostDials: true, frostPopups: true, frostOver: "everything"
         } }
     ]

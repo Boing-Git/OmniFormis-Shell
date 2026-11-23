@@ -168,11 +168,16 @@ Item {
         toggle: () => board.togglePause(),
         size: board.cfg.dialSize,
         dateIcon: false,
-        corner: board.corner,
+        // nothing kept: no card (the inner ring says so)
+        corner: board.entries.length > 0 ? board.corner : null,
         settings: board.cfg.controlCenter,
 
         // a pill per copy, pinned first, then Clear all
         devices: () => {
+            // nothing kept: one pill that says so (paused: a click keeps copies again)
+            if (board.entries.length === 0) return [board.paused
+                ? { label: "Paused", icon: "content_paste_off", shape: "Circle", on: false, status: "none", activate: () => board.togglePause() }
+                : { label: "No copies", icon: "content_paste", shape: "Circle", on: false, status: "none", activate: () => {} }]
             const pills = board.entries.map(e => ({
                 label: e.image !== "" ? "Picture" : e.text.slice(0, 40),
                 icon: e.pin >= 0 ? "push_pin" : e.image !== "" ? "image" : "notes",

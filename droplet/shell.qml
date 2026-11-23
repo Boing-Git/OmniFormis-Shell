@@ -95,6 +95,9 @@ Scope {
         // at most this many circles come out of one (the rest are left out)
         readonly property int most: 12
 
+        // how many circles' room a slider takes on the fan (Slider.qml)
+        readonly property int sliderSlots: 4
+
         // ms between one circle budding out and the next, between one circle of a finished
         // chain lighting up and the next, and between one running back in and the next
         readonly property int budStagger: 38
@@ -143,6 +146,9 @@ Scope {
             property var chain: [seed]
             property var cands: []
             readonly property var head: chain[chain.length - 1]
+
+            // the curved slider on offer with the circles (a node with `slider`), or null
+            property var slider: null
 
             // a chain that reached its task: it stays lit for a moment, then it's let go
             property bool finished: false
@@ -277,16 +283,27 @@ Scope {
             }
 
             // the last circle's own circles bud out of it, one after another (it shivers as
-            // they leave it)
+            // they leave it). A slider among them takes the end of the fan: a band along it
             function bloom() {
                 clearCands()
-                const list = kids()
-                const at = fan(list.length, win.bubbleR * (list.some(k => k.big) ? win.bigger : 1))
+                const all = kids(), sl = all.find(k => k.slider) || null, list = all.filter(k => !k.slider)
+                const at = fan(list.length + (sl ? win.sliderSlots : 0), win.bubbleR * (list.some(k => k.big) ? win.bigger : 1))
                 head.jiggle(0.16)
                 cands = list.map((k, i) => bubbleC.createObject(bubbles, {
                     node: k, from: head, r: win.bubbleR * (k.big ? win.bigger : 1),
                     toX: at[i].x, toY: at[i].y, homeX: at[i].x, homeY: at[i].y, delay: i * win.budStagger
                 }))
+                if (sl) {
+                    const a = at[list.length], b = at[at.length - 1], hx = head.homeX, hy = head.homeY
+                    const a0 = Math.atan2(a.y - hy, a.x - hx)
+                    let sweep = Math.atan2(b.y - hy, b.x - hx) - a0
+                    while (sweep > Math.PI) sweep -= 2 * Math.PI
+                    while (sweep <= -Math.PI) sweep += 2 * Math.PI
+                    slider = sliderC.createObject(bubbles, {
+                        node: sl, cx: hx, cy: hy, radius: Math.hypot(a.x - hx, a.y - hy), a0: a0, sweep: sweep,
+                        thick: win.bubbleR * 1.1, reach: win.reach
+                    })
+                }
             }
 
             // what's on offer may have changed (a task switched something, a network was
@@ -297,9 +314,10 @@ Scope {
                 if (phase !== "open" || finished) return
                 // the chain's own circles that can say how they are now (what's playing) do
                 for (const b of chain) if (b.node.live) b.node = b.node.live()
-                const list = kids()
-                if (list.length !== cands.length) { if (afresh) bloom(); return }
+                const all = kids(), sl = all.find(k => k.slider) || null, list = all.filter(k => !k.slider)
+                if (list.length !== cands.length || !sl !== !slider) { if (afresh) bloom(); return }
                 for (let i = 0; i < list.length; i++) cands[i].node = list[i]
+                if (slider) { slider.node = sl; if (!slider.hot) slider.value = sl.value }
             }
             Timer {
                 interval: win.lookEvery
@@ -323,6 +341,8 @@ Scope {
             function clearCands() {
                 for (const c of cands) c.leaveInto(head.cx, head.cy)
                 cands = []
+                if (slider) slider.leave()
+                slider = null
             }
 
             // the drop came free of the edge at (x, y): it is the seed now, and it opens
@@ -531,6 +551,7 @@ Scope {
             // ── the circles ──
             Item { id: bubbles; anchors.fill: parent }
             Component { id: bubbleC; Bubble {} }
+            Component { id: sliderC; Slider {} }
 
             // the seed: the drop pulled out of the edge, and the first circle of every chain.
             // At rest it waits behind the edge, out of sight; pulled, it follows the hand; free,
@@ -628,7 +649,7 @@ Scope {
                     }
 
                     // on a circle on offer: nothing joins by a click. The one to drag shows itself
-                    if (web.under(web.cands, mouse.x, mouse.y)) {
+                    if (web.under(web.cands, mouse.x, mouse.y) || (web.slider && !isNaN(web.slider.valueAt(mouse.x, mouse.y)))) {
                         web.head.pulse()
                         web.head.jiggle(0.28)
                         web.say(web.chain.length > 1 ? "Drag " + web.head.node.label + " onto it" : "Drag the drop onto it")
@@ -650,6 +671,13 @@ Scope {
                     }
                     if (web.phase !== "open" || web.finished) return
                     web.follow()
+
+                    // the held circle on the slider's band: where it sits is the level
+                    const s = web.slider
+                    const v = s && web.grabbed ? s.valueAt(mouse.x, mouse.y) : NaN
+                    if (s) s.hot = !isNaN(v)
+                    if (!isNaN(v)) { s.slide(v); for (const k of web.cands) k.hot = false; return }
+
                     const c = web.candidateAt(mouse.x, mouse.y)
                     for (const k of web.cands) k.hot = k === c
                     if (!c) web.spent = false
@@ -670,6 +698,9 @@ Scope {
                     if (web.phase === "pull") { web.restY = web.cursorY; web.phase = "rest"; return }
                     if (web.phase !== "open" || web.finished || mouse.button !== Qt.LeftButton) return
                     const b = web.grabbed
+
+                    // let go on the slider: the level stays where it was put
+                    if (b && web.slider && web.slider.hot) { web.slider.commit(); web.say(Tree.last) }
                     web.drop()
 
                     // the seed, clicked or pushed back into the edge: it all runs back in

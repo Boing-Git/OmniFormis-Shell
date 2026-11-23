@@ -52,6 +52,14 @@ Singleton {
             else fn()
         } }, more || {})
     }
+    // a curved slider (Slider.qml): drag the held circle onto it to set `value` (0..1)
+    function slider(label, icon, value, fn) {
+        return { label: label, icon: icon, leaf: true, slider: true, value: value, set: v => {
+            root.last = label + " at " + Math.round(v * 100) + "%"
+            if (root.demo) console.log("circle shell (demo): " + root.last)
+            else fn(v)
+        } }
+    }
     function group(label, icon, children, more) {
         return Object.assign({ label: label, icon: icon, leaf: false, children: children }, more || {})
     }
@@ -120,6 +128,7 @@ Singleton {
         if (Settings.automations) automationLister.running = true
         if (Settings.screenTime) usageReader.running = true
         if (wallpaperFiles.length === 0) wallLister.running = true
+        brightReader.running = true
     }
     function total(i) {
         const d = usage.days[i]
@@ -165,7 +174,7 @@ Singleton {
             group("Volume", muted ? "volume_off" : "volume_up", volume, { note: muted ? "Muted" : Math.round(level * 100) + "%" }),
             group("Sound out", "speaker", outputs, { note: sink ? nameOf(sink) : "" }),
             group("Microphone", micMuted ? "mic_off" : "mic", microphones, { note: source ? nameOf(source) : "" }),
-            group("Brightness", "brightness_6", brightness)
+            group("Brightness", "brightness_6", brightness, { note: Math.round(bright * 100) + "%" })
         ]
     }
 
@@ -297,9 +306,8 @@ Singleton {
     function volume() {
         const out = [task(muted ? "Unmute" : "Mute", muted ? "volume_up" : "volume_off", muted ? "Sound is on" : "Muted",
             () => { if (sink && sink.audio) sink.audio.muted = !sink.audio.muted }, { stay: true })]
-        for (const p of [0, 25, 50, 75, 100]) out.push(task(p + "%", p === 0 ? "volume_mute" : p <= 50 ? "volume_down" : "volume_up",
-            "Volume at " + p + "%", () => { if (sink && sink.audio) { sink.audio.muted = false; sink.audio.volume = p / 100 } },
-            { stay: true, on: Math.abs(level * 100 - p) < 6 && !muted }))
+        out.push(slider("Volume", "volume_up", muted ? 0 : level,
+            v => { if (sink && sink.audio) { sink.audio.muted = false; sink.audio.volume = v } }))
         return out
     }
     function outputs() {
@@ -316,12 +324,22 @@ Singleton {
         return out
     }
 
-    // ── brightness ── straight to a level: a laptop's backlight, else the monitor over DDC
+    // ── brightness ── a laptop's backlight, else the monitor over DDC; read as the shell opens
+    // (ddcutil takes a second), then kept as it's set
     Process { id: brightProc }
+    property real bright: 0.5
+    Process {
+        id: brightReader
+        command: ["sh", "-c", "p=$(brightnessctl -m -c backlight 2>/dev/null | cut -d, -f4 | tr -d %); "
+            + "[ -n \"$p\" ] && echo \"$p\" || ddcutil --terse getvcp 10 2>/dev/null | awk '{ if ($5 > 0) print int($4 * 100 / $5) }'"]
+        stdout: StdioCollector { onStreamFinished: { const p = parseInt(text); if (p >= 0 && p <= 100) root.bright = p / 100 } }
+    }
     function brightness() {
-        return [10, 25, 50, 75, 100].map(p => task(p + "%", p <= 25 ? "brightness_low" : p <= 50 ? "brightness_medium" : "brightness_high",
-            "Brightness at " + p + "%", () => brightProc.exec(["sh", "-c",
-                "brightnessctl -q -c backlight set " + p + "% 2>/dev/null || ddcutil --noverify setvcp 10 " + p]), { stay: true }))
+        return [slider("Brightness", "brightness_6", bright, v => {
+            const p = Math.max(1, Math.round(v * 100))
+            root.bright = p / 100
+            brightProc.exec(["sh", "-c", "brightnessctl -q -c backlight set " + p + "% 2>/dev/null || ddcutil --noverify setvcp 10 " + p])
+        })]
     }
 
     // ══════════════════════════════════ apps ══════════════════════════════════

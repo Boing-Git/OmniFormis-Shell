@@ -92,7 +92,8 @@ Item {
         toggle: () => Prefs.toggle("dnd"),
         size: notify.cfg.dialSize,
         dateIcon: false,
-        corner: notify.corner,
+        // nothing waiting: no card (the inner ring says so)
+        corner: Notifs.count > 0 ? notify.corner : null,
         value: which,
         hint: "notifyCenter",
 
@@ -116,7 +117,13 @@ Item {
                 drag: "device",
                 fling: () => Notifs.dismissApp(g.key)
             }))
-            if (apps.length === 0) return []
+            // nothing waiting: one pill that says so
+            if (apps.length === 0) return [{
+                label: Prefs.dnd ? "All clear · Do not disturb" : "All clear",
+                icon: Prefs.dnd ? "notifications_off" : "done_all",
+                shape: "Circle", on: false, status: "none",
+                activate: () => {}
+            }]
             return apps.concat([{
                 label: "Clear all", icon: "clear_all", shape: "Circle", on: false, status: "none",
                 badgeIcon: "delete_sweep",

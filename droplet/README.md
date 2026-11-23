@@ -40,8 +40,11 @@ it is done.
     asks for its password: type it while that network is the last circle.
   - **Bluetooth**: on/off, scan, and your devices. A device can be connected, disconnected
     or unpaired; a new one found by the scan can be paired.
-  - **Volume** (mute, levels), **Sound out** (pick the output), **Microphone** (mute, pick
-    the input), **Brightness** (levels, via `brightnessctl` or `ddcutil`).
+  - **Volume** (mute, and a level slider), **Sound out** (pick the output), **Microphone**
+    (mute, pick the input), **Brightness** (a level slider, via `brightnessctl` or `ddcutil`).
+- **Sliders** (`Slider.qml`): a curved band along the arc where the circles fan out. Drag
+  the circle you hold onto it: where it sits is the level, live as you move along the band,
+  kept when you let go. Mute sits just past the band's quiet end.
 - **Apps**: the first nine of your own order (the dial shell's launcher keeps it), then
   All apps in alphabet groups. Type to find one by name, description or keyword.
 - **Media**: a bigger circle wearing the album art and showing what's playing. Inside:
