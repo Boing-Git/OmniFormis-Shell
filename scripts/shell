@@ -10,6 +10,7 @@
 #                            (if it doesn't answer in 15 s it's stopped and the old one stays)
 #   shell restart | stop
 #   shell ipc <show | call target fn args...>   qs ipc against the running shell
+#   shell lock               the running shell locks the screen (hypridle's lock_cmd)
 set -u
 here=$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)
 state="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles-shell"
@@ -71,10 +72,16 @@ switch_to() {
 }
 
 # Stopping the shell that holds the lock would leave the session locked with nothing to unlock
-# it: never while Dial-E's lock is up (its marker names this Hyprland session)
+# it: never while a lock is up (Dial-E's and Droplet's markers name this Hyprland session;
+# Puffy's lock keeps none, so it is asked)
 locked() {
-    local f="${XDG_STATE_HOME:-$HOME/.local/state}/dial-quickshell/locked"
-    [ -f "$f" ] && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && [ "$(cat "$f")" = "$HYPRLAND_INSTANCE_SIGNATURE" ]
+    local f
+    for f in "${XDG_STATE_HOME:-$HOME/.local/state}"/{dial-quickshell,droplet}/locked; do
+        [ -f "$f" ] && [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && [ "$(cat "$f")" = "$HYPRLAND_INSTANCE_SIGNATURE" ] && return 0
+    done
+    local id
+    id=$(ids_of puffy | head -n1)
+    [ -n "$id" ] && [ "$(qs ipc -i "$id" call lock isLocked 2>/dev/null)" = "true" ]
 }
 case "${1:-}" in switch | restart | stop) if locked; then echo "the screen is locked: unlock first" >&2; exit 1; fi ;; esac
 
@@ -85,7 +92,9 @@ case "${1:-}" in
     switch) switch_to "${2:?usage: shell switch <${names[*]// /|}>}" ;;
     restart) n=$(running | head -n1); n=${n:-$(chosen)}; stop "$n"; sleep 0.3; switch_to "$n" ;;
     stop) for n in $(running); do stop "$n"; done ;;
+    lock) n=$(running | head -n1); [ -n "$n" ] || { echo "no shell is running to lock the screen" >&2; exit 1; }
+          id=$(ids_of "$n" | head -n1); exec qs ipc -i "$id" call lock lock ;;
     ipc) shift; n=$(running | head -n1); [ -n "$n" ] || { echo "no shell is running" >&2; exit 1; }
          id=$(ids_of "$n" | head -n1); exec qs ipc -i "$id" "$@" ;;
-    *) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+    *) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
 esac

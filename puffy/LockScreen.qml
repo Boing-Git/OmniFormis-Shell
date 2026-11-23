@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Pam
 import Quickshell.Widgets
@@ -78,6 +79,13 @@ Item {
 
     signal shakeActive()
     signal successActive()
+
+    // from hypridle and scripts/shell lock, as every shell answers:  qs ipc call lock lock
+    IpcHandler {
+        target: "lock"
+        function lock(): void { root.lockScreen() }
+        function isLocked(): bool { return sessionLock.locked }
+    }
 
     function lockScreen() {
         sessionLock.locked = true;
