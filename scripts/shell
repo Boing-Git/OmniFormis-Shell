@@ -19,11 +19,16 @@ declare -A title=([dial-e]="Dial-E" [puffy]="Puffy" [droplet]="Droplet")
 # (the names the shells had before: a saved choice or a keybind with one still works)
 declare -A alias=([dial]=dial-e [quickshell]=dial-e [omniformis]=puffy [circle]=droplet [circle-shell]=droplet)
 
+# a desktop notification (best effort: no notification server, no message)
 notify() {
     busctl --user call org.freedesktop.Notifications /org/freedesktop/Notifications \
         org.freedesktop.Notifications Notify susssasa{sv}i "Shell" 0 "swap_horiz" "$1" "$2" 0 0 6000 >/dev/null 2>&1 || true
 }
+
+# a shell's name from what was typed or saved, old names too; nothing if unknown
 name_of() { local n=${1,,}; [ -n "$n" ] || return 1; n=${alias[$n]:-$n}; [ -n "${dir[$n]:-}" ] && echo "$n"; }
+
+# the shell chosen last (Dial-E until one is)
 chosen() { name_of "$(cat "$state" 2>/dev/null)" || echo dial-e; }
 
 # the running instances of a shell: "<id>" per line (its config resolves into its folder; the
@@ -34,14 +39,21 @@ ids_of() {
     qs list --all 2>/dev/null | awk '/^Instance /{sub(":", "", $2); id=$2} /Config path:/{print id, $3}' |
         while read -r id path; do [ "$(dirname "$(readlink -f "$path")")" = "$want" ] && echo "$id"; done
 }
+
+# the shells running now, by name
 running() { for n in "${names[@]}"; do [ -n "$(ids_of "$n")" ] && echo "$n"; done; }
+
+# true once a shell's instance answers on IPC (it has finished starting)
 answers() { local id; id=$(ids_of "$1" | head -n1); [ -n "$id" ] && qs ipc -i "$id" show >/dev/null 2>&1; }
 
 # QML_IMPORT_PATH from the session can point at another Qt's modules (it did: 6.11 under a
 # 6.12 Quickshell, and Puffy's QtQuick.Controls failed to load); the shells bring their own
 launch() { env -u QML_IMPORT_PATH qs -d -p "${dir[$1]}" >/dev/null 2>&1; }
+
+# stops every instance of a shell
 stop() { for id in $(ids_of "$1"); do qs kill -i "$id" >/dev/null 2>&1; done; }
 
+# starts <name>, waits until it answers, then stops the others and remembers it
 switch_to() {
     local to old
     to=$(name_of "$1") || { echo "no shell called '$1' (${names[*]})" >&2; return 1; }

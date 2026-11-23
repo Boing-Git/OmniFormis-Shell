@@ -13,7 +13,9 @@ HERE = Path(__file__).resolve().parents[1] / "assistant"
 replies, seen = [], []
 
 
+# the fake Ollama: answers each request with the next scripted reply, keeps what it was sent
 class Fake(BaseHTTPRequestHandler):
+    # /api/chat: record the request, answer with the next reply
     def do_POST(self):
         seen.append(json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
         body = json.dumps({"message": replies.pop(0)}).encode()
@@ -22,14 +24,17 @@ class Fake(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    # quiet
     def log_message(self, *a):
         pass
 
 
+# a model reply that calls one tool
 def tool_call(name, args):
     return {"role": "assistant", "content": "", "tool_calls": [{"function": {"name": name, "arguments": args}}]}
 
 
+# assistant.py on a prompt (tools dry-run, the fake server's address), its events
 def run(prompt, url):
     env = dict(os.environ, DOTS_DRY_RUN="1", DOTS_AI_URL=url)
     out = subprocess.run([sys.executable, HERE / "assistant.py", prompt], capture_output=True, text=True, env=env, timeout=60)

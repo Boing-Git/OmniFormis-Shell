@@ -31,6 +31,7 @@ DIAL_SCHEMA = CACHE / "dial-e-settings.json"
 DIAL_DIR = DOTS / "quickshell"
 
 
+# a tool's own failure, said in plain words: goes back to the model as the tool's result
 class ToolError(Exception):
     pass
 
@@ -60,6 +61,7 @@ def detach(cmd):
                      stdin=subprocess.DEVNULL, start_new_session=True)
 
 
+# the shell running now (scripts/shell list marks it with *), or ""
 def current_shell():
     out = run([SHELL, "list"], check=False) if not DRY else "dial-e *\t"
     for line in out.splitlines():
@@ -101,11 +103,13 @@ def advanced_path():
     return Path(m.group(1)) if m else STATE / "dial-quickshell" / "advanced.json"
 
 
+# the settings files Advanced.qml reads, as (type, label, path), from its own `files` list
 def advanced_files():
     text = (DIAL_DIR / "primitive" / "Advanced.qml").read_text()
     return re.findall(r'\{ type: "(\w+)", label: "([^"]+)", path: "([^"]+)"', text)
 
 
+# a property's value in the file when it is a plain literal (number, bool, string), else None
 def literal(raw):
     raw = raw.strip().rstrip(";").split("//")[0].strip()
     if raw in ("true", "false"):
@@ -157,12 +161,14 @@ def advanced_settings():
     return out
 
 
+# the range Settings > Advanced allows a number, so the AI can't set what the UI couldn't
 def advanced_range(row):
     # as Advanced.qml's rangeOf: from its own value (0 .. 3x, a negative one mirrored)
     d = row["default"] if isinstance(row["default"], (int, float)) and not isinstance(row["default"], bool) else 0
     return [d * 3 if d < 0 else 0, max(0 if d < 0 else d * 3, 10 if row["int"] else 1)]
 
 
+# "LockSettings.ringRadius" = value: live over IPC while Dial-E runs, else into advanced.json
 def advanced_set(full_key, value):
     type_, _, key = full_key.partition(".")
     row = next((r for r in advanced_settings() if r["type"] == type_ and r["key"] == key), None)
@@ -202,6 +208,7 @@ def advanced_set(full_key, value):
     return f"Dial-E isn't running: saved {row['label']} > {key} = {v}, it applies when Dial-E starts"
 
 
+# every setting of every source, in one shape the model can read
 def all_settings():
     out = []
     for r in advanced_settings():
@@ -228,11 +235,13 @@ def all_settings():
     return out
 
 
+# a key and its help as lowercase words, for matching
 def words(s):
     # "lockBlur" → "lock blur", so "lock" and "blur" both find it
     return re.sub(r"([a-z])([A-Z])", r"\1 \2", str(s)).lower()
 
 
+# the best dozen settings for some words: a hit in the key counts twice
 def settings_search(query, source=""):
     terms = words(query).split()
     hits = []
@@ -247,6 +256,7 @@ def settings_search(query, source=""):
     return [{k: v for k, v in h[1].items() if v not in (None, "", [])} for h in hits[:12]] or "no setting matches"
 
 
+# sets one setting where it lives (the source settings_search gave)
 def setting_set(source, key, value):
     if source == "dial-e-advanced":
         return advanced_set(key, value)
@@ -281,6 +291,7 @@ def setting_set(source, key, value):
     return f"Dial-E isn't running: saved {key} = {v}, it applies when Dial-E starts"
 
 
+# a value given as text, as the type Dial-E's schema wants, checked against its range and choices
 def coerce(row, value):
     t = row.get("type")
     if t == "bool":
@@ -303,6 +314,7 @@ def coerce(row, value):
     return str(value)
 
 
+# shortcuts whose description, name or keys hold every word
 def keybinds_search(query):
     binds = json.loads(run(["omniformis", "hypr", "binds", "--json"]))["binds"]
     terms = query.lower().split()
@@ -316,6 +328,7 @@ def shell_switch(name):
     return f"switched to {name}"
 
 
+# the running shell's IPC targets and functions (qs ipc show)
 def shell_actions():
     return run([SHELL, "ipc", "show"]).strip() or "the running shell offers no actions"
 
@@ -323,6 +336,7 @@ def shell_actions():
 BLOCKED_IPC = {("prefs", "resetAll")}  # would wipe every setting
 
 
+# one IPC call to the running shell, except the ones in BLOCKED_IPC
 def shell_action(target, function, args=None):
     if (target, function) in BLOCKED_IPC:
         raise ToolError("not allowed from the assistant")
@@ -338,6 +352,7 @@ def wallpaper_set(path):
     return f"wallpaper and colours from {p.name}"
 
 
+# pictures in ~/Pictures/Wallpapers whose name holds the words (20 at most)
 def wallpapers(query=""):
     root = HOME / "Pictures" / "Wallpapers"
     pics = [p for p in root.rglob("*") if p.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp", ".gif")] if root.is_dir() else []
@@ -345,6 +360,7 @@ def wallpapers(query=""):
     return [str(p) for p in pics[:20]] or f"no wallpaper matches in {root}"
 
 
+# light <-> dark, through omniformis
 def theme_toggle():
     return run(["omniformis", "theme", "toggle"], timeout=60).strip() or "switched light / dark"
 
@@ -367,12 +383,14 @@ def desktop_entries():
     return seen
 
 
+# installed apps whose name or id holds the words, shortest names first
 def apps_search(query):
     q = query.lower()
     hits = [(i, n) for i, n in desktop_entries().items() if q in n.lower() or q in i.lower()]
     return [{"name": n, "id": i[:-8]} for i, n in sorted(hits, key=lambda h: len(h[1]))[:12]] or "no app matches"
 
 
+# starts the best match with gtk-launch, detached
 def app_open(name):
     entries = desktop_entries()
     q = name.lower()
@@ -386,6 +404,7 @@ def app_open(name):
 SKIP = {".cache", ".local", ".nix-defexpr", ".nix-profile", "node_modules", ".git", ".cargo", ".rustup", ".mozilla", ".steam"}
 
 
+# names under a folder holding the words (15 at most), hidden folders and caches skipped
 def files_search(query, folder="~"):
     root = Path(folder).expanduser()
     if not root.is_dir():
@@ -402,6 +421,7 @@ def files_search(query, folder="~"):
     return out or f"nothing called {query} in {root}"
 
 
+# a folder in the file manager the dotfiles name (Files), a file in its own app
 def open_path(path):
     p = Path(path).expanduser()
     if not p.exists():
@@ -425,6 +445,7 @@ def media(action):
     return action.replace("_", "/")
 
 
+# the default speaker: get, set (0-100 %) or mute; answers with the volume after
 def volume(action, percent=None):
     if action == "set":
         if percent is None:
@@ -435,11 +456,13 @@ def volume(action, percent=None):
     return run(["wpctl", "get-volume", "@DEFAULT_AUDIO_SINK@"]).strip() or "done"
 
 
+# focuses a workspace (Hyprland's Lua dispatcher)
 def workspace(number):
     run(["hyprctl", "dispatch", f"hl.dsp.focus({{ workspace = {int(number)} }})"])
     return f"workspace {number}"
 
 
+# lock, suspend, log out, reboot, shut down (call() asks first for the last three)
 def power(action):
     cmd = {"lock": ["loginctl", "lock-session"], "suspend": ["systemctl", "suspend"],
            "logout": ["hyprctl", "dispatch", "hl.dsp.exit()"], "reboot": ["systemctl", "reboot"],
@@ -448,6 +471,7 @@ def power(action):
     return action
 
 
+# a short picture of the desktop now, for questions like "what's playing"
 def status():
     vol = volume("get") if shutil.which("wpctl") else ""
     return {"shell": current_shell(), "volume": vol, "media": media("status"),
@@ -490,10 +514,12 @@ TOOLS = {
 ASKS_FIRST = {("power", "logout"), ("power", "reboot"), ("power", "shutdown")}
 
 
+# true for a step the user must confirm (ASKS_FIRST)
 def asks_first(name, args):
     return any(name == n and args.get("action") == a for n, a in ASKS_FIRST)
 
 
+# TOOLS as Ollama's `tools` list (JSON schema per function)
 def ollama_tools():
     return [{"type": "function", "function": {"name": n, "description": d,
              "parameters": {"type": "object", "properties": props, "required": req}}}
@@ -523,6 +549,7 @@ def call(name, args, confirmed=False):
         return "error", f"{type(e).__name__}: {e}"
 
 
+# the command line (see the top of this file)
 def main(argv):
     if argv[:1] == ["list"]:
         print(json.dumps(ollama_tools(), indent=2))

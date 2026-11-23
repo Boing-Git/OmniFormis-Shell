@@ -48,18 +48,24 @@ ShellRoot {
     property var confirmStep: null   // { name, args, question }: waiting for a yes
     readonly property bool hasCard: busy || steps.length > 0 || answer !== "" || confirmStep !== null
 
+    // out of the edge (the shortcut's way: the drop comes down by itself)
     function open() {
         if (phase === "open") return
         phase = "open"
     }
+
+    // back into the edge; stops a request still running
     function close() {
         if (phase === "rest" || phase === "closing") return
         if (asker.running) asker.running = false
         busy = false
         phase = "closing"
     }
+
+    // the shortcut
     function toggle() { phase === "open" ? close() : open() }
 
+    // sends the words to assistant.py; its events fill the card as they come
     function ask(text) {
         const t = text.trim()
         if (t === "" || busy) return
@@ -70,6 +76,8 @@ ShellRoot {
         asker.command = ["python3", assistant, t]
         asker.running = true
     }
+
+    // the answer to a step that asked first: yes runs it (assistant.py --yes), no drops it
     function confirm(yes) {
         const c = confirmStep
         confirmStep = null
@@ -88,6 +96,8 @@ ShellRoot {
         else if (e.type === "error") answer = e.text
         else if (e.type === "confirm") confirmStep = e
     }
+
+    // settings_search -> "Settings search"
     function pretty(name) { return name.replace(/_/g, " ").replace(/^./, c => c.toUpperCase()) }
 
     Process {

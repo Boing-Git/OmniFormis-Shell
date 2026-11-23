@@ -36,10 +36,12 @@ SYSTEM = """You run this Linux desktop (NixOS, Hyprland) for its user through to
 The running shell is {shell}."""
 
 
+# one event as a JSON line, flushed at once so the overlay sees it as it happens
 def emit(**event):
     print(json.dumps(event), flush=True)
 
 
+# one round with the model: the conversation so far and the tools in, its message out
 def chat(messages):
     body = json.dumps({"model": MODEL, "messages": messages, "tools": tools.ollama_tools(),
                        "stream": False, "think": False, "options": {"temperature": 0.2}}).encode()
@@ -48,6 +50,7 @@ def chat(messages):
         return json.loads(r.read())["message"]
 
 
+# a request, start to end: the model picks tools, they run, results go back, until it answers
 def ask(prompt):
     messages = [{"role": "system", "content": SYSTEM.format(shell=tools.current_shell() or "unknown")},
                 {"role": "user", "content": prompt}]
@@ -86,6 +89,7 @@ def ask(prompt):
     return 0
 
 
+# the command line (see the top of this file)
 def main(argv):
     if argv[:1] == ["--yes"] and len(argv) >= 2:
         kind, result = tools.call(argv[1], json.loads(argv[2]) if len(argv) > 2 else {}, confirmed=True)
