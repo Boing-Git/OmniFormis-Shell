@@ -417,7 +417,6 @@ Item {
         onExited: rootModel.askWaking = false
     }
     onAskWakingChanged: scheduleSync()
-    onFilterTextChanged: if (filterText.startsWith("/ask")) askWake()
     onAskStepsChanged: scheduleSync()
     onAskAnswerChanged: scheduleSync()
     onAskConfirmChanged: scheduleSync()
@@ -451,7 +450,12 @@ Item {
         return rows;
     }
 
-    onFilterTextChanged: scheduleSync()
+    // (and opening /ask wakes the model)
+    onFilterTextChanged: {
+        scheduleSync();
+        if (filterText.startsWith("/ask"))
+            askWake();
+    }
     onEmojiModelChanged: scheduleSync()
     onFileModelChanged: scheduleSync()
     onClipboardModelChanged: scheduleSync()
