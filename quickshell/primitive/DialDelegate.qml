@@ -65,7 +65,17 @@ Item {
     // shared with the glass on it (DialBand, SearchBar find it here); loaded only while
     // liquid glass is on
     readonly property LiquidBackdrop liquidBackdrop: liquidPictures
-    LiquidBackdrop { id: liquidPictures }
+    LiquidBackdrop {
+        id: liquidPictures
+
+        // Sees: Live streams only while this dial is out, and only the windows under its box
+        // (screen px: the corner's square, or twice as long along an edge)
+        awake: root.currentSize > root.collapsedSize + 0.5
+        area: Qt.rect(root.alongX ? Backdrop.screenSize.width / 2 - root.expandedSize : root.isRight ? Backdrop.screenSize.width - root.expandedSize : 0,
+                      root.alongY ? Backdrop.screenSize.height / 2 - root.expandedSize : root.isBottom ? Backdrop.screenSize.height - root.expandedSize : 0,
+                      root.alongX ? 2 * root.expandedSize : root.expandedSize,
+                      root.alongY ? 2 * root.expandedSize : root.expandedSize)
+    }
 
     // the background is liquid glass right now (on, and its picture is loaded)
     readonly property bool liquid: discGlass.active

@@ -165,12 +165,18 @@ const lockBlur = 6;
 //   shadowOpacity    0 .. 1, shadowSpread 0 .. 40 px, shadowOffsetY -20 .. 20 px
 //   sees             "wallpaper", or "windows": a grim snapshot of the screen, taken
 //                    `windowsSettle` ms after the windows change and every `windowsRefresh`
-//                    ms while no dial is open (0: only when they change)
+//                    ms while no dial is open (0: only when they change); or "live": the
+//                    windows under an open dial streamed, `liveFps` frames a second each
+//                    (the screen's own rate would cost 4x on a 240 Hz screen for no visible
+//                    gain under the bend and blur), counting windows up to `liveMargin` px
+//                    past the dial's box (the bend and the shadow reach out of it)
 const liquid = {
     mode: "off",
     sees: "wallpaper",
     windowsSettle: 300,
     windowsRefresh: 4000,
+    liveFps: 60,
+    liveMargin: 48,
     blurAmount: 0,
     refraction: 0.69,
     chromAberration: 0.05,

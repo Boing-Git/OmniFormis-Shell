@@ -112,17 +112,7 @@ QtObject {
         interval: Vars.liquid.windowsSettle
         onTriggered: root.snap()
     }
-    readonly property var _windowEvents: ["openwindow", "closewindow", "movewindow", "movewindowv2", "workspace", "workspacev2",
-        "changefloatingmode", "fullscreen", "activewindow", "activewindowv2", "focusedmon"]
-    property Connections _hypr: Connections {
-        target: Hyprland
-        enabled: root.windows || root.live
-        function onRawEvent(event) {
-            if (root._windowEvents.indexOf(event.name) < 0) return
-            if (root.windows) root._settle.restart()
-            else root._relist()
-        }
-    }
+    // (the window events: _hypr, below)
 
     // and every few seconds, for what changes inside the windows (a page scrolled, a video)
     property Timer _refresh: Timer {
@@ -141,12 +131,14 @@ QtObject {
     // ── Sees: Live ── each window on the screen streamed on its own (ScreencopyView in
     // LiquidBackdrop, over the wallpaper), so video plays through the glass. A whole-screen
     // stream would have the glass in it, seeing itself; Hyprland's no_screen_share paints a
-    // layer black instead of leaving it out. Streams only while a dial is open; otherwise
-    // each window keeps its last frame
+    // layer black instead of leaving it out. Only a dial that is out streams, and only the
+    // windows that reach under it (LiquidBackdrop.awake / area)
     readonly property bool live: Prefs.liquidOn && Prefs.liquidSees === "live"
 
-    // the windows to stream, bottom first: { handle (a Toplevel), key, x, y, w, h } in the
-    // screen's logical px
+    // the windows to stream, bottom first: { handle (a Toplevel), key, ws, x, y, w, h, z,
+    // entering, leaving } in the screen's logical px. While a workspace changes, the ones
+    // going (`leaving`, kept as last seen) and the ones coming (`entering`) move as
+    // Hyprland moves them (inDX, outOpacity, ...)
     property var liveWindows: []
 
     // Hyprland's window list is asked for again, then read a moment later (it answers
@@ -164,28 +156,176 @@ QtObject {
     onLiveChanged: live ? _relist() : (liveWindows = [])
     onOutputChanged: _relist()
 
+    // the windows on the screen right now (not the leaving ones)
+    property var _current: []
+
     function _rebuildLive() {
         const m = Hyprland.monitors.values.find(m => m.name === output) || Hyprland.focusedMonitor
         if (!live || !m) return
         const mo = m.lastIpcObject || {}
         const ws = [mo.activeWorkspace ? mo.activeWorkspace.id : (m.activeWorkspace ? m.activeWorkspace.id : -1),
                     mo.specialWorkspace && mo.specialWorkspace.id ? mo.specialWorkspace.id : null]
+        _lastWs = ws[0]
         const list = []
         for (const t of Hyprland.toplevels.values) {
             const o = t.lastIpcObject
-            if (!t.wayland || !o || !o.at || !o.size || o.hidden || o.mapped === false) continue
-            if (ws.indexOf(o.workspace ? o.workspace.id : null) < 0) continue
+            // (nothing to stream from a window with no size: Steam opens such transient ones)
+            if (!t.wayland || !o || !o.at || !o.size || o.size[0] <= 0 || o.size[1] <= 0 || o.hidden || o.mapped === false || !o.workspace) continue
+            if (ws.indexOf(o.workspace.id) < 0) continue
 
             // the stacking: fullscreen over floating over tiled, the most recently focused on top
             // shortcut: Hyprland's IPC has no real z-order, so overlapping floats can come out in the wrong order
             const z = (o.fullscreen ? 2e6 : 0) + (o.floating ? 1e6 : 0) + (o.workspace.id < 0 ? 4e6 : 0) - (o.focusHistoryID ?? 0)
-            list.push({ handle: t.wayland, key: t.address, x: o.at[0] - (mo.x ?? m.x), y: o.at[1] - (mo.y ?? m.y), w: o.size[0], h: o.size[1], z: z })
+            list.push({ handle: t.wayland, key: t.address, ws: o.workspace.id, x: o.at[0] - (mo.x ?? m.x), y: o.at[1] - (mo.y ?? m.y),
+                        w: o.size[0], h: o.size[1], z: z, entering: false, leaving: false })
+        }
+
+        // a change underway: what wasn't there before comes in; what's still here stays
+        if (_switch) {
+            for (const w of list) w.entering = !_switch.before[w.key] && _switch.side(w)
+            _leaving = _leaving.filter(l => !list.some(w => w.key === l.key))
         }
         list.sort((a, b) => a.z - b.z)
+        _current = list
+        _publish()
+    }
 
-        // the same windows in the same places: keep the list, so no stream starts over
-        const sig = l => l.map(w => [w.key, w.x, w.y, w.w, w.h].join(",")).join(";")
-        if (sig(list) !== sig(liveWindows)) liveWindows = list
+    // the leaving windows go under the others (and away when their animation ends)
+    property var _leaving: []
+    function _publish() {
+        const all = _leaving.concat(_current)
+        const sig = l => l.map(w => [w.key, w.x, w.y, w.w, w.h, w.entering, w.leaving].join(",")).join(";")
+        if (sig(all) !== sig(liveWindows)) liveWindows = all
+    }
+
+    // ── workspace changes, as Hyprland animates them ── its own style, time and curve
+    // (hyprctl animations), the incoming and the outgoing each their own. A workspace slides
+    // (or fades) the windows of the screen's regular workspace; a special workspace the
+    // windows over it
+    property var _switch: null      // { before: { key: true }, side(w) }
+    property int _lastWs: -1        // the screen's regular workspace, as last listed
+    property real inT: 1            // 0 → 1 as the new windows come in
+    property real outT: 1           // 0 → 1 as the old ones go
+    property int _dir: 1            // 1: the new one comes from the right (or from below)
+    property var _inStyle: _parseStyle("")
+    property var _outStyle: _parseStyle("")
+
+    // "slide", "slidevert", "fade", "slidefade 20%", "slidefadevert 20%" → how far it moves
+    // (share of the screen) and whether it fades
+    function _parseStyle(style) {
+        const s = String(style || "slide")
+        const pct = /(\d+)%/.exec(s)
+        const share = s.startsWith("slidefade") ? (pct ? Number(pct[1]) / 100 : 0.2) : s.startsWith("slide") ? 1 : 0
+        return { share: share, vertical: s.indexOf("vert") >= 0, fade: s.startsWith("fade") || s.startsWith("slidefade") }
+    }
+    readonly property real inDX: _inStyle.vertical ? 0 : _dir * _inStyle.share * screenSize.width * (1 - inT)
+    readonly property real inDY: _inStyle.vertical ? _dir * _inStyle.share * screenSize.height * (1 - inT) : 0
+    readonly property real inOpacity: _inStyle.fade ? inT : 1
+    readonly property real outDX: _outStyle.vertical ? 0 : -_dir * _outStyle.share * screenSize.width * outT
+    readonly property real outDY: _outStyle.vertical ? -_dir * _outStyle.share * screenSize.height * outT : 0
+    readonly property real outOpacity: _outStyle.fade ? 1 - outT : 1
+
+    property NumberAnimation _inAnim: NumberAnimation { target: root; property: "inT"; from: 0; to: 1; easing.type: Easing.BezierSpline }
+    property NumberAnimation _outAnim: NumberAnimation { target: root; property: "outT"; from: 0; to: 1; easing.type: Easing.BezierSpline }
+    property Timer _switchEnd: Timer {
+        onTriggered: {
+            root._switch = null
+            root._leaving = []
+            for (const w of root._current) w.entering = false
+            root._publish()
+        }
+    }
+
+    // `kind`: "workspaces" or "specialWorkspace"; `side(w)`: the windows it moves
+    function _beginSwitch(kind, dir, side) {
+        const a = anim(kind + "In"), b = anim(kind + "Out")
+        const before = {}
+        for (const w of _current) before[w.key] = true
+        _switch = { before: before, side: side }
+        _dir = dir
+        _inStyle = _parseStyle(a.style)
+        _outStyle = _parseStyle(b.style)
+
+        // the going ones stay as last seen (LiquidBackdrop stops streaming them) and move out
+        _leaving = _current.filter(side).map(w => Object.assign({}, w, { leaving: true, entering: false }))
+        _current = _current.filter(w => !side(w))
+        _inAnim.stop(); _outAnim.stop()
+        _inAnim.duration = a.ms; _inAnim.easing.bezierCurve = a.bezier.concat([1, 1])
+        _outAnim.duration = b.ms; _outAnim.easing.bezierCurve = b.bezier.concat([1, 1])
+        inT = 0; outT = 0
+        _inAnim.start(); _outAnim.start()
+        _switchEnd.interval = Math.max(a.ms, b.ms) + 20
+        _switchEnd.restart()
+        _publish()
+    }
+
+    // ── Hyprland's animation settings ── (hyprctl animations -j), read at start and after a
+    // config reload. A node that isn't overridden takes its parent's
+    property var _anims: ({})
+    property var _beziers: ({})
+    readonly property var _animParent: ({ workspacesIn: "workspaces", workspacesOut: "workspaces",
+        specialWorkspaceIn: "specialWorkspace", specialWorkspaceOut: "specialWorkspace",
+        specialWorkspace: "workspaces", workspaces: "global" })
+    function anim(name) {
+        let n = name
+        while (_animParent[n] && !(_anims[n] && _anims[n].overridden)) n = _animParent[n]
+        let s = n
+        while (_animParent[s] && !(_anims[s] && _anims[s].overridden && _anims[s].style)) s = _animParent[s]
+        const a = _anims[n] || { enabled: true, speed: 4, bezier: "default" }
+        return { ms: a.enabled ? Math.round(a.speed * 100) : 0, bezier: _beziers[a.bezier] || [0, 0.75, 0.15, 1],
+                 style: (_anims[s] && _anims[s].style) || "slide" }
+    }
+
+    // ── Hyprland's window decorations ── how it rounds and edges the windows, so the glass
+    // sees them as they're drawn: { rounding, border (px), active, active2, inactive }
+    property var deco: ({ rounding: 0, border: 0, active: "transparent", active2: "transparent", inactive: "transparent" })
+
+    // "ffbec2ff ffe7b9d5 45deg" → its colours as "#aarrggbb"
+    function _colours(g) { return String(g || "").split(" ").filter(c => /^[0-9a-f]{8}$/i.test(c)).map(c => "#" + c) }
+    property Process _hyprLook: Process {
+        command: ["sh", "-c", "hyprctl animations -j; echo; for o in decoration:rounding general:border_size general:col.active_border general:col.inactive_border; do hyprctl getoption $o -j | tr -d '\\n'; echo; done"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const lines = text.trim().split("\n")
+                    const opts = lines.slice(-4).map(l => JSON.parse(l))
+                    const animList = JSON.parse(lines.slice(0, -4).join("\n"))
+                    const anims = {}, beziers = {}
+                    for (const a of animList[0]) anims[a.name] = a
+                    for (const b of animList[1]) beziers[b.name] = [b.X0, b.Y0, b.X1, b.Y1]
+                    root._anims = anims
+                    root._beziers = beziers
+                    const act = root._colours(opts[2].gradient || opts[2].custom), inact = root._colours(opts[3].gradient || opts[3].custom)
+                    root.deco = { rounding: opts[0].int || 0, border: opts[1].int || 0,
+                                  active: act[0] || "transparent", active2: act[1] || act[0] || "transparent", inactive: inact[0] || "transparent" }
+                } catch (e) { /* no Hyprland, or another output: windows stay square and slides use the defaults */ }
+            }
+        }
+    }
+    Component.onCompleted: _hyprLook.running = true
+
+    // ── what Hyprland says ──
+    readonly property var _windowEvents: ["openwindow", "closewindow", "movewindow", "movewindowv2", "workspace", "workspacev2",
+        "changefloatingmode", "fullscreen", "activewindow", "activewindowv2", "focusedmon", "activespecial", "activespecialv2"]
+    property Connections _hypr: Connections {
+        target: Hyprland
+        enabled: root.windows || root.live
+        function onRawEvent(event) {
+            if (event.name === "configreloaded") { root._hyprLook.running = true; return }
+            if (root._windowEvents.indexOf(event.name) < 0) return
+            if (root.windows) { root._settle.restart(); return }
+            if (!root.dialOpen) { root._relist(); return }
+
+            // a dial is out: a change of workspace on this screen moves the windows under it as
+            // Hyprland does (to a higher number: in from the right)
+            if (event.name === "workspacev2" && Hyprland.focusedMonitor && Hyprland.focusedMonitor.name === root.output) {
+                const to = Number(event.parse(2)[0])
+                if (to !== root._lastWs) root._beginSwitch("workspaces", to < root._lastWs ? -1 : 1, w => w.ws >= 0)
+            } else if (event.name === "activespecialv2" && event.parse(3)[2] === root.output) {
+                root._beginSwitch("specialWorkspace", 1, w => w.ws < 0)
+            }
+            root._relist()
+        }
     }
     onBlurSigmaChanged: if (windows) _settle.restart()
 }
