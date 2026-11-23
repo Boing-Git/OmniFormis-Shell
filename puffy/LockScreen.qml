@@ -193,8 +193,7 @@ Item {
                             }
 
                             // ── Puffy itself ── (Settings → Extras → Mascot) by the clock: it puffs
-                            // up a little with each letter, dozes while nothing is typed, and a
-                            // wrong password gives it a fright
+                            // up a little with each letter and dozes while nothing is typed
                             Mascots.Mascot {
                                 id: keeper
                                 width: 46
@@ -209,15 +208,23 @@ Item {
                                 pupil: Theme.on_primary_fixed
                                 accent: Theme.primary
                                 visible: Vars.mascots
-                                asleep: passwordInput.text.length === 0 && !root.authError
+                                asleep: passwordInput.text.length === 0 && !root.authError && mood === ""
                                 look: Qt.point(-0.4, 0.8)
+                                // a bob per letter (and a little more puff), a flinch per
+                                // deletion; it cries at a wrong password (and goes flat)
+                                property int lastLength: 0
                                 Connections {
                                     target: passwordInput
-                                    function onTextChanged() { keeper.puffTo(Math.min(1, passwordInput.text.length / 12)) }
+                                    function onTextChanged() {
+                                        const n = passwordInput.text.length
+                                        if (!root.authError) keeper.react(n > keeper.lastLength ? "type" : "delete")
+                                        keeper.lastLength = n
+                                        keeper.puffTo(Math.min(1, n / 12))
+                                    }
                                 }
                                 Connections {
                                     target: root
-                                    function onAuthErrorChanged() { if (root.authError) { keeper.puffTo(0); keeper.poke() } }
+                                    function onAuthErrorChanged() { if (root.authError) keeper.react("wrong") }
                                 }
                             }
                         }

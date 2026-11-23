@@ -1097,7 +1097,8 @@ PanelWindow {
             }
             Connections {
                 target: dial
-                function onInnerIndexChanged() { dozing.dozed = false; dozing.restart() }
+                // the ring turns: it wakes, and bobs as if it followed
+                function onInnerIndexChanged() { dozing.dozed = false; dozing.restart(); hiding.react("type") }
                 function onOpenChanged() { dozing.dozed = false }
             }
             MouseArea {

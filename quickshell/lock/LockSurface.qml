@@ -413,8 +413,7 @@ WlSessionLockSurface {
         }
 
         // ── Dial-E, keeping watch ── (Settings → Extras → Mascots) small, on the dial's rim at
-        // the bottom: asleep until you come back, its eyes on the pointer; a wrong password
-        // startles it, the right one makes it hop
+        // the bottom: asleep until you come back, its eyes on the pointer
         Mascot {
             id: keeper
             width: 30
@@ -435,10 +434,18 @@ WlSessionLockSurface {
                 const d = Math.max(1, Math.hypot(dx, dy))
                 return Qt.point(dx / d, dy / d)
             }
+            // a bob per letter, a flinch per deletion; it cries at a wrong password, and is glad at
+            // the right one
+            property int lastCount: 0
             Connections {
                 target: surface.lock
-                function onWrongChanged() { if (surface.lock.wrong) keeper.poke() }
-                function onUnlockingChanged() { if (surface.lock.unlocking) keeper.cheer() }
+                function onCountChanged() {
+                    if (!surface.lock.wrong && !surface.lock.unlocking)
+                        keeper.react(surface.lock.count > keeper.lastCount ? "type" : "delete")
+                    keeper.lastCount = surface.lock.count
+                }
+                function onWrongChanged() { if (surface.lock.wrong) keeper.react("wrong") }
+                function onUnlockingChanged() { if (surface.lock.unlocking) keeper.react("right") }
             }
         }
 
