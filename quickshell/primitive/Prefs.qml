@@ -758,7 +758,8 @@ QtObject {
         function listJson(): string {
             return JSON.stringify(root.schema.map(e => ({
                 key: e.key, group: e.group, label: e.label, type: e.type, value: root[e.key],
-                "default": root._defaults[e.key], help: e.help
+                "default": root._defaults[e.key], help: e.help,
+                options: e.options ? e.options.map(o => o.value) : undefined, min: e.min, max: e.max
             })), null, 2)
         }
         function get(key: string): string { return root.entry(key) ? String(root[key]) : "unknown setting '" + key + "'" }

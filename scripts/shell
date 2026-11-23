@@ -9,6 +9,7 @@
 #   shell switch <name>      starts <name>, waits until it answers, then stops the other
 #                            (if it doesn't answer in 15 s it's stopped and the old one stays)
 #   shell restart | stop
+#   shell ipc <show | call target fn args...>   qs ipc against the running shell
 set -u
 here=$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)
 state="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles-shell"
@@ -72,5 +73,7 @@ case "${1:-}" in
     switch) switch_to "${2:?usage: shell switch <${names[*]// /|}>}" ;;
     restart) n=$(running | head -n1); n=${n:-$(chosen)}; stop "$n"; sleep 0.3; switch_to "$n" ;;
     stop) for n in $(running); do stop "$n"; done ;;
-    *) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+    ipc) shift; n=$(running | head -n1); [ -n "$n" ] || { echo "no shell is running" >&2; exit 1; }
+         id=$(ids_of "$n" | head -n1); exec qs ipc -i "$id" "$@" ;;
+    *) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
 esac
