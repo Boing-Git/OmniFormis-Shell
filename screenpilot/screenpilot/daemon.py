@@ -10,17 +10,20 @@ Protocol: one JSON object per line. Requests carry "cmd"; replies and pushed eve
 States: idle, thinking, acting, paused, halted. Only `resume` leaves halted.
 """
 import asyncio
+import dataclasses
 import json
 import os
 import shutil
 import signal
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from . import agent, config, proc
 
 LINE_LIMIT = 64 * 1024
+CAPTURE_MODES = ("monitor", "window", "region")
 
 
 def log(*args):
@@ -48,11 +51,19 @@ class Daemon:
         self.overlay_starts = 0
 
     # ── the parts later modules provide (the tests replace them) ──
-    async def capture(self):
-        raise RuntimeError("capture is not built yet")
+    def sandbox_display(self):
+        """The sandbox's WAYLAND_DISPLAY in sandbox mode; None in shared mode."""
+        return None
+
+    async def capture(self, mode="monitor"):
+        from . import capture
+        display = self.sandbox_display()
+        return await capture.grab(self.cfg, mode, wayland_display=display,
+                                  protected=() if display else self.protected_rects)
 
     async def context(self):
-        return ""
+        from . import context
+        return await context.describe(self.sandbox_display())
 
     def backend(self):
         from . import backends
@@ -122,11 +133,12 @@ class Daemon:
         signal.signal(signal.SIGUSR1, on_signal)
 
     # ── runs ──
-    def start(self, kind, text):
+    def start(self, kind, text, capture_mode="monitor"):
         if self.state == "halted":
             raise RuntimeError("halted: run `screenpilot resume` first")
         if self.task and not self.task.done():
             raise RuntimeError("busy: another request is running")
+        self.capture_mode = capture_mode if kind == "ask" else "monitor"  # ACT sees the whole screen
         run = agent.run_act if kind == "act" else agent.run_ask
         self.task = asyncio.ensure_future(self._run(run, text))
         return self.task
@@ -218,10 +230,19 @@ class Daemon:
             if not text:
                 return send({"type": "error", "text": f"{cmd} what? Give it some words."})
             try:
-                task = self.start(cmd, text)
+                task = self.start(cmd, text, req.get("mode") if req.get("mode") in CAPTURE_MODES else "monitor")
             except RuntimeError as e:
                 return send({"type": "error", "text": str(e)})
             await self._follow(task, reader, writer)
+        elif cmd == "shot":
+            try:
+                shot = await self.capture(req.get("mode") if req.get("mode") in CAPTURE_MODES else "monitor")
+            except Exception as e:
+                return send({"type": "error", "text": str(e)})
+            path = config.state_dir() / "shots" / time.strftime("%Y%m%d-%H%M%S.png")
+            path.parent.mkdir(exist_ok=True)
+            path.write_bytes(shot.png)
+            send({"type": "ok", "path": str(path), "frame": dataclasses.asdict(shot.frame)})
         else:
             send({"type": "error", "text": f"unknown cmd {cmd!r}"})
 

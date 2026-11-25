@@ -56,7 +56,7 @@ class SlowBackend:
 
 
 class FakeDaemon(daemon.Daemon):
-    async def capture(self):
+    async def capture(self, mode="monitor"):
         return None
 
     async def context(self):

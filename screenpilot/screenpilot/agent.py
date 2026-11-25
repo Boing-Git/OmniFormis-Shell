@@ -4,7 +4,7 @@ import asyncio
 
 async def run_ask(d, question: str) -> str:
     d.set_state("thinking")
-    shot = await d.capture()
+    shot = await d.capture(d.capture_mode)
     return await d.backend().ask(question, shot, await d.context())
 
 

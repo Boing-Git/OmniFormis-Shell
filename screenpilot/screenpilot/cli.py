@@ -71,8 +71,11 @@ def main(argv=None):
     p = argparse.ArgumentParser(prog="screenpilot", description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
-    for name in ("ask", "act"):
-        sub.add_parser(name).add_argument("text", nargs="+")
+    ask = sub.add_parser("ask")
+    ask.add_argument("text", nargs="+")
+    ask.add_argument("--mode", default="monitor", choices=("monitor", "window", "region"),
+                     help="what to show the model: the focused monitor, the active window, or a region you pick")
+    sub.add_parser("act").add_argument("text", nargs="+")
     for name in ("stop", "resume", "status"):
         sub.add_parser(name)
     sub.add_parser("backend").add_argument("name", nargs="?", choices=config.BACKENDS)
@@ -98,6 +101,8 @@ def main(argv=None):
     req = {"cmd": a.cmd}
     if a.cmd in ("ask", "act"):
         req["text"] = " ".join(a.text)
+        if a.cmd == "ask":
+            req["mode"] = a.mode
     elif a.cmd == "backend" and a.name:
         req["name"] = a.name
     elif a.cmd == "say":
@@ -125,6 +130,9 @@ def main(argv=None):
               + f", {event['backend']}, {event['mode']}")
     elif a.cmd == "backend":
         print(event["backend"])
+    elif a.cmd == "shot":
+        print(event["path"])
+        print("frame: " + json.dumps(event["frame"]), file=sys.stderr)
     else:
         print(event.get("text") or event.get("path") or event.get("state") or "ok")
     return 0
