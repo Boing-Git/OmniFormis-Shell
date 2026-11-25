@@ -43,7 +43,10 @@ class Daemon:
         self.input = input
         self.tts = tts
         self.task = None
-        self.subscribers = set()
+        self.subscribers = set()   # the client following a run
+        self.listeners = set()     # the overlay: every event, and the confirm questions
+        self.confirms = {}
+        self.confirm_id = 0
         self.protected_rects = []
         self.reason = ""
         self.state = "halted" if config.halt_path().exists() else "idle"
@@ -178,12 +181,36 @@ class Daemon:
                 "backend": self.cfg["backend"], "mode": self.cfg["mode"]}
 
     def broadcast(self, event):
+        """To the overlay (listeners) and to the client following a run (subscribers)."""
         line = (json.dumps(event) + "\n").encode()
-        for w in list(self.subscribers):
-            if w.is_closing():
-                self.subscribers.discard(w)
-            else:
-                w.write(line)
+        for group in (self.listeners, self.subscribers):
+            for w in list(group):
+                if w.is_closing():
+                    group.discard(w)
+                else:
+                    w.write(line)
+
+    async def confirm(self, question):
+        """Yes or No from the overlay's confirm box (a rect the AI can't click). Nobody to ask,
+        or no answer in two minutes, is no."""
+        if not self.listeners:
+            return False
+        self.confirm_id += 1
+        cid = self.confirm_id
+        self.confirms[cid] = asyncio.get_running_loop().create_future()
+        self.broadcast({"type": "confirm", "id": cid, "question": question})
+        try:
+            return await asyncio.wait_for(self.confirms[cid], 120)
+        except TimeoutError:
+            return False
+        finally:
+            del self.confirms[cid]
+            self.broadcast({"type": "confirmed", "id": cid})
+
+    def answer_confirm(self, cid, yes):
+        fut = self.confirms.get(cid)
+        if fut and not fut.done():
+            fut.set_result(bool(yes))
 
     def set_state(self, state):
         # nothing but resume() leaves halted, so a run that is still unwinding can't undo a STOP
@@ -294,6 +321,7 @@ class Daemon:
             pass
         finally:
             self.subscribers.discard(writer)
+            self.listeners.discard(writer)
             writer.close()
 
     async def dispatch(self, cmd, req, reader, writer):
@@ -307,8 +335,11 @@ class Daemon:
             self.resume()
             send({"type": "ok", "state": self.state})
         elif cmd == "subscribe":
-            self.subscribers.add(writer)
+            self.listeners.add(writer)
             send(self.status())
+        elif cmd == "confirm":
+            self.answer_confirm(req.get("id"), req.get("yes") is True)
+            send({"type": "ok"})
         elif cmd == "backend":
             if req.get("name"):
                 try:

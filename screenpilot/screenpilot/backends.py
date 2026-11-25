@@ -97,7 +97,7 @@ class ClaudeSession:
     def __init__(self, backend, goal):
         self.b, self.goal = backend, goal
         self.messages, self.queue, self.results = [], [], []
-        self.pending, self.failed = None, False
+        self.pending, self.failed, self.said = None, False, ""
 
     def _result(self, tool_id, content, error=False):
         r = {"type": "tool_result", "tool_use_id": tool_id, "toolset_name": "computer", "content": content}
@@ -127,6 +127,8 @@ class ClaudeSession:
                         self._text_result(block.id, f"error: {e}", error=True)
                         continue
                     self.pending = block.id
+                    # what Claude said before acting: the first action's reason (the confirm check reads it)
+                    action.reason, self.said = self.said, ""
                     return action
             if self.messages:
                 self.messages.append({"role": "user", "content": self.results})
@@ -138,9 +140,9 @@ class ClaudeSession:
             # its whole turn goes back unchanged (thinking blocks included)
             self.messages.append({"role": "assistant", "content": [b.to_dict() for b in resp.content]})
             self.queue = [b for b in resp.content if b.type == "tool_use"]
+            self.said = " ".join(b.text for b in resp.content if b.type == "text").strip()
             if not self.queue:
-                text = " ".join(b.text for b in resp.content if b.type == "text").strip()
-                return Action("done", text=text or "Done.")
+                return Action("done", text=self.said or "Done.")
 
 
 class Local:

@@ -64,6 +64,8 @@ ShellRoot {
         } else if (ev.type === "confirm") {
             confirmReq = ev
             reportRects()
+        } else if (ev.type === "confirmed") {  // answered, or timed out (no answer is no)
+            if (confirmReq && confirmReq.id === ev.id) { confirmReq = null; reportRects() }
         } else if (ev.type === "prompt") {
             promptMode = ev.mode
         } else if (ev.type === "answer" || ev.type === "error") {

@@ -60,7 +60,8 @@ class ClaudeTest(unittest.IsolatedAsyncioTestCase):
                                tool("t2", "type", text="hello")),
                          reply(Block(type="text", text="Typed hello."), stop="end_turn"))
         s = b.session("type hello")
-        self.assertEqual(await s.step(SHOT, "{}", ""), Action("click", 10, 20))
+        # what Claude said before its actions is the first one's reason (the confirm check reads it)
+        self.assertEqual(await s.step(SHOT, "{}", ""), Action("click", 10, 20, reason="Opening it."))
         self.assertEqual(await s.step(SHOT, "{}", "click done"), Action("type", text="hello"))
         self.assertEqual(await s.step(SHOT, "{}", "type done"), Action("done", text="Typed hello."))
         first, second = self.fake.calls
