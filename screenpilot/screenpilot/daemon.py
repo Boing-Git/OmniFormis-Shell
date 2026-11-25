@@ -340,15 +340,17 @@ class Daemon:
         elif cmd == "confirm":
             self.answer_confirm(req.get("id"), req.get("yes") is True)
             send({"type": "ok"})
-        elif cmd == "backend":
+        elif cmd in config.RUNTIME:  # backend, mode
             if req.get("name"):
+                if cmd == "mode" and self.task and not self.task.done():
+                    return send({"type": "error", "text": "busy: a run is going; switch after it"})
                 try:
-                    config.set_backend(req["name"])
+                    config.set(cmd, req["name"])
                 except ValueError as e:
                     return send({"type": "error", "text": str(e)})
-                self.cfg["backend"] = req["name"]
+                self.cfg[cmd] = req["name"]
                 self.broadcast(self.status())
-            send({"type": "ok", "backend": self.cfg["backend"]})
+            send({"type": "ok", cmd: self.cfg[cmd]})
         elif cmd == "overlay":
             try:
                 rects = [tuple(float(v) for v in r) for r in req["rects"]]

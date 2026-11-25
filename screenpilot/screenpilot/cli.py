@@ -79,6 +79,7 @@ def main(argv=None):
     for name in ("stop", "resume", "status"):
         sub.add_parser(name)
     sub.add_parser("backend").add_argument("name", nargs="?", choices=config.BACKENDS)
+    sub.add_parser("mode").add_argument("name", nargs="?", choices=config.MODES)
     say = sub.add_parser("say")
     say.add_argument("text", nargs="*")
     say.add_argument("--selection", action="store_true", help="read the selected text (primary selection)")
@@ -92,10 +93,10 @@ def main(argv=None):
     if a.cmd == "stop":
         print("stopped (" + stop_escalation() + ")")
         return 0
-    if a.cmd == "backend" and not config.socket_path().exists():
+    if a.cmd in config.RUNTIME and not config.socket_path().exists():  # no daemon: the file alone
         if a.name:
-            config.set_backend(a.name)
-        print(config.load()["backend"])
+            config.set(a.cmd, a.name)
+        print(config.load()[a.cmd])
         return 0
 
     req = {"cmd": a.cmd}
@@ -103,7 +104,7 @@ def main(argv=None):
         req["text"] = " ".join(a.text)
         if a.cmd == "ask":
             req["mode"] = a.mode
-    elif a.cmd == "backend" and a.name:
+    elif a.cmd in config.RUNTIME and a.name:
         req["name"] = a.name
     elif a.cmd == "say":
         text = " ".join(a.text)
@@ -128,8 +129,8 @@ def main(argv=None):
     if a.cmd == "status":
         print(event["state"] + (f" ({event['reason']})" if event.get("reason") else "")
               + f", {event['backend']}, {event['mode']}")
-    elif a.cmd == "backend":
-        print(event["backend"])
+    elif a.cmd in config.RUNTIME:
+        print(event[a.cmd])
     elif a.cmd == "shot":
         print(event["path"])
         print("frame: " + json.dumps(event["frame"]), file=sys.stderr)

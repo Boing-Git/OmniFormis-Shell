@@ -70,6 +70,20 @@ class ProtocolTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.d.input.held, set())
         w.close()
 
+    async def test_mode_switches_and_is_remembered(self):
+        self.assertEqual((await self.reply({"cmd": "mode", "name": "shared"}))["mode"], "shared")
+        self.assertEqual(self.d.cfg["mode"], "shared")
+        self.assertEqual(config.load()["mode"], "shared")
+        self.assertEqual((await self.reply({"cmd": "mode", "name": "everywhere"}))["type"], "error")
+        self.assertEqual((await self.reply({"cmd": "mode"}))["mode"], "shared")
+
+    async def test_mode_is_not_switched_mid_run(self):
+        r, w = await self.send(b'{"cmd": "act", "text": "slow"}\n')
+        while not self.d.input.held:
+            await asyncio.sleep(0.005)
+        self.assertIn("busy", (await self.reply({"cmd": "mode", "name": "shared"}))["text"])
+        w.close()
+
     async def test_cli_stop_reaches_the_socket(self):
         layer = await asyncio.to_thread(cli.stop_escalation)
         self.assertEqual(layer, "socket")
