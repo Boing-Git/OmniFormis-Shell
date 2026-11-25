@@ -26,6 +26,7 @@ from .sandbox import Sandbox
 LINE_LIMIT = 64 * 1024
 CAPTURE_MODES = ("monitor", "window", "region")
 GLIDE_MS = 350  # how long the AI cursor takes to reach a target before the AI acts there
+INPUT_GRACE_S = 0.75  # a run's first moments: the keys that started it are being let go
 
 
 def log(*args):
@@ -61,6 +62,7 @@ class Daemon:
         self.watcher = None
         self.idle_task = None
         self.last_user_input = 0.0
+        self.run_started = 0.0
         self.resume_state = "thinking"
 
     # ── the parts later modules provide (the tests replace them) ──
@@ -142,6 +144,8 @@ class Daemon:
         self.last_user_input = time.monotonic()
         if self.run_kind != "act" or self.cfg["mode"] != "shared" or self.state not in ("thinking", "acting"):
             return
+        if self.last_user_input - self.run_started < INPUT_GRACE_S:
+            return  # letting go of the keys that started the run
         if self.cfg["stopOnUserInput"]:
             return self.stop("you used the mouse or keyboard")
         self.resume_state = self.state
@@ -246,6 +250,8 @@ class Daemon:
 
     def resume(self):
         self._unpause()
+        if self.input:
+            self.input.paused = False  # a pause that a STOP cut short ends here too
         config.halt_path().unlink(missing_ok=True)
         if hasattr(self.input, "unblock"):
             self.input.unblock()
@@ -271,6 +277,9 @@ class Daemon:
             raise RuntimeError("busy: another request is running")
         self.capture_mode = capture_mode if kind == "ask" else "monitor"  # ACT sees the whole screen
         self.run_kind = kind
+        self.run_started = time.monotonic()
+        if self.input:
+            self.input.paused = False  # a pause belongs to the run it happened in
         run = agent.run_act if kind == "act" else agent.run_ask
         self.task = asyncio.ensure_future(self._run(run, text))
         return self.task
@@ -361,6 +370,10 @@ class Daemon:
             self.protected_rects = [tuple(int(v) if v == int(v) else v for v in r) for r in rects]
             send({"type": "ok"})
         elif cmd == "prompt":
+            if self.state == "halted":  # said on the overlay too: a keybind has no terminal
+                why = {"type": "error", "text": "halted: Super + Shift + Escape resumes"}
+                self.broadcast(why)
+                return send(why)
             if self.task and not self.task.done():
                 return send({"type": "error", "text": "busy: another request is running"})
             self.broadcast({"type": "prompt", "mode": "act" if req.get("mode") == "act" else "ask"})

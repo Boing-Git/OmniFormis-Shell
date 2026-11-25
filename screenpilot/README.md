@@ -140,7 +140,7 @@ Limits:
 
 ```
 nix develop ~/Dotfiles#screenpilot
-cd screenpilot && python3 -m unittest discover -s tests     # 101 tests, no display needed
+cd screenpilot && python3 -m unittest discover -s tests     # no display or network needed
 nix build ~/Dotfiles#screenpilot                            # runs them too
 ```
 

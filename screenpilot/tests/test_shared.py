@@ -43,8 +43,27 @@ class YieldTest(unittest.IsolatedAsyncioTestCase):
         task = d.start("act", "slow")
         while d.state not in ("thinking", "acting"):
             await asyncio.sleep(0.005)
+        d.run_started -= 5  # past the grace for the keys that started it
         self.addAsyncCleanup(self._end, d, task)
         return d
+
+    async def test_the_keys_that_started_the_run_dont_pause_it(self):
+        d = make_daemon()
+        d.cfg.update({"mode": "shared", "stopOnUserInput": True})
+        d.input = Recorder()
+        task = d.start("act", "slow")
+        self.addAsyncCleanup(self._end, d, task)
+        while d.state not in ("thinking", "acting"):
+            await asyncio.sleep(0.005)
+        d.on_user_input()                      # Super + Alt + D let go just after
+        self.assertNotEqual(d.state, "halted")
+
+    async def test_a_pause_never_outlives_its_run(self):
+        d = await self.running(idleMs=10_000)
+        d.on_user_input()
+        d.stop("test")
+        d.resume()
+        self.assertFalse(d.input.paused)       # or the next run would wait forever
 
     async def _end(self, d, task):
         d.stop("cleanup")

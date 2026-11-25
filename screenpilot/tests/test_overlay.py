@@ -50,6 +50,14 @@ class OverlayProtocolTest(unittest.IsolatedAsyncioTestCase):
         await self.next_event(r, "ok")
         self.assertEqual((await self.next_event(sub, "prompt"))["mode"], "ask")
 
+    async def test_prompt_while_halted_says_why_on_the_overlay(self):
+        sub, _ = await self.connect({"cmd": "subscribe"})
+        await self.next_event(sub, "status")
+        self.d.stop("test")
+        r, _ = await self.connect({"cmd": "prompt", "mode": "ask"})
+        self.assertIn("halted", (await self.next_event(r, "error"))["text"])
+        self.assertIn("halted", (await self.next_event(sub, "error"))["text"])
+
     async def test_prompt_refused_while_running(self):
         await self.connect({"cmd": "act", "text": "slow"})
         while not self.d.input.held:
