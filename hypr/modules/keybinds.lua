@@ -330,4 +330,18 @@ return {
     MonoclePrevTabBind = "$SM + $TM + Tab",
     -- Cycle to the previous window
     MonoclePrevBind = "$MM + $left",
+
+    -- Screen AI (screenpilot)
+    -- Stop the screen AI at once (works in every submap, and while locked)
+    ScreenpilotStopBind = "$MM + Escape",
+    -- Let the screen AI carry on after a stop
+    ScreenpilotResumeBind = "$MM + $TM + Escape",
+    -- Ask the screen AI about what's on screen
+    ScreenpilotAskBind = "$MM + $TM + A",
+    -- Let the screen AI do something
+    ScreenpilotActBind = "$MM + $SM + D",
+    -- Read the selected text aloud
+    ScreenpilotSayBind = "$MM + $SM + S",
+    -- Show or hide the screen AI's own desktop (the sandbox)
+    ScreenpilotSandboxBind = "$MM + $SM + A",
 }

@@ -12,7 +12,9 @@ States: idle, thinking, acting, paused, halted. Only `resume` leaves halted.
 import asyncio
 import json
 import os
+import shutil
 import signal
+import subprocess
 import sys
 from pathlib import Path
 
@@ -25,6 +27,11 @@ def log(*args):
     print("screenpilotd:", *args, file=sys.stderr, flush=True)
 
 
+def overlay_dir() -> Path:
+    """The overlay's Quickshell config: the package's share dir, or the source tree's."""
+    return Path(os.environ.get("SCREENPILOT_OVERLAY") or Path(__file__).resolve().parent.parent / "overlay")
+
+
 class Daemon:
     def __init__(self, cfg, *, input=None, tts=None):
         self.cfg = cfg
@@ -35,6 +42,10 @@ class Daemon:
         self.protected_rects = []
         self.reason = ""
         self.state = "halted" if config.halt_path().exists() else "idle"
+        self.overlay = None
+        self.overlay_cmd = ["qs", "-p", str(overlay_dir())]
+        self.overlay_restart_s = 2
+        self.overlay_starts = 0
 
     # ── the parts later modules provide (the tests replace them) ──
     async def capture(self):
@@ -131,6 +142,7 @@ class Daemon:
             log(f"{type(e).__name__}: {e}")
             event = {"type": "error", "text": str(e) or type(e).__name__}
         self.set_state("idle")
+        self.broadcast(event)  # the overlay shows how it ended (a keybind run has no terminal)
         return event
 
     # ── socket ──
@@ -187,6 +199,20 @@ class Daemon:
                 self.cfg["backend"] = req["name"]
                 self.broadcast(self.status())
             send({"type": "ok", "backend": self.cfg["backend"]})
+        elif cmd == "overlay":
+            try:
+                rects = [tuple(float(v) for v in r) for r in req["rects"]]
+                if any(len(r) != 4 or isinstance(v, bool) for r in req["rects"] for v in r):
+                    raise ValueError
+            except (KeyError, TypeError, ValueError):
+                return send({"type": "error", "text": "rects is a list of [x, y, w, h]"})
+            self.protected_rects = [tuple(int(v) if v == int(v) else v for v in r) for r in rects]
+            send({"type": "ok"})
+        elif cmd == "prompt":
+            if self.task and not self.task.done():
+                return send({"type": "error", "text": "busy: another request is running"})
+            self.broadcast({"type": "prompt", "mode": "act" if req.get("mode") == "act" else "ask"})
+            send({"type": "ok"})
         elif cmd in ("ask", "act"):
             text = str(req.get("text", "")).strip()
             if not text:
@@ -220,9 +246,24 @@ class Daemon:
                     return
         finally:
             self.subscribers.discard(writer)
-            if gone and not gone.done():
+            if gone:  # also collects a broken-pipe error it may have ended with
                 gone.cancel()
                 await asyncio.gather(gone, return_exceptions=True)
+
+    async def keep_overlay(self):
+        """The overlay (STOP button, status, AI cursor; a separate Quickshell instance) runs as
+        long as the daemon does. Losing it during a run is STOP: its button is gone."""
+        env = {k: v for k, v in os.environ.items() if k != "QML_IMPORT_PATH"}
+        env.setdefault("SCREENPILOT_CLI", shutil.which("screenpilot") or "screenpilot")
+        while True:
+            self.overlay = await asyncio.create_subprocess_exec(*self.overlay_cmd, env=env,
+                                                                stdin=subprocess.DEVNULL)
+            self.overlay_starts += 1
+            code = await self.overlay.wait()
+            if self.state in ("thinking", "acting", "paused"):
+                self.stop("the overlay (and its STOP button) went away")
+            log(f"overlay exited ({code}), starting it again")
+            await asyncio.sleep(self.overlay_restart_s)
 
     async def serve_on(self, path):
         path = Path(path)
@@ -240,9 +281,13 @@ class Daemon:
         for sig in (signal.SIGTERM, signal.SIGINT):
             loop.add_signal_handler(sig, quit_.set)
         log("listening on", config.socket_path(), "state", self.state)
+        keeper = asyncio.ensure_future(self.keep_overlay())
         await quit_.wait()
         if self.input:
             self.input.release_all()
+        keeper.cancel()
+        if self.overlay and self.overlay.returncode is None:
+            self.overlay.terminate()
         server.close()
 
 

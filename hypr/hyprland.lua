@@ -8,6 +8,7 @@ require("modules.env")
 require("modules.binds")
 require("modules.general")
 require("modules.plugins")
+require("modules.screenpilot")
 local variables = require("modules.variables")
 
 if variables.Layout == "Scrolling" or variables.Layout == "scrolling" then
