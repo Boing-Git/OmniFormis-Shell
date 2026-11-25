@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "screenpilot"
+version = "0.1.0"
+description = "A screen-aware assistant for Hyprland: see, act, speak, and a STOP the AI can't get around"
+requires-python = ">=3.11"
+dependencies = ["anthropic", "httpx", "pillow", "evdev"]
+
+[project.scripts]
+screenpilot = "screenpilot.cli:main"
+screenpilotd = "screenpilot.daemon:main"
+
+[tool.setuptools]
+packages = ["screenpilot"]
