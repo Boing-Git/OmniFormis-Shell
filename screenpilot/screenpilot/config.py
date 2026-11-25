@@ -29,7 +29,7 @@ DEFAULTS = {
     "localModel": "qwen3-vl:8b",
     "localUrl": "http://127.0.0.1:11434/v1",
     "voice": "",                        # path to a piper .onnx voice; empty = no speech
-    "sharedMove": "virtual",            # virtual | hyprctl
+    "sharedMove": "hyprctl",            # hyprctl (Hyprland moves the cursor) | virtual (absolute motion)
     "keepRuns": 20,
 }
 

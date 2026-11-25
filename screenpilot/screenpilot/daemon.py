@@ -25,6 +25,7 @@ from .sandbox import Sandbox
 
 LINE_LIMIT = 64 * 1024
 CAPTURE_MODES = ("monitor", "window", "region")
+GLIDE_MS = 350  # how long the AI cursor takes to reach a target before the AI acts there
 
 
 def log(*args):
@@ -53,6 +54,11 @@ class Daemon:
         self.overlay_cmd = ["qs", "-p", str(overlay_dir())]
         self.overlay_restart_s = 2
         self.overlay_starts = 0
+        self.cursor_shown = False
+        self.watcher = None
+        self.idle_task = None
+        self.last_user_input = 0.0
+        self.resume_state = "thinking"
 
     # ── the parts later modules provide (the tests replace them) ──
     def sandbox_display(self):
@@ -73,30 +79,90 @@ class Daemon:
                 self.input.display = display
                 self.input.focus_window = self.sandbox.focus
         else:
-            raise RuntimeError("shared mode is not built yet")
+            from . import capture, shared, userwatch
+            if not isinstance(self.input, shared.SharedInput):
+                self._close_input()
+                self.input = await asyncio.to_thread(shared.SharedInput, os.environ["WAYLAND_DISPLAY"],
+                                                     self.cfg["delayMs"] / 1000, self.cfg["sharedMove"])
+            self.input.box = shared.layout_box(await capture.hypr("monitors"))
+            if self.watcher is None or self.watcher.done():
+                self.watcher = asyncio.ensure_future(userwatch.watch(self.on_user_input))
+                self.watcher.add_done_callback(lambda t: t.cancelled() or log("can't watch your input:", t.exception()))
 
     def _close_input(self):
         if hasattr(self.input, "close"):
             self.input.close()
         self.input = None
 
+    async def guard_problem(self):
+        """Checked before every ACT step: the STOP button and shortcut must both still be there."""
+        from . import capture, shared
+        return shared.guard_problem(await capture.hypr("binds"),
+                                    self.overlay is not None and self.overlay.returncode is None)
+
+    async def glide(self, x, y):
+        """Shared mode: the AI cursor glides to where the AI is about to act, before it acts."""
+        self.cursor_shown = True
+        self.broadcast({"type": "cursor", "x": x, "y": y, "ms": GLIDE_MS})
+        await asyncio.sleep(GLIDE_MS / 1000)
+
     async def execute(self, action, shot):
         from . import executor
+        while self.state == "paused":   # the user has the controls
+            await asyncio.sleep(0.05)
         sandboxed = self.sandbox_display() is not None
-        if sandboxed:  # absolute motion spans the sandbox's one output, which is the whole shot
-            f = shot.frame
-            self.input.box = (f.ox, f.oy, f.lw, f.lh)
         try:
-            return await executor.execute(action, shot, self.input,
-                                          protected=() if sandboxed else self.protected_rects)
+            if sandboxed:  # absolute motion spans the sandbox's one output, which is the whole shot
+                f = shot.frame
+                self.input.box = (f.ox, f.oy, f.lw, f.lh)
+                return await executor.execute(action, shot, self.input)
+            began = time.monotonic()
+            async with self.input.burst(lambda: self.last_user_input > began):
+                return await executor.execute(action, shot, self.input, protected=self.protected_rects,
+                                              on_point=self.glide)
         except executor.Refused as e:
             return f"refused: {e}"  # the model hears why and tries something else
 
     async def capture(self, mode="monitor"):
         from . import capture
         sandboxed = self.sandbox_display() is not None
+        if self.cursor_shown:  # the model never sees the AI cursor
+            self.cursor_shown = False
+            self.broadcast({"type": "cursor", "hide": True})
+            await asyncio.sleep(0.06)
         return await capture.grab(self.cfg, mode, sandbox_env=self.sandbox.env() if sandboxed else None,
                                   protected=() if sandboxed else self.protected_rects)
+
+    # ── shared mode: the user's hands come first ──
+    def on_user_input(self):
+        """Called for every event of the user's own keyboards and mice."""
+        self.last_user_input = time.monotonic()
+        if self.run_kind != "act" or self.cfg["mode"] != "shared" or self.state not in ("thinking", "acting"):
+            return
+        if self.cfg["stopOnUserInput"]:
+            return self.stop("you used the mouse or keyboard")
+        self.resume_state = self.state
+        self.set_state("paused")
+        if self.input:
+            self.input.paused = True
+            self.input.let_go()
+        if self.idle_task is None or self.idle_task.done():
+            self.idle_task = asyncio.ensure_future(self._carry_on_when_idle())
+
+    async def _carry_on_when_idle(self):
+        while self.state == "paused":
+            wait = self.last_user_input + self.cfg["idleMs"] / 1000 - time.monotonic()
+            if wait <= 0:
+                return self._unpause()
+            await asyncio.sleep(wait)
+
+    def _unpause(self):
+        if self.state != "paused":
+            return
+        if self.input:
+            self.input.paused = False
+        self.state = self.resume_state
+        self.broadcast({"type": "state", "state": self.state})
 
     async def context(self):
         from . import context
@@ -122,6 +188,9 @@ class Daemon:
     def set_state(self, state):
         # nothing but resume() leaves halted, so a run that is still unwinding can't undo a STOP
         if self.state == "halted" or self.state == state:
+            return
+        if self.state == "paused" and state in ("thinking", "acting"):
+            self.resume_state = state  # it goes on as that once the user lets go
             return
         self.state = state
         self.broadcast({"type": "state", "state": state})
@@ -149,6 +218,7 @@ class Daemon:
         self.broadcast({"type": "cursor", "hide": True})
 
     def resume(self):
+        self._unpause()
         config.halt_path().unlink(missing_ok=True)
         if hasattr(self.input, "unblock"):
             self.input.unblock()

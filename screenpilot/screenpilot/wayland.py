@@ -81,7 +81,8 @@ class Input:
     def __init__(self, delay=0.06):
         self.delay = delay
         self.held = set()        # ("button", code) / ("key", code)
-        self.blocked = False
+        self.blocked = False     # STOP: refused until unblock()
+        self.paused = False      # shared mode, the user is using the controls: wait
         self.keysyms = []        # keysym at keycode index + 1
         self.box = (0, 0, 1, 1)  # the layout rectangle absolute motion spans (x, y, w, h)
 
@@ -97,15 +98,22 @@ class Input:
         if self.blocked:
             raise Halted("stopped: input is off until resume")
 
+    async def _gate(self):
+        """Before every event: refused after STOP, held back while paused."""
+        self._check()
+        while self.paused:
+            await asyncio.sleep(0.05)
+            self._check()
+
     async def _pause(self, s=None):
         await asyncio.sleep(self.delay if s is None else s)
 
     async def move_to(self, x, y):
-        self._check()
+        await self._gate()
         self._motion(x, y)
 
     async def press(self, button="left"):
-        self._check()
+        await self._gate()
         code = BUTTONS[button]
         self.held.add(("button", code))
         self._button(code, 1)
@@ -138,7 +146,7 @@ class Input:
     async def scroll(self, dx=0, dy=0):
         for axis, n in ((0, dy), (1, dx)):
             for _ in range(abs(n)):
-                self._check()
+                await self._gate()
                 self._axis(axis, 1 if n > 0 else -1)
                 await self._pause()
 
@@ -153,7 +161,7 @@ class Input:
         return [self.keysyms.index(k) + 1 for k in keysyms]
 
     async def _tap(self, code):
-        self._check()
+        await self._gate()
         self.held.add(("key", code))
         self._key(code, 1)
         await self._pause(0.01)
@@ -162,7 +170,7 @@ class Input:
         await self._pause()
 
     async def type_text(self, text):
-        self._check()
+        await self._gate()
         syms = [keysym_for_char(c) for c in text if c in "\n\t" or c.isprintable()]
         # shortcut: more than MAX_KEYS different characters go in chunks, a keymap each
         for i in range(0, len(syms), 200):
@@ -171,7 +179,7 @@ class Input:
 
     async def key(self, combo):
         mask, keysym = parse_combo(combo)
-        self._check()
+        await self._gate()
         (code,) = self._codes([keysym])
         self._mods(mask)
         try:
@@ -182,6 +190,10 @@ class Input:
     def release_all(self):
         """STOP: let go of everything, then refuse events until unblock(). Never raises."""
         self.blocked = True
+        self.let_go()
+
+    def let_go(self):
+        """Releases every held button and key (the user takes over: nothing stays pressed)."""
         for kind, code in list(self.held):
             try:
                 (self._button if kind == "button" else self._key)(code, 0)

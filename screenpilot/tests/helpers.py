@@ -65,6 +65,9 @@ class FakeDaemon(daemon.Daemon):
     async def prepare_act(self):
         pass
 
+    async def guard_problem(self):
+        return None
+
     def backend(self):
         return SlowBackend(self)
 

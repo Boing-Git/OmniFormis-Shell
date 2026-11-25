@@ -14,6 +14,10 @@ async def run_act(d, goal: str) -> str:
     note = ""
     async with asyncio.timeout(d.cfg["timeoutS"]):
         for _ in range(d.cfg["maxSteps"]):
+            problem = await d.guard_problem()
+            if problem:
+                d.stop(problem)
+                await asyncio.sleep(0)  # the cancel lands here
             d.set_state("thinking")
             shot = await d.capture()
             action = await session.step(shot, await d.context(), note)
