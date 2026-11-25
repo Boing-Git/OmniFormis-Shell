@@ -34,6 +34,13 @@ class CensorTest(unittest.TestCase):
         out = capture.censor(self.img, self.frame, wins, ["(?i)keepass"], "refuse", [])
         self.assertEqual(out.getpixel((100, 100)), (200, 30, 30))
 
+    def test_special_workspaces_count_only_while_shown(self):
+        # Hyprland 0.57 gives a special workspace no id, and calls its windows visible while hidden
+        spotify = client("KeePassXC", 0, workspace={"address": "special:music", "type": "special", "name": "special:music"})
+        self.assertEqual(capture.hypr_windows([spotify], MONITORS), [])
+        shown = [dict(MONITORS[0], specialWorkspace={"address": "x", "type": "special", "name": "special:music"})]
+        self.assertEqual(len(capture.hypr_windows([spotify], shown)), 1)
+
     def test_blocklist_matches_titles_too(self):
         wins = capture.hypr_windows([client("firefox", 1, title="Bitwarden — vault")], MONITORS)
         with self.assertRaises(capture.Blocked):

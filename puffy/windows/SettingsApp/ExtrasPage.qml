@@ -38,9 +38,18 @@ Item {
         command: [extras.screenTimeScript, "json", "1"]
         stdout: StdioCollector { onStreamFinished: { try { extras.usage = JSON.parse(text) } catch (e) {} } }
     }
-    onVisibleChanged: if (visible) reader.running = true
-    Component.onCompleted: reader.running = true
+    onVisibleChanged: if (visible) { reader.running = true; aiReader.running = true }
+    Component.onCompleted: { reader.running = true; aiReader.running = true }
     Process { id: switcher; onExited: reader.running = true }
+
+    // ── the screen AI's model ── screenpilot's own setting, shared by every shell
+    property string screenAi: ""
+    Process {
+        id: aiReader
+        command: ["screenpilot", "backend"]
+        stdout: StdioCollector { onStreamFinished: extras.screenAi = text.trim() }
+    }
+    Process { id: aiSwitcher; onExited: aiReader.running = true }
 
     readonly property var today: usage.days.length > 0 ? usage.days[0].apps : ({})
     readonly property var apps: Object.keys(today).sort((a, b) => today[b] - today[a]).slice(0, 12)
@@ -93,7 +102,9 @@ Item {
                     { icon: "bolt", title: "Automations", sub: "The launcher's /run mode: runs of steps (open Steam and Spotify, play, open a game…) kept in ~/.config/automations.",
                       on: Vars.automations !== false, flip: () => extras.setVar("automations", !(Vars.automations !== false)) },
                     { icon: "hourglass_top", title: "Screen time", sub: "Counts how long each app is used. One switch for every shell: off stops the counting.",
-                      on: extras.usage.on, flip: () => switcher.exec([extras.screenTimeScript, extras.usage.on ? "off" : "on"]) }
+                      on: extras.usage.on, flip: () => switcher.exec([extras.screenTimeScript, extras.usage.on ? "off" : "on"]) },
+                    { icon: "cloud", title: "Screen AI: Claude", sub: "screenpilot (Super + Shift + A asks about the screen) uses Claude, which sends its screenshots to Anthropic. Off: the local model, nothing leaves this computer. One switch for every shell.",
+                      on: extras.screenAi === "claude", flip: () => aiSwitcher.exec(["screenpilot", "backend", extras.screenAi === "claude" ? "local" : "claude"]) }
                 ]
                 Rectangle {
                     required property var modelData

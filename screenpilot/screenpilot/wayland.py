@@ -43,6 +43,16 @@ def keysym_for_char(ch: str) -> int:
     return 0x01000000 + cp
 
 
+def parse_mods(mods: str) -> int:
+    """"ctrl+shift" -> its modifier mask ("" -> 0)."""
+    mask = 0
+    for m in filter(None, (p.strip().lower() for p in mods.split("+"))):
+        if m not in MODS:
+            raise ValueError(f"unknown modifier {m!r}")
+        mask |= MODS[m]
+    return mask
+
+
 def parse_combo(combo: str) -> tuple:
     """"ctrl+shift+t" -> (modifier mask, keysym). Shift is only what is said: "ctrl+T" is ctrl+t."""
     parts = combo.strip().split("+")
@@ -123,15 +133,23 @@ class Input:
         self._button(code, 0)
         self.held.discard(("button", code))
 
-    async def click(self, button="left"):
-        await self.press(button)
-        await self._pause(0.04)
-        await self.release(button)
+    async def click(self, button="left", mods=0):
+        """mods: held for this click only (ctrl+click)."""
+        await self._gate()
+        if mods:
+            self._mods(mods)
+        try:
+            await self.press(button)
+            await self._pause(0.04)
+            await self.release(button)
+        finally:
+            if mods:
+                self._mods(0)
 
-    async def double_click(self, button="left"):
-        await self.click(button)
+    async def double_click(self, button="left", mods=0):
+        await self.click(button, mods)
         await self._pause(0.08)
-        await self.click(button)
+        await self.click(button, mods)
 
     async def drag(self, x1, y1, x2, y2, steps=12):
         await self.move_to(x1, y1)

@@ -57,6 +57,11 @@ class ExecutorTest(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(Refused):
             await self.run_action(Action("key", keys="ctrl+notakey"))
 
+    async def test_modifier_click_holds_the_modifiers_for_that_click_only(self):
+        await self.run_action(Action("click", 784, 441, keys="ctrl+shift"))
+        kinds = [e for e in self.inp.sent if e[0] in ("mods", "button")]
+        self.assertEqual(kinds, [("mods", 5), ("button", 0x110, 1), ("button", 0x110, 0), ("mods", 0)])
+
     async def test_scroll_at_a_point_moves_there_first(self):
         await self.run_action(Action("scroll", 784, 441, dy=3))
         self.assertEqual(self.inp.sent[0], ("motion", 960, 540))

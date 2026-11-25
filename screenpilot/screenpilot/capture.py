@@ -39,13 +39,14 @@ async def hypr(what):
 
 def hypr_windows(clients, monitors):
     """Hyprland's clients that are on screen now, as {"name", "rect"} (layout coordinates)."""
-    shown = {m["activeWorkspace"]["id"] for m in monitors}
-    shown |= {m["specialWorkspace"]["id"] for m in monitors if m["specialWorkspace"].get("id")}  # no "id" when none is open
+    # by name: on 0.57 a special workspace has no id (and its windows say visible even while hidden)
+    shown = {m["activeWorkspace"]["name"] for m in monitors}
+    shown |= {m["specialWorkspace"]["name"] for m in monitors if m["specialWorkspace"].get("name")}
     out = []
     for c in clients:
         if not c.get("mapped", True) or c.get("hidden") or not c.get("visible", True):
             continue
-        if c["workspace"]["id"] not in shown:
+        if c["workspace"]["name"] not in shown:
             continue
         out.append({"name": f"{c['class']} {c['initialClass']} {c['title']}", "rect": (*c["at"], *c["size"])})
     return out

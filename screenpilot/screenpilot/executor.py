@@ -5,6 +5,8 @@ near screenpilot's own STOP button (or confirm box), a key the input can't type.
 """
 import asyncio
 
+from .wayland import parse_combo, parse_mods
+
 MARGIN = 12  # around the protected rects, in layout pixels
 
 
@@ -47,11 +49,15 @@ async def execute(action, shot, inp, *, protected=(), on_point=None) -> str:
         await go(action.x, action.y)
     elif k in ("click", "right_click", "middle_click", "double_click"):
         point(action.x, action.y)
+        try:
+            mods = parse_mods(action.keys)
+        except ValueError as e:
+            raise Refused(str(e))
         await go(action.x, action.y)
         if k == "double_click":
-            await inp.double_click()
+            await inp.double_click(mods=mods)
         else:
-            await inp.click({"click": action.button or "left", "right_click": "right", "middle_click": "middle"}[k])
+            await inp.click({"click": action.button or "left", "right_click": "right", "middle_click": "middle"}[k], mods)
     elif k == "drag":
         point(action.x, action.y)
         x2, y2 = point(action.x2, action.y2)
@@ -67,14 +73,16 @@ async def execute(action, shot, inp, *, protected=(), on_point=None) -> str:
         combos = action.keys.split()
         if not combos:
             raise Refused("no key given")
-        from .wayland import parse_combo
         for combo in combos:
             try:
                 parse_combo(combo)
             except ValueError as e:
                 raise Refused(str(e))
         for combo in combos:
-            await inp.key(combo)
+            if action.target and hasattr(inp, "send_shortcut"):  # to that window, focus untouched
+                await inp.send_shortcut(combo, action.target)
+            else:
+                await inp.key(combo)
     elif k == "focus":
         await inp.focus_window(action.target)
     return f"{k} done"

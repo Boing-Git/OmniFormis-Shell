@@ -90,6 +90,13 @@ QtObject {
         command: [Quickshell.shellDir + "/../scripts/screentime.py", "status"]
         stdout: StdioCollector { onStreamFinished: root.screenTime = text.trim() !== "off" }
     }
+    // (the screen AI's model is shared with the other shells too: the truth is screenpilot's own)
+    property bool screenAiClaude: false
+    property Process _screenAiState: Process {
+        running: true
+        command: ["screenpilot", "backend"]
+        stdout: StdioCollector { onStreamFinished: if (text.trim()) root.screenAiClaude = text.trim() === "claude" }
+    }
     property int notifyHold: Vars.notifyHold
 
     // ── dials ──
@@ -362,6 +369,8 @@ QtObject {
           help: "The Ask control: type a question or a wish on the dial (\"bigger gaps\", \"open Downloads\"); the local AI does it with the desktop's own commands. Super + A opens it." },
         { key: "screenTime", group: "Extras", label: "Screen time", icon: "hourglass_top", type: "bool",
           help: "Counts how long each app is used, per day, and shows it in the Screen time control. One switch for every shell: off stops the counting too." },
+        { key: "screenAiClaude", group: "Extras", label: "Screen AI: Claude", icon: "cloud", type: "bool",
+          help: "screenpilot (Super + Shift + A asks about the screen, Super + Alt + D acts) uses Claude, which sends its screenshots to Anthropic. Off, it uses the local model and nothing leaves this computer. One switch for every shell." },
         { key: "mascots", group: "Extras", label: "Mascots", icon: "sentiment_satisfied", type: "bool",
           help: "Dial-E hides in plain sight: in an empty corner of the control center and on the lock screen. Find it." },
         { key: "automations", group: "Extras", label: "Automations", icon: "bolt", type: "bool",
@@ -627,6 +636,7 @@ QtObject {
 
             // screen time's switch is the shared one (every shell's): the counting follows it
             if (key === "screenTime") Quickshell.execDetached([Quickshell.shellDir + "/../scripts/screentime.py", r.value ? "on" : "off"])
+            if (key === "screenAiClaude") Quickshell.execDetached(["screenpilot", "backend", r.value ? "claude" : "local"])
             if (key === "themeSource") _previewTheme()
         }
         return ""

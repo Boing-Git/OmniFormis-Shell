@@ -13,18 +13,21 @@ Singleton {
     property bool mascot: true      // Droplet's mascot, hiding in plain sight
     property bool screenTime: true  // the Screen time circle, and the tracking itself
     property bool automations: true // the Automations circle (scripts/automate/automate.py)
+    property bool screenAiClaude: false // screenpilot's model: Claude, or the local one (shared by every shell)
 
     // what the Settings circle lists
     readonly property var all: [
         { key: "assistant", label: "Ask the AI", icon: "auto_awesome" },
         { key: "mascot", label: "Mascot", icon: "water_drop" },
         { key: "screenTime", label: "Screen time", icon: "hourglass_top" },
-        { key: "automations", label: "Automations", icon: "bolt" }
+        { key: "automations", label: "Automations", icon: "bolt" },
+        { key: "screenAiClaude", label: "Screen AI: Claude", icon: "cloud" }
     ]
 
     function toggle(key) {
         root[key] = !root[key]
         if (key === "screenTime") Quickshell.execDetached([screenTimeScript, root.screenTime ? "on" : "off"])
+        else if (key === "screenAiClaude") Quickshell.execDetached(["screenpilot", "backend", root.screenAiClaude ? "claude" : "local"])
         else _write()
     }
 
@@ -48,6 +51,11 @@ Singleton {
         running: true
         command: [root.screenTimeScript, "status"]
         stdout: StdioCollector { onStreamFinished: root.screenTime = text.trim() !== "off" }
+    }
+    Process {
+        running: true
+        command: ["screenpilot", "backend"]
+        stdout: StdioCollector { onStreamFinished: if (text.trim()) root.screenAiClaude = text.trim() === "claude" }
     }
 
     // to a temp file first, then renamed over the real one
