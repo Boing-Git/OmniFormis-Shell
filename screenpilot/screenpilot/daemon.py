@@ -251,6 +251,8 @@ class Daemon:
     async def _run(self, run, text):
         try:
             event = {"type": "answer", "text": await run(self, text)}
+            if self.tts:
+                self.tts.say(event["text"])
         except asyncio.CancelledError:
             event = {"type": "error", "text": f"stopped ({self.reason or 'cancelled'})"}
         except TimeoutError:
@@ -339,6 +341,14 @@ class Daemon:
             except RuntimeError as e:
                 return send({"type": "error", "text": str(e)})
             await self._follow(task, reader, writer)
+        elif cmd == "say":
+            text = str(req.get("text", "")).strip()
+            if not self.tts:
+                return send({"type": "error", "text": "no voice set (services.screenpilot.voice)"})
+            if not text:
+                return send({"type": "error", "text": "say what? Give it some words (or select some text)."})
+            self.tts.say(text)
+            send({"type": "ok"})
         elif cmd == "sandbox":
             try:
                 send({"type": "ok", "text": await self.sandbox_cmd(req.get("action"), req.get("command") or [])})
@@ -454,7 +464,15 @@ class Daemon:
 
 
 def main():
-    asyncio.run(Daemon(config.load()).serve())
+    cfg = config.load()
+    tts = None
+    if cfg["voice"]:
+        from .tts import Piper
+        try:
+            tts = Piper(cfg["voice"])
+        except (OSError, ValueError, KeyError) as e:
+            log(f"no speech: can't read the voice {cfg['voice']} ({e})")
+    asyncio.run(Daemon(cfg, tts=tts).serve())
 
 
 if __name__ == "__main__":
