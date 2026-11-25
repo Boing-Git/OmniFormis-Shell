@@ -62,6 +62,9 @@ class FakeDaemon(daemon.Daemon):
     async def context(self):
         return ""
 
+    async def prepare_act(self):
+        pass
+
     def backend(self):
         return SlowBackend(self)
 

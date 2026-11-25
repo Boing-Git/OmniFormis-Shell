@@ -84,7 +84,7 @@ def main(argv=None):
     say.add_argument("--selection", action="store_true", help="read the selected text (primary selection)")
     sub.add_parser("shot").add_argument("--mode", default="monitor", choices=("monitor", "window", "region"))
     sb = sub.add_parser("sandbox")
-    sb.add_argument("action", choices=("start", "stop", "show", "run"))
+    sb.add_argument("action", choices=("start", "stop", "show", "run", "shot"))
     sb.add_argument("command", nargs=argparse.REMAINDER)
     sub.add_parser("prompt").add_argument("mode", choices=("ask", "act"))
     a = p.parse_args(argv)

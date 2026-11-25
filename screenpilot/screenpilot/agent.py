@@ -9,6 +9,7 @@ async def run_ask(d, question: str) -> str:
 
 
 async def run_act(d, goal: str) -> str:
+    await d.prepare_act()
     session = d.backend().session(goal)
     note = ""
     async with asyncio.timeout(d.cfg["timeoutS"]):

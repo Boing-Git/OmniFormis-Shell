@@ -7,7 +7,6 @@ Sandbox mode: the nested sway's whole output.
 import asyncio
 import io
 import json
-import os
 import re
 from dataclasses import dataclass
 
@@ -100,11 +99,11 @@ def censor(img, frame, windows, blocklist, action, protected):
     return img
 
 
-async def grab(cfg, mode="monitor", *, wayland_display=None, protected=()) -> Shot:
-    """One screenshot as the model will see it."""
-    env = None
-    if wayland_display:  # the sandbox: its one output, at scale 1
-        env = dict(os.environ, WAYLAND_DISPLAY=wayland_display)
+async def grab(cfg, mode="monitor", *, sandbox_env=None, protected=()) -> Shot:
+    """One screenshot as the model will see it. sandbox_env (Sandbox.env(): its WAYLAND_DISPLAY
+    and SWAYSOCK) captures the sandbox instead of the user's desktop."""
+    if sandbox_env:  # the sandbox: its one output, at scale 1
+        env = sandbox_env
         raw = await proc.run(["grim", "-"], env=env, timeout=10)
         img = Image.open(io.BytesIO(raw)).convert("RGB")
         ox, oy, lw, lh = 0, 0, img.width, img.height

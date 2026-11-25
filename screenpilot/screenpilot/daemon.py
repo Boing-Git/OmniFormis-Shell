@@ -21,6 +21,7 @@ import time
 from pathlib import Path
 
 from . import agent, config, proc
+from .sandbox import Sandbox
 
 LINE_LIMIT = 64 * 1024
 CAPTURE_MODES = ("monitor", "window", "region")
@@ -45,6 +46,9 @@ class Daemon:
         self.protected_rects = []
         self.reason = ""
         self.state = "halted" if config.halt_path().exists() else "idle"
+        self.run_kind = None
+        self.capture_mode = "monitor"
+        self.sandbox = Sandbox()
         self.overlay = None
         self.overlay_cmd = ["qs", "-p", str(overlay_dir())]
         self.overlay_restart_s = 2
@@ -52,25 +56,55 @@ class Daemon:
 
     # ── the parts later modules provide (the tests replace them) ──
     def sandbox_display(self):
-        """The sandbox's WAYLAND_DISPLAY in sandbox mode; None in shared mode."""
+        """What ACT looks at in sandbox mode: the sandbox's WAYLAND_DISPLAY. None otherwise (ASK
+        always looks at the user's own screen)."""
+        if self.cfg["mode"] == "sandbox" and self.run_kind == "act":
+            return self.sandbox.display
         return None
+
+    async def prepare_act(self):
+        """Points the AI's input at its target before an ACT run."""
+        if self.cfg["mode"] == "sandbox":
+            display = await self.sandbox.start()
+            if getattr(self.input, "display", None) != display:
+                self._close_input()
+                from .wayland import WaylandInput
+                self.input = await asyncio.to_thread(WaylandInput, display, self.cfg["delayMs"] / 1000)
+                self.input.display = display
+                self.input.focus_window = self.sandbox.focus
+        else:
+            raise RuntimeError("shared mode is not built yet")
+
+    def _close_input(self):
+        if hasattr(self.input, "close"):
+            self.input.close()
+        self.input = None
+
+    async def execute(self, action, shot):
+        from . import executor
+        sandboxed = self.sandbox_display() is not None
+        if sandboxed:  # absolute motion spans the sandbox's one output, which is the whole shot
+            f = shot.frame
+            self.input.box = (f.ox, f.oy, f.lw, f.lh)
+        try:
+            return await executor.execute(action, shot, self.input,
+                                          protected=() if sandboxed else self.protected_rects)
+        except executor.Refused as e:
+            return f"refused: {e}"  # the model hears why and tries something else
 
     async def capture(self, mode="monitor"):
         from . import capture
-        display = self.sandbox_display()
-        return await capture.grab(self.cfg, mode, wayland_display=display,
-                                  protected=() if display else self.protected_rects)
+        sandboxed = self.sandbox_display() is not None
+        return await capture.grab(self.cfg, mode, sandbox_env=self.sandbox.env() if sandboxed else None,
+                                  protected=() if sandboxed else self.protected_rects)
 
     async def context(self):
         from . import context
-        return await context.describe(self.sandbox_display())
+        return await context.describe(self.sandbox.env() if self.sandbox_display() else None)
 
     def backend(self):
         from . import backends
         return backends.make(self.cfg)
-
-    async def execute(self, action, shot):
-        raise RuntimeError("input is not built yet")
 
     # ── state ──
     def status(self):
@@ -139,6 +173,7 @@ class Daemon:
         if self.task and not self.task.done():
             raise RuntimeError("busy: another request is running")
         self.capture_mode = capture_mode if kind == "ask" else "monitor"  # ACT sees the whole screen
+        self.run_kind = kind
         run = agent.run_act if kind == "act" else agent.run_ask
         self.task = asyncio.ensure_future(self._run(run, text))
         return self.task
@@ -234,17 +269,52 @@ class Daemon:
             except RuntimeError as e:
                 return send({"type": "error", "text": str(e)})
             await self._follow(task, reader, writer)
+        elif cmd == "sandbox":
+            try:
+                send({"type": "ok", "text": await self.sandbox_cmd(req.get("action"), req.get("command") or [])})
+            except Exception as e:
+                send({"type": "error", "text": str(e)})
         elif cmd == "shot":
             try:
                 shot = await self.capture(req.get("mode") if req.get("mode") in CAPTURE_MODES else "monitor")
             except Exception as e:
                 return send({"type": "error", "text": str(e)})
-            path = config.state_dir() / "shots" / time.strftime("%Y%m%d-%H%M%S.png")
-            path.parent.mkdir(exist_ok=True)
-            path.write_bytes(shot.png)
-            send({"type": "ok", "path": str(path), "frame": dataclasses.asdict(shot.frame)})
+            send({"type": "ok", "path": self._save_shot(shot), "frame": dataclasses.asdict(shot.frame)})
         else:
             send({"type": "error", "text": f"unknown cmd {cmd!r}"})
+
+    async def sandbox_cmd(self, action, command):
+        if action == "start":
+            return "the sandbox runs on " + await self.sandbox.start()
+        if action == "stop":
+            if self.task and not self.task.done() and self.sandbox_display():
+                self.stop("the sandbox was closed")
+            if getattr(self.input, "display", None) == self.sandbox.display:
+                self._close_input()
+            await self.sandbox.stop()
+            return "the sandbox is closed"
+        if action == "show":
+            await proc.run(["hyprctl", "dispatch", 'hl.dsp.workspace.toggle_special("screenpilot")'], timeout=5)
+            return "ok"
+        if action == "run":
+            if not command:
+                raise RuntimeError("run what? e.g. screenpilot sandbox run foot")
+            await self.sandbox.start()
+            await self.sandbox.run([str(c) for c in command])
+            return f"started {command[0]} in the sandbox"
+        if action == "shot":
+            from . import capture
+            await self.sandbox.start()
+            shot = await capture.grab(self.cfg, sandbox_env=self.sandbox.env())
+            return self._save_shot(shot)
+        raise RuntimeError(f"unknown sandbox action {action!r}")
+
+    @staticmethod
+    def _save_shot(shot):
+        path = config.state_dir() / "shots" / time.strftime("%Y%m%d-%H%M%S.png")
+        path.parent.mkdir(exist_ok=True)
+        path.write_bytes(shot.png)
+        return str(path)
 
     async def _follow(self, task, reader, writer):
         """Streams the run's events to the client that asked, until the answer, or until that
@@ -309,6 +379,7 @@ class Daemon:
         keeper.cancel()
         if self.overlay and self.overlay.returncode is None:
             self.overlay.terminate()
+        await self.sandbox.stop()
         server.close()
 
 

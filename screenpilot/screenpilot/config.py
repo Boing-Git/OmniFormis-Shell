@@ -29,7 +29,6 @@ DEFAULTS = {
     "localModel": "qwen3-vl:8b",
     "localUrl": "http://127.0.0.1:11434/v1",
     "voice": "",                        # path to a piper .onnx voice; empty = no speech
-    "sandboxSize": "1280x800",
     "sharedMove": "virtual",            # virtual | hyprctl
     "keepRuns": 20,
 }

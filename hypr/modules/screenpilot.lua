@@ -17,7 +17,7 @@ bind("ScreenpilotResumeBind", hl.dsp.exec_cmd(sp .. "resume"),
 bind("ScreenpilotAskBind", hl.dsp.exec_cmd(sp .. "prompt ask"), { description = "Ask the screen AI" })
 bind("ScreenpilotActBind", hl.dsp.exec_cmd(sp .. "prompt act"), { description = "Let the screen AI act" })
 bind("ScreenpilotSayBind", hl.dsp.exec_cmd(sp .. "say --selection"), { description = "Read the selection aloud" })
-bind("ScreenpilotSandboxBind", hl.dsp.exec_cmd(sp .. "sandbox show"), { description = "Show the screen AI's desktop" })
+bind("ScreenpilotSandboxBind", hl.dsp.workspace.toggle_special("screenpilot"), { description = "Show the screen AI's desktop" })
 
 -- (The overlay is kept out of the model's screenshots by the daemon itself: no_screen_share on
 -- a layer does not hide it from grim on Hyprland 0.57.)

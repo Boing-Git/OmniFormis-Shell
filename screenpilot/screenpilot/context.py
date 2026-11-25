@@ -1,7 +1,6 @@
 """The text that goes with each screenshot: which windows, workspaces and monitors there are.
 Trimmed to what helps the model (no addresses, pids or format details)."""
 import json
-import os
 
 from . import proc
 
@@ -22,11 +21,10 @@ def trim_hypr(clients, monitors):
     })
 
 
-async def describe(sandbox_display=None) -> str:
-    if sandbox_display:
+async def describe(sandbox_env=None) -> str:
+    if sandbox_env:
         from .capture import sway_windows
-        env = dict(os.environ, WAYLAND_DISPLAY=sandbox_display)
-        tree = json.loads(await proc.run(["swaymsg", "-t", "get_tree", "-r"], env=env, timeout=5))
+        tree = json.loads(await proc.run(["swaymsg", "-t", "get_tree", "-r"], env=sandbox_env, timeout=5))
         return _compact({"sandbox": True, "windows": sway_windows(tree)})
     from .capture import hypr
     return trim_hypr(await hypr("clients"), await hypr("monitors"))
